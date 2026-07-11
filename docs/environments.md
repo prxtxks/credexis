@@ -43,15 +43,29 @@ live until recorded here.
 | Azure Document Intelligence | ☐ Not provisioned | Prebuilt-tax for 1040 family.           |
 | Transcript provider (M9)    | ☐ Not provisioned | TaxStatus / Halcyon-class.              |
 
+## Repository & CI
+
+- **Remote:** `github.com/prxtxks/credexis` — **private**, created fresh
+  2026-07-11. No history or code from V1/UnderlyticsAI.
+- **CI:** GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to
+  `main`.
+- **Branch protection:** _not yet enforceable_ — GitHub requires Pro (or a
+  public repo) for protection rules on private repos. **[PRATIK]** upgrade to
+  Pro or move the repo into an org with a paid plan to make red CI physically
+  block merges. Until then the working rule is: no PR merges unless its CI run
+  is green (enforced by discipline, verified per merge).
+
 ## V1 secret hygiene (carry-over from the post-mortem)
 
 V1 committed a **live GCP service-account key** (`*.json`) at the repo root
-because `.gitignore` covered only `.env*` and `*.pem`. Required actions
-(Blueprint §11, assume compromise):
+because `.gitignore` covered only `.env*` and `*.pem`. Status (Blueprint §11):
 
-1. **Revoke** the leaked GCP service-account key; audit GCP usage logs.
-2. **Rotate** all V1 secrets before any are reused. Prefer fresh projects
-   (fresh Supabase per M0.5) over reusing V1 infrastructure.
+1. ~~Revoke the leaked GCP service-account key~~ — **done automatically**:
+   Google detected the public leak and revoked the key (confirmed by Pratik,
+   2026-07-11).
+2. **Rotate** any remaining V1 secrets before any are reused. Moot in practice:
+   V2 uses all-fresh projects (fresh Supabase per M0.5) and reuses no V1
+   infrastructure.
 
 ## Structural guardrails
 
