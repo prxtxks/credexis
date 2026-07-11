@@ -14,12 +14,18 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "db:generate": "pnpm run build && drizzle-kit generate",
+    "db:migrate": "node dist/db/migrate.js",
     "clean": "rm -rf dist .turbo *.tsbuildinfo"
   },
   "devDependencies": {
+    "@types/node": "24.2.0",
+    "drizzle-kit": "0.31.4",
     "typescript": "5.9.2"
   },
   "dependencies": {
+    "drizzle-orm": "0.44.4",
+    "postgres": "3.4.7",
     "zod": "3.25.76"
   }
 }
