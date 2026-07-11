@@ -15,8 +15,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test": "turbo run build --filter='./packages/*' && vitest run",
+    "test:coverage": "turbo run build --filter='./packages/*' && vitest run --coverage",
     "test:e2e": "pnpm --filter @credexis/web test:e2e",
     "eval": "turbo run eval",
     "prepare": "husky"
