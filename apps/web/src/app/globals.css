@@ -1,0 +1,17 @@
+/*
+ * Minimal reset. The V1 emerald/teal OKLCH palette and glass utilities are
+ * ported verbatim in M8.1 (Blueprint §8.1) — not before.
+ */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}

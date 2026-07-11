@@ -1,0 +1,23 @@
+{
+  "name": "credexis",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Credexis — SBA 7(a) underwriting automation. Documents in, banker-grade pro-forma out.",
+  "packageManager": "pnpm@10.12.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "eval": "turbo run eval"
+  },
+  "devDependencies": {
+    "turbo": "2.5.6",
+    "typescript": "5.9.2"
+  }
+}
