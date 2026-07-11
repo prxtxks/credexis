@@ -8,6 +8,13 @@
       "when": 1783785637840,
       "tag": "0000_schema-v1",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783795549422,
+      "tag": "0001_rls-v1",
+      "breakpoints": true
     }
   ]
 }
