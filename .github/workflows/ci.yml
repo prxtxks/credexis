@@ -63,6 +63,23 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
 
+  schema-checks:
+    name: Schema checks (drift + RLS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Drift: drizzle TS schema must match committed migrations (M2.7).
+      - run: pnpm db:check-drift
+      # RLS assertion also runs inside Unit tests (schema-checks.test.ts);
+      # this job exists so a schema-only failure is legible at a glance.
+      - run: pnpm vitest run packages/schema/src/db/schema-checks.test.ts
+
   test:
     name: Unit tests
     runs-on: ubuntu-latest

@@ -48,5 +48,16 @@ export default tseslint.config(
       "money/no-raw-money-arithmetic": "error",
     },
   },
+  // Node CLI scripts (package scripts/, tooling) run under plain Node.
+  {
+    files: ["**/scripts/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly",
+        URL: "readonly",
+      },
+    },
+  },
   eslintConfigPrettier,
 );
