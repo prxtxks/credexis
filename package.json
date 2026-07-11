@@ -22,7 +22,8 @@
     "db:generate": "pnpm --filter @credexis/schema db:generate",
     "db:migrate": "pnpm --filter @credexis/schema run build && pnpm --filter @credexis/schema db:migrate",
     "db:migrate:api": "pnpm --filter @credexis/schema run build && cd packages/schema && node dist/db/migrate-api.js",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:seed": "pnpm --filter @credexis/schema run build && cd packages/schema && node dist/db/seed-api.js"
   },
   "devDependencies": {
     "@eslint/js": "9.33.0",
