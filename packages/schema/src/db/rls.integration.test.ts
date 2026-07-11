@@ -58,15 +58,26 @@ function asUser(userId: string, statements: string): string {
 const CLEANUP = `
   delete from public.deals where id in ('${T.dealA}','${T.dealB}');
   delete from public.profiles where id in ('${T.userA}','${T.userB}','${T.viewerA}');
+  delete from auth.users where id in ('${T.userA}','${T.userB}','${T.viewerA}');
   delete from public.tenants where id in ('${T.tenantA}','${T.tenantB}');
   delete from public.policy_packs where id = '${T.packId}';
 `;
+
+/** profiles.id → auth.users.id (0002), so test users need auth rows first. */
+const seedAuthUser = (id: string, email: string) =>
+  `insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
+     email_confirmed_at, created_at, updated_at)
+   values ('${id}', '00000000-0000-0000-0000-000000000000', 'authenticated',
+     'authenticated', '${email}', '', now(), now(), now());`;
 
 const SEED = `
   insert into public.policy_packs (id, version, effective_date, rules)
     values ('${T.packId}', 'test-pack-rls', '2026-03-01', '{}');
   insert into public.tenants (id, name) values
     ('${T.tenantA}', 'Tenant A'), ('${T.tenantB}', 'Tenant B');
+  ${seedAuthUser(T.userA, "a@test.local")}
+  ${seedAuthUser(T.viewerA, "viewer@test.local")}
+  ${seedAuthUser(T.userB, "b@test.local")}
   insert into public.profiles (id, tenant_id, email, role) values
     ('${T.userA}', '${T.tenantA}', 'a@test.local', 'underwriter'),
     ('${T.viewerA}', '${T.tenantA}', 'viewer@test.local', 'viewer'),

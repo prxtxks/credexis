@@ -97,6 +97,11 @@ jobs:
   e2e:
     name: Playwright smoke
     runs-on: ubuntu-latest
+    env:
+      # Dummy values: the middleware fails closed (treats auth errors as
+      # signed-out), which is exactly the state the smoke test asserts.
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-dummy.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-dummy-anon-key
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
