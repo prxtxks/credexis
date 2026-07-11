@@ -24,8 +24,10 @@ export async function loadCorpus(corpusDir: string): Promise<EvalDocument[]> {
         `corpus integrity: manifest and ground truth disagree on pdf_sha256 for "${entry.id}"`,
       );
     }
-    const pdfPath = join(corpusDir, "pdfs", `${entry.id}.pdf`);
-    docs.push({ groundTruth: gt, pdfPath: existsSync(pdfPath) ? pdfPath : null });
+    // Real PDFs live under pdfs/ (bucket-synced); synthetic under synthetic/.
+    const candidates = [join(corpusDir, gt.synthetic ? "synthetic" : "pdfs", `${entry.id}.pdf`)];
+    const pdfPath = candidates.find((p) => existsSync(p)) ?? null;
+    docs.push({ groundTruth: gt, pdfPath });
   }
   return docs;
 }

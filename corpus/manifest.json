@@ -1,5 +1,76 @@
 {
   "version": 1,
-  "updated_at": "2026-07-11T14:30:00Z",
-  "documents": []
+  "updated_at": "2026-07-11T15:06:12.848Z",
+  "documents": [
+    {
+      "id": "synthetic-1040-2024-001",
+      "ground_truth_path": "ground-truth/synthetic-1040-2024-001.json",
+      "pdf_sha256": "54d607164895a71bc0f07d007bd2e0ab2ffeecabf82fddf5306a6c50262b2ac9",
+      "pdf_bytes": 2047,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "synthetic-1065-2024-001",
+      "ground_truth_path": "ground-truth/synthetic-1065-2024-001.json",
+      "pdf_sha256": "ae04aa821bfc9ee80e882ead543972a6e6a627928e16b7056b07795e91fb5fb9",
+      "pdf_bytes": 2118,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "synthetic-1120-2024-001",
+      "ground_truth_path": "ground-truth/synthetic-1120-2024-001.json",
+      "pdf_sha256": "45b3dd671993be4ee4a978a83f4d1d4069fa69f377345c68b288b68939e96d89",
+      "pdf_bytes": 2110,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "synthetic-1120s-2023-001",
+      "ground_truth_path": "ground-truth/synthetic-1120s-2023-001.json",
+      "pdf_sha256": "ef9cf6e78c5f61d81065a1cd85b1155359e5485e96beb20d5a9274e792ed77ca",
+      "pdf_bytes": 2221,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "synthetic-1120s-2024-001",
+      "ground_truth_path": "ground-truth/synthetic-1120s-2024-001.json",
+      "pdf_sha256": "7ce4e18b7bd57be92cd52dabd845f7f5027c19f683826072e90d9581acb32b43",
+      "pdf_bytes": 2222,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "synthetic-4562-2024-001",
+      "ground_truth_path": "ground-truth/synthetic-4562-2024-001.json",
+      "pdf_sha256": "9000f57b00d800d3ea7d35e74e8f797cca05b7d865321ff8bf2d6106e9ca2afa",
+      "pdf_bytes": 2003,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "synthetic-balancesheet-001",
+      "ground_truth_path": "ground-truth/synthetic-balancesheet-001.json",
+      "pdf_sha256": "7a8f89d9faaae8890a9dd14fe8f7137ddfe20f3f43ceb22019d453977740e4ae",
+      "pdf_bytes": 2239,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "synthetic-pnl-blankcell-001",
+      "ground_truth_path": "ground-truth/synthetic-pnl-blankcell-001.json",
+      "pdf_sha256": "f73bff12be0464b80092867b53967ed1126afa1b2a45f815eb3d39aee5608e81",
+      "pdf_bytes": 2331,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "synthetic-pnl-quickbooks-001",
+      "ground_truth_path": "ground-truth/synthetic-pnl-quickbooks-001.json",
+      "pdf_sha256": "667629b0489eb355f133d00878454ccf013a3deb5155302d34b9494f64af9ed9",
+      "pdf_bytes": 2555,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "synthetic-w2-2024-001",
+      "ground_truth_path": "ground-truth/synthetic-w2-2024-001.json",
+      "pdf_sha256": "1e63d1925a8841ba134c4a6ba2544aa167cc4478c84ce26db78f09a7baca98f9",
+      "pdf_bytes": 2069,
+      "pdf_bucket_key": null
+    }
+  ]
 }

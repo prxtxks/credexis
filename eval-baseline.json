@@ -2,5 +2,12 @@
   "version": 1,
   "extractor": "mock-perfect@1",
   "real": null,
-  "synthetic_harness_check": null
+  "synthetic_harness_check": {
+    "field_precision": 1,
+    "field_recall": 1,
+    "auto_accept_precision": 1,
+    "auto_accept_coverage": 1,
+    "silent_wrong_count": 0,
+    "documents": 10
+  }
 }
