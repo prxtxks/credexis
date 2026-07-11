@@ -1,0 +1,19 @@
+# gitleaks config — content-based secret scanning.
+# The V1 leak (a live GCP service-account *.json committed at the repo root)
+# must be structurally impossible. This runs in CI (job: secret-scan) and can
+# be run locally with `gitleaks git --redact`.
+
+title = "Credexis gitleaks config"
+
+# Use gitleaks' full built-in ruleset (GCP keys, AWS, private key blocks,
+# API tokens, etc.), then add our own allowlist below.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Non-secret files that must never trip the scanner."
+paths = [
+  '''\.env\.example$''',
+  '''pnpm-lock\.yaml$''',
+  '''docs/environments\.md$''',
+]

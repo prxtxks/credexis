@@ -28,6 +28,25 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
+# Secrets & credentials — NEVER commit.
+# V1 leaked a live GCP service-account *.json at the repo root because
+# .gitignore only covered .env* and *.pem. These filename patterns are the
+# first line of defense; gitleaks (CI + local) is the content-based backstop
+# that catches key material regardless of filename.
+*.pem
+*.key
+*.p12
+*.pfx
+*-key.json
+*.key.json
+*credentials*.json
+*service-account*.json
+*serviceaccount*.json
+gcp-*.json
+service_account*.json
+secrets/
+.secrets/
+
 # OS / editor
 .DS_Store
 Thumbs.db
