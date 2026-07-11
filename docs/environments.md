@@ -43,6 +43,13 @@ live until recorded here.
 | Azure Document Intelligence | ☐ Not provisioned | Prebuilt-tax for 1040 family.                                                            |
 | Transcript provider (M9)    | ☐ Not provisioned | TaxStatus / Halcyon-class.                                                               |
 
+**[PRATIK] pending review (M2.6):** policy pack `sop-50-10-8-2026-03` is
+seeded with `reviewStatus: "draft"` — every threshold (DSCR 1.15/1.10, 10%
+equity injection, term/guaranty limits) must be verified against the current
+SOP 50 10 8 text and flipped to `reviewed`. The engine (M7) will refuse to
+certify compliance under a draft pack. Taxonomy granularity (207 nodes) also
+awaits the same review.
+
 ## Storage layout (M2.4)
 
 - **Bucket:** `deal-documents` — private; 50 MiB/object cap; MIME allowlist

@@ -17,7 +17,8 @@
     "db:generate": "pnpm run build && drizzle-kit generate",
     "db:migrate": "node dist/db/migrate.js",
     "db:migrate:api": "node dist/db/migrate-api.js",
-    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+    "clean": "rm -rf dist .turbo *.tsbuildinfo",
+    "db:seed:api": "node dist/db/seed-api.js"
   },
   "devDependencies": {
     "@types/node": "24.2.0",
