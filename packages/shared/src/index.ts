@@ -7,3 +7,5 @@
  */
 
 export const SHARED_PACKAGE = "@credexis/shared" as const;
+
+export * from "./money/index.js";
