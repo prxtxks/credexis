@@ -7,9 +7,7 @@ export const metadata: Metadata = {
   description: "SBA 7(a) underwriting automation — documents in, banker-grade pro-forma out.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
       <body>{children}</body>
