@@ -19,6 +19,8 @@
     "test:coverage": "turbo run build --filter='./packages/*' && vitest run --coverage",
     "test:e2e": "pnpm --filter @credexis/web test:e2e",
     "eval": "turbo run eval",
+    "db:generate": "pnpm --filter @credexis/schema db:generate",
+    "db:migrate": "pnpm --filter @credexis/schema run build && pnpm --filter @credexis/schema db:migrate",
     "prepare": "husky"
   },
   "devDependencies": {
