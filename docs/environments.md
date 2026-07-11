@@ -43,6 +43,23 @@ live until recorded here.
 | Azure Document Intelligence | ☐ Not provisioned | Prebuilt-tax for 1040 family.                                                            |
 | Transcript provider (M9)    | ☐ Not provisioned | TaxStatus / Halcyon-class.                                                               |
 
+## Storage layout (M2.4)
+
+- **Bucket:** `deal-documents` — private; 50 MiB/object cap; MIME allowlist
+  (pdf, png, jpeg, tiff, xlsx, xls) enforced at the bucket level.
+- **Key convention (RLS keys on the first segment = tenant id):**
+  `tenant_id/deals/deal_id/uploads/<sha256>.<ext>` for uploads,
+  `tenant_id/deals/deal_id/pages/<logical_doc_id>/<n>.png` for page renders.
+  Keys are built ONLY by `apps/web/src/lib/storage.ts` (uploads/URLs) — never
+  hand-assembled.
+- **Access:** tenant members read own-tenant objects; admin/underwriter write
+  own-tenant; delete admin-only; objects immutable (no UPDATE policy). File
+  contents flow only through **signed URLs, TTL 120 s**, created server-side
+  with the caller's RLS-scoped client. The pipeline worker role is scoped to
+  this bucket only.
+- **Dedupe:** `documents(deal_id, sha256)` unique constraint + content-addressed
+  object keys — re-uploading identical bytes to a deal is rejected at the DB.
+
 ## Auth providers (M2.3)
 
 - **Email/password:** enabled (Supabase default). Sign-ups do NOT get access
