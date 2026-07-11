@@ -4,7 +4,16 @@
  * `logical_documents` (one tax form / statement each) with page ranges.
  */
 
-import { boolean, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { documentStatus, virusScanStatus } from "./enums.js";
 import { deals, entities } from "./deals.js";
 import { tenants } from "./tenancy.js";
@@ -34,7 +43,12 @@ export const documents = pgTable(
   (t) => [
     index("documents_tenant_idx").on(t.tenantId),
     index("documents_deal_idx").on(t.dealId),
+    // Cross-deal duplicate detection (Stage S) still needs the plain lookup…
     index("documents_sha256_idx").on(t.sha256),
+    // …while dedupe within a deal is a hard guarantee (M2.4): re-uploading
+    // the same bytes to the same deal is a constraint violation the upload
+    // flow (M3.1) turns into "already uploaded".
+    uniqueIndex("documents_deal_sha256_unique").on(t.dealId, t.sha256),
   ],
 );
 
