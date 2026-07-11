@@ -47,6 +47,10 @@ service_account*.json
 secrets/
 .secrets/
 
+# Golden corpus — PDFs never in git (PII + size); labels + manifest ARE tracked
+corpus/pdfs/
+corpus/synthetic/**/*.pdf
+
 # OS / editor
 .DS_Store
 Thumbs.db
