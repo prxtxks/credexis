@@ -43,6 +43,23 @@ live until recorded here.
 | Azure Document Intelligence | ☐ Not provisioned | Prebuilt-tax for 1040 family.                                                            |
 | Transcript provider (M9)    | ☐ Not provisioned | TaxStatus / Halcyon-class.                                                               |
 
+## Auth providers (M2.3)
+
+- **Email/password:** enabled (Supabase default). Sign-ups do NOT get access
+  by themselves: a new user has no `profiles` row, so `current_tenant_id()`
+  is NULL and RLS matches zero rows; tRPC `protectedProcedure` rejects them.
+  Tenant membership is granted by an admin creating the profile row (invite
+  flow comes in a later milestone).
+- **Google OAuth:** wired in the login page (`signInWithOAuth`), but the
+  provider is **not yet configured** in Supabase — it needs a Google Cloud
+  OAuth client. **[PRATIK]**: create OAuth credentials at
+  console.cloud.google.com (authorized redirect URI:
+  `https://<project-ref>.supabase.co/auth/v1/callback`), then share the
+  client ID + secret via `.env.local` (`GOOGLE_OAUTH_CLIENT_ID`,
+  `GOOGLE_OAUTH_CLIENT_SECRET`) and I'll enable the provider via the
+  Management API. Until then the Google button returns a provider-disabled
+  error; email/password works.
+
 ### Supabase operations model
 
 Schema/RLS/seeds are applied **token-only**, no dashboard login and no DB

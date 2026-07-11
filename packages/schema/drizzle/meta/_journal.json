@@ -15,6 +15,13 @@
       "when": 1783795549422,
       "tag": "0001_rls-v1",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783796166207,
+      "tag": "0002_auth-wiring",
+      "breakpoints": true
     }
   ]
 }

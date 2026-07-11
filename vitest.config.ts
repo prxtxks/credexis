@@ -7,7 +7,7 @@ import { defineConfig } from "vitest/config";
  */
 export default defineConfig({
   test: {
-    projects: ["packages/*", "tooling/eslint-rules"],
+    projects: ["packages/*", "tooling/eslint-rules", "apps/web"],
     passWithNoTests: true,
     coverage: {
       provider: "v8",
