@@ -1,0 +1,62 @@
+{
+  "id": "synthetic-1040-2024-001",
+  "form_family": "1040",
+  "tax_year": 2024,
+  "entity": "guarantor",
+  "quality": "native",
+  "synthetic": true,
+  "pdf_sha256": "54d607164895a71bc0f07d007bd2e0ab2ffeecabf82fddf5306a6c50262b2ac9",
+  "page_count": 1,
+  "labeled_by": "synthetic-generator",
+  "labeled_at": "2026-07-11T00:00:00Z",
+  "fields": [
+    {
+      "registry_field_id": "f1040.line1a",
+      "period": "FY2024",
+      "value_cents": "9850000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.07828282828282829,
+        "w": 0.0726797385620915,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "registry_field_id": "f1040.line8",
+      "period": "FY2024",
+      "value_cents": "2210000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.10606060606060606,
+        "w": 0.0726797385620915,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "registry_field_id": "f1040.line9",
+      "period": "FY2024",
+      "value_cents": "12060000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.13383838383838384,
+        "w": 0.08176470588235293,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "registry_field_id": "f1040.line15",
+      "period": "FY2024",
+      "value_cents": "9310000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.16161616161616163,
+        "w": 0.0726797385620915,
+        "h": 0.015151515151515152
+      }
+    }
+  ]
+}

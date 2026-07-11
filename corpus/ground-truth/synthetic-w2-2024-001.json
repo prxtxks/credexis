@@ -1,0 +1,50 @@
+{
+  "id": "synthetic-w2-2024-001",
+  "form_family": "W2",
+  "tax_year": 2024,
+  "entity": "guarantor",
+  "quality": "native",
+  "synthetic": true,
+  "pdf_sha256": "1e63d1925a8841ba134c4a6ba2544aa167cc4478c84ce26db78f09a7baca98f9",
+  "page_count": 1,
+  "labeled_by": "synthetic-generator",
+  "labeled_at": "2026-07-11T00:00:00Z",
+  "fields": [
+    {
+      "registry_field_id": "fw2.box1",
+      "period": "FY2024",
+      "value_cents": "9850000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.07828282828282829,
+        "w": 0.0726797385620915,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "registry_field_id": "fw2.box2",
+      "period": "FY2024",
+      "value_cents": "1477500",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.10606060606060606,
+        "w": 0.0726797385620915,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "registry_field_id": "fw2.box5",
+      "period": "FY2024",
+      "value_cents": "9850000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.13383838383838384,
+        "w": 0.0726797385620915,
+        "h": 0.015151515151515152
+      }
+    }
+  ]
+}

@@ -16,6 +16,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { corpusManifestSchema } from "@credexis/schema";
+import { generateSynthetic } from "./generate-synthetic.js";
 import {
   groundTruthPath,
   parseFilledTemplate,
@@ -149,8 +150,18 @@ async function main(): Promise<void> {
     // eslint-disable-next-line no-fallthrough -- process.exit above never falls through
     case "add":
       return cmdAdd(rest);
+    case "generate-synthetic": {
+      const dir = getFlag(rest, "--corpus-dir") ?? "corpus";
+      const ids = await generateSynthetic(dir);
+      console.log(`generated ${ids.length} synthetic fixtures into ${dir}/synthetic/:`);
+      for (const id of ids) console.log(`  - ${id}`);
+      console.log("(synthetic — NEVER counted in accuracy claims)");
+      return;
+    }
     default:
-      fail("usage: corpus <template|check|add> …  (see file header for details)");
+      fail(
+        "usage: corpus <template|check|add|generate-synthetic> …  (see file header for details)",
+      );
   }
 }
 

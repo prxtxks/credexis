@@ -1,0 +1,80 @@
+{
+  "id": "synthetic-pnl-blankcell-001",
+  "form_family": "PNL",
+  "tax_year": null,
+  "entity": "applicant",
+  "quality": "native",
+  "synthetic": true,
+  "pdf_sha256": "f73bff12be0464b80092867b53967ed1126afa1b2a45f815eb3d39aee5608e81",
+  "page_count": 1,
+  "labeled_by": "synthetic-generator",
+  "labeled_at": "2026-07-11T00:00:00Z",
+  "fields": [
+    {
+      "taxonomy_node": "revenue.total",
+      "period": "FY2023",
+      "value_cents": "88000000",
+      "page": 1,
+      "bbox": {
+        "x": 0.5228758169934641,
+        "y": 0.07828282828282829,
+        "w": 0.08176470588235293,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "taxonomy_node": "revenue.total",
+      "period": "FY2024",
+      "value_cents": "98000000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.10606060606060606,
+        "w": 0.08176470588235293,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "taxonomy_node": "opex.officer_comp",
+      "period": "FY2023",
+      "value_cents": null,
+      "page": 1
+    },
+    {
+      "taxonomy_node": "opex.officer_comp",
+      "period": "FY2024",
+      "value_cents": "16000000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.16161616161616163,
+        "w": 0.08176470588235293,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "taxonomy_node": "net_income",
+      "period": "FY2023",
+      "value_cents": "15200000",
+      "page": 1,
+      "bbox": {
+        "x": 0.5228758169934641,
+        "y": 0.1893939393939394,
+        "w": 0.08176470588235293,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "taxonomy_node": "net_income",
+      "period": "FY2024",
+      "value_cents": "18730000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.21717171717171718,
+        "w": 0.08176470588235293,
+        "h": 0.015151515151515152
+      }
+    }
+  ]
+}

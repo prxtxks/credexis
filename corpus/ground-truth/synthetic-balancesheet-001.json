@@ -1,0 +1,74 @@
+{
+  "id": "synthetic-balancesheet-001",
+  "form_family": "BALANCE_SHEET",
+  "tax_year": null,
+  "entity": "applicant",
+  "quality": "native",
+  "synthetic": true,
+  "pdf_sha256": "7a8f89d9faaae8890a9dd14fe8f7137ddfe20f3f43ceb22019d453977740e4ae",
+  "page_count": 1,
+  "labeled_by": "synthetic-generator",
+  "labeled_at": "2026-07-11T00:00:00Z",
+  "fields": [
+    {
+      "taxonomy_node": "assets.current.cash",
+      "period": "FY2024",
+      "value_cents": "18500000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.07828282828282829,
+        "w": 0.08176470588235293,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "taxonomy_node": "assets.current.ar",
+      "period": "FY2024",
+      "value_cents": "12750000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.10606060606060606,
+        "w": 0.08176470588235293,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "taxonomy_node": "assets.total",
+      "period": "FY2024",
+      "value_cents": "64250000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.13383838383838384,
+        "w": 0.08176470588235293,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "taxonomy_node": "liabilities.total",
+      "period": "FY2024",
+      "value_cents": "29800000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.16161616161616163,
+        "w": 0.08176470588235293,
+        "h": 0.015151515151515152
+      }
+    },
+    {
+      "taxonomy_node": "equity.total",
+      "period": "FY2024",
+      "value_cents": "34450000",
+      "page": 1,
+      "bbox": {
+        "x": 0.7026143790849673,
+        "y": 0.1893939393939394,
+        "w": 0.08176470588235293,
+        "h": 0.015151515151515152
+      }
+    }
+  ]
+}
