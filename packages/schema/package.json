@@ -18,7 +18,8 @@
     "db:migrate": "node dist/db/migrate.js",
     "db:migrate:api": "node dist/db/migrate-api.js",
     "clean": "rm -rf dist .turbo *.tsbuildinfo",
-    "db:seed:api": "node dist/db/seed-api.js"
+    "db:seed:api": "node dist/db/seed-api.js",
+    "db:check-drift": "pnpm run build && node scripts/check-drift.mjs"
   },
   "devDependencies": {
     "@types/node": "24.2.0",
