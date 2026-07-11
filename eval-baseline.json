@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "extractor": "mock-perfect@1",
+  "real": null,
+  "synthetic_harness_check": null
+}

@@ -10,6 +10,7 @@
       "dependsOn": ["^build", "build"]
     },
     "eval": {
+      "dependsOn": ["build"],
       "cache": false
     },
     "dev": {

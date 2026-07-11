@@ -51,6 +51,9 @@ secrets/
 corpus/pdfs/
 corpus/synthetic/**/*.pdf
 
+# Eval harness output (eval-baseline.json IS tracked; reports are not)
+eval-output/
+
 # OS / editor
 .DS_Store
 Thumbs.db
