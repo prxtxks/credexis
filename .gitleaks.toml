@@ -17,3 +17,10 @@ paths = [
   '''pnpm-lock\.yaml$''',
   '''docs/environments\.md$''',
 ]
+# Taxonomy node keys ("taxonomyNodeKey: \"pcf.income.k1_distributions\"")
+# are dotted chart-of-accounts paths, not credentials — but the word "Key"
+# plus entropy trips the generic-api-key rule.
+regexTarget = "line"
+regexes = [
+  '''taxonomyNodeKey(:| =)\s*"[a-z0-9_.]+"''',
+]
