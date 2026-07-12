@@ -22,3 +22,4 @@ export * from "./registry/loader.js";
 export * from "./consensus/reconcile.js";
 export * from "./facts/plan-writes.js";
 export * from "./stages/extract-paths.js";
+export * from "./statements/grid.js";
