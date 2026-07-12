@@ -25,3 +25,4 @@ export * from "./stages/extract-paths.js";
 export * from "./statements/grid.js";
 export * from "./statements/row-typing.js";
 export * from "./statements/period-binding.js";
+export * from "./statements/taxonomy-mapper.js";
