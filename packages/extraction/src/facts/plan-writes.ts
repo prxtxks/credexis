@@ -57,11 +57,10 @@ export function planFactWrites(
   entry: RegistryEntry,
   existing: ExistingFact[],
 ): WritePlan {
-  const nodeByField = new Map(
-    entry.fields
-      .filter((f) => f.taxonomyNodeKey !== null)
-      .map((f) => [f.fieldId, f.taxonomyNodeKey]),
-  );
+  const nodeByField = new Map<string, string>();
+  for (const f of entry.fields) {
+    if (f.taxonomyNodeKey !== null) nodeByField.set(f.fieldId, f.taxonomyNodeKey);
+  }
 
   // Live (non-superseded) facts by registry field id.
   const live = existing.filter((f) => f.supersededBy === null);
