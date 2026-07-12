@@ -143,6 +143,12 @@ importers:
       '@anthropic-ai/sdk':
         specifier: 0.74.0
         version: 0.74.0(zod@3.25.76)
+      '@credexis/schema':
+        specifier: workspace:*
+        version: link:../schema
+      '@credexis/shared':
+        specifier: workspace:*
+        version: link:../shared
       zod:
         specifier: 3.25.76
         version: 3.25.76

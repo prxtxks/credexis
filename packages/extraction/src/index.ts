@@ -14,3 +14,6 @@ export * from "./config.js";
 export { AnthropicVisionAdapter } from "./adapters/anthropic-vision.js";
 export { ReductoAdapter } from "./adapters/reducto.js";
 export { AzureDocumentIntelligenceAdapter } from "./adapters/azure-document-intelligence.js";
+export * from "./split/signals.js";
+export * from "./split/classify.js";
+export * from "./split/group.js";
