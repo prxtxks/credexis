@@ -94,3 +94,29 @@ describe("appRouter surface", () => {
     });
   });
 });
+
+describe("review router (M6.3) — role gating", () => {
+  const review = (state: Parameters<typeof ctxFor>[0]) =>
+    appRouter.createCaller(ctxFor(state)).review;
+
+  it("mutations reject viewers with FORBIDDEN before touching the database", async () => {
+    await expect(
+      review("viewer").accept({ factId: "00000000-0000-4000-a000-000000000001" }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      review("viewer").correct({
+        factId: "00000000-0000-4000-a000-000000000001",
+        correctedCents: "100",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      review("viewer").reject({ factId: "00000000-0000-4000-a000-000000000001" }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("anonymous callers get UNAUTHORIZED on reads too", async () => {
+    await expect(
+      review("anonymous").queue({ dealId: "00000000-0000-4000-a000-000000000002" }),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+});
