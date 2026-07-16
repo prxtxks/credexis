@@ -1,4 +1,5 @@
 import { protectedProcedure, publicProcedure, router } from "./init";
+import { reviewRouter } from "./routers/review";
 
 /**
  * Application router (M2.3). Grows with the product; today it carries the
@@ -14,6 +15,9 @@ export const appRouter = router({
     tenantId: ctx.profile.tenantId,
     role: ctx.profile.role,
   })),
+
+  /** Review queue (M6.3): ordered items + audited accept/correct/reject. */
+  review: reviewRouter,
 });
 
 export type AppRouter = typeof appRouter;

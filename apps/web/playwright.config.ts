@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 3000;
+// Dedicated e2e port: 3000 is the default for every Next app on this
+// machine — reuseExistingServer once connected to an unrelated project's
+// dev server and tested the wrong app. 3799 keeps the suite hermetic.
+const PORT = 3799;
 
 /**
  * Playwright smoke config. Kept minimal for M0.2 — the real E2E suite
@@ -19,7 +22,7 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "pnpm dev",
+    command: `pnpm dev --port ${PORT}`,
     port: PORT,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
