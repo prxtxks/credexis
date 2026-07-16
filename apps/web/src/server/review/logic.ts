@@ -27,17 +27,21 @@ const SEVERITY_RANK: Record<IssueSeverity, number> = {
   info: 0,
 };
 
-export interface OrderedQueueItem extends QueueFact {
+export type OrderedQueueItem<T extends QueueFact = QueueFact> = T & {
   /** Highest severity of any issue implicating this fact (null = none). */
   topSeverity: IssueSeverity | null;
-}
+};
 
 /**
  * Next-item ordering (task M6.3): severity first (critical → …), then
  * document order (logical document, page, creation) — so a reviewer burns
- * down the dangerous items before the merely-uncertain ones.
+ * down the dangerous items before the merely-uncertain ones. Generic so
+ * callers can enrich items with display fields that pass through untouched.
  */
-export function orderQueue(facts: QueueFact[], issues: QueueIssueRef[]): OrderedQueueItem[] {
+export function orderQueue<T extends QueueFact>(
+  facts: T[],
+  issues: QueueIssueRef[],
+): OrderedQueueItem<T>[] {
   const severityByFact = new Map<string, IssueSeverity>();
   for (const issue of issues) {
     for (const id of issue.factIds) {

@@ -26,7 +26,9 @@ export const reviewRouter = router({
     const [factsRes, issuesRes] = await Promise.all([
       ctx.supabase
         .from("facts")
-        .select("id, logical_document_id:source_logical_document_id, source_page, created_at")
+        .select(
+          "id, logical_document_id:source_logical_document_id, source_page, created_at, value_cents, taxonomy_node_key, registry_field_id, method, confidence, period_id, source_bbox",
+        )
         .eq("deal_id", input.dealId)
         .eq("status", "suggested"),
       ctx.supabase
@@ -40,12 +42,20 @@ export const reviewRouter = router({
     if (issuesRes.error)
       throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: issuesRes.error.message });
 
-    const facts: QueueFact[] = (factsRes.data ?? []).map((f) => ({
+    const facts = (factsRes.data ?? []).map((f) => ({
       id: f.id as string,
       logicalDocumentId: (f.logical_document_id as string | null) ?? null,
       sourcePage: (f.source_page as number | null) ?? null,
       createdAt: f.created_at as string,
-    }));
+      // Display payload (rendered verbatim — the client never computes).
+      valueCents: String(f.value_cents),
+      taxonomyNodeKey: (f.taxonomy_node_key as string | null) ?? null,
+      registryFieldId: (f.registry_field_id as string | null) ?? null,
+      method: f.method as string,
+      confidence: (f.confidence as number | null) ?? null,
+      periodId: f.period_id as string,
+      sourceBbox: (f.source_bbox as { x: number; y: number; w: number; h: number } | null) ?? null,
+    })) satisfies QueueFact[];
     const issues: QueueIssueRef[] = (issuesRes.data ?? []).map((i) => ({
       severity: i.severity as QueueIssueRef["severity"],
       factIds: (i.fact_ids as string[]) ?? [],
