@@ -11,3 +11,4 @@ export const ENGINE_PACKAGE = "@credexis/engine" as const;
 
 export * from "./gates/types.js";
 export * from "./gates/gates.js";
+export * from "./confidence/scorer.js";
