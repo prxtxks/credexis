@@ -120,6 +120,10 @@ importers:
         version: 5.9.2
 
   packages/engine:
+    dependencies:
+      '@credexis/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       typescript:
         specifier: 5.9.2
