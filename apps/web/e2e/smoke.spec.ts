@@ -13,3 +13,8 @@ test("login page is directly reachable without a session", async ({ page }) => {
   await expect(page).toHaveURL(/\/login/);
   await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
 });
+
+test("review queue route is auth-gated (M6.4)", async ({ page }) => {
+  await page.goto("/deals/00000000-0000-4000-a000-000000000001/review");
+  await expect(page).toHaveURL(/\/login/);
+});
