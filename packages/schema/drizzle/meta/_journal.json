@@ -36,6 +36,13 @@
       "when": 1783802310932,
       "tag": "0004_audit-writer",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784392244320,
+      "tag": "0005_assignment-audit",
+      "breakpoints": true
     }
   ]
 }

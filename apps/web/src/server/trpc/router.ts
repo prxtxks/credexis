@@ -1,4 +1,5 @@
 import { protectedProcedure, publicProcedure, router } from "./init";
+import { assignmentRouter } from "./routers/assignment";
 import { documentsRouter } from "./routers/documents";
 import { reviewRouter } from "./routers/review";
 
@@ -22,6 +23,9 @@ export const appRouter = router({
 
   /** Review queue (M6.3): ordered items + audited accept/correct/reject. */
   review: reviewRouter,
+
+  /** Document assignment (M6.5): confirm/fix Stage-S split suggestions. */
+  assignment: assignmentRouter,
 });
 
 export type AppRouter = typeof appRouter;
