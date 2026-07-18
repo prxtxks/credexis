@@ -127,6 +127,9 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The app imports workspace packages (@credexis/shared, …) that
+      # resolve to their built dist/ — build them before the dev server runs.
+      - run: pnpm exec turbo run build --filter='./packages/*'
       - run: pnpm --filter @credexis/web exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
