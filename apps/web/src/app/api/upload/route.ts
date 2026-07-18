@@ -21,9 +21,15 @@ import { triggerIngest } from "@/server/pipeline/trigger-client";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Fail closed: an unreachable auth server is an unauthenticated caller,
+  // never a 500 (same posture as the middleware).
+  let user;
+  try {
+    const res = await supabase.auth.getUser();
+    user = res.data.user;
+  } catch {
+    user = null;
+  }
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const { data: profile } = await supabase
