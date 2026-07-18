@@ -153,6 +153,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: 0.74.0
         version: 0.74.0(zod@3.25.76)
+      '@credexis/corpus-tools':
+        specifier: workspace:*
+        version: link:../corpus-tools
       '@credexis/schema':
         specifier: workspace:*
         version: link:../schema
