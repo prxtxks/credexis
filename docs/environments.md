@@ -31,17 +31,17 @@ git**, and the **service-role key never appears in a request path**.
 **[PRATIK] M0.5** — fill in as each service is procured. Nothing is assumed
 live until recorded here.
 
-| Service                     | Status            | Notes                                                                                    |
-| --------------------------- | ----------------- | ---------------------------------------------------------------------------------------- |
-| Supabase (fresh project)    | ✅ Live           | Org `Credexis`, project `Credexis Web App`, us-east-2, Postgres 17. Fresh — no V1 reuse. |
-| Vercel                      | ☐ Not provisioned |                                                                                          |
-| Trigger.dev org             | ☐ Not provisioned |                                                                                          |
-| Sentry                      | ☐ Not provisioned |                                                                                          |
-| Anthropic API (ZDR tier)    | ☐ Not provisioned | Zero-data-retention required (tax PII).                                                  |
-| Reducto                     | ☐ Not provisioned | Primary extractor candidate (M3.4).                                                      |
-| Extend                      | ☐ Not provisioned | Bake-off candidate.                                                                      |
-| Azure Document Intelligence | ☐ Not provisioned | Prebuilt-tax for 1040 family.                                                            |
-| Transcript provider (M9)    | ☐ Not provisioned | TaxStatus / Halcyon-class.                                                               |
+| Service                     | Status             | Notes                                                                                    |
+| --------------------------- | ------------------ | ---------------------------------------------------------------------------------------- |
+| Supabase (fresh project)    | ✅ Live            | Org `Credexis`, project `Credexis Web App`, us-east-2, Postgres 17. Fresh — no V1 reuse. |
+| Vercel                      | ✅ Live            | `credexis-web.vercel.app` — middleware auth verified in production (2026-07-18).         |
+| Trigger.dev org             | ✅ Live            | Secret key + project id verified against the runs API (2026-07-18).                      |
+| Sentry                      | ✅ DSN provisioned | Wiring lands with M10.2.                                                                 |
+| Anthropic API               | ✅ Live            | Key verified (2026-07-18). ⚠️ Confirm org ZDR status before REAL tax docs ([PRATIK]).    |
+| Reducto                     | ✅ Live            | Key verified (2026-07-18). Primary extractor candidate (M3.4).                           |
+| Extend                      | ✅ Key provisioned | Bake-off candidate; adapter not yet implemented (optional third contender).              |
+| Azure Document Intelligence | ✅ Live            | Resource `credexis-docintel`; endpoint+key verified (2026-07-18). Prebuilt-tax for 1040. |
+| Transcript provider (M9)    | ☐ Not provisioned  | TaxStatus / Halcyon-class.                                                               |
 
 **[PRATIK] pending review (M2.6):** policy pack `sop-50-10-8-2026-03` is
 seeded with `reviewStatus: "draft"` — every threshold (DSCR 1.15/1.10, 10%
