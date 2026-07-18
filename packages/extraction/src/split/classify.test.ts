@@ -70,6 +70,17 @@ describe("AnthropicPageClassifier (recorded responses — no live calls)", () =>
     });
   });
 
+  it("reports token usage through onUsage (M3.2 cost recording seam)", async () => {
+    const seen: { model: string; inputTokens: number; outputTokens: number }[] = [];
+    const classifier = new AnthropicPageClassifier({
+      apiKey: "test",
+      fetch: recordedFetch(),
+      onUsage: (u) => seen.push(u),
+    });
+    await classifier.classifyPages([{ page: 1, text: "x" }]);
+    expect(seen).toEqual([{ model: "claude-haiku-4-5", inputTokens: 900, outputTokens: 60 }]);
+  });
+
   it("sends page images when provided (vision path)", async () => {
     const capture: { body?: unknown } = {};
     const classifier = new AnthropicPageClassifier({
