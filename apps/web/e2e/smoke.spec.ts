@@ -18,3 +18,13 @@ test("review queue route is auth-gated (M6.4)", async ({ page }) => {
   await page.goto("/deals/00000000-0000-4000-a000-000000000001/review");
   await expect(page).toHaveURL(/\/login/);
 });
+
+test("documents route is auth-gated (M3.1)", async ({ page }) => {
+  await page.goto("/deals/00000000-0000-4000-a000-000000000001/documents");
+  await expect(page).toHaveURL(/\/login/);
+});
+
+test("upload API rejects unauthenticated requests (M3.1)", async ({ request }) => {
+  const res = await request.post("/api/upload", { multipart: { dealId: "x" } });
+  expect(res.status()).toBe(401);
+});

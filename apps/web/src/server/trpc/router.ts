@@ -1,4 +1,5 @@
 import { protectedProcedure, publicProcedure, router } from "./init";
+import { documentsRouter } from "./routers/documents";
 import { reviewRouter } from "./routers/review";
 
 /**
@@ -15,6 +16,9 @@ export const appRouter = router({
     tenantId: ctx.profile.tenantId,
     role: ctx.profile.role,
   })),
+
+  /** Deal documents (M3.1): uploads + pipeline status. */
+  documents: documentsRouter,
 
   /** Review queue (M6.3): ordered items + audited accept/correct/reject. */
   review: reviewRouter,

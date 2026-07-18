@@ -50,6 +50,9 @@ export async function middleware(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
+  // API routes authenticate themselves and must answer with status codes,
+  // not login redirects (a 307 turns an unauthenticated POST into a 404).
+  if (pathname.startsWith("/api/")) return response;
   if (!signedIn && !isPublic(pathname)) {
     const redirect = request.nextUrl.clone();
     redirect.pathname = "/login";
