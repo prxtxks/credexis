@@ -6,3 +6,4 @@
 export * from "./intake.js";
 export * from "./redaction.js";
 export { loadPdf, type LoadedPdf } from "./pdf.js";
+export { buildSyntheticPdf, SYNTHETIC_SPECS, type SyntheticDocSpec } from "./synthetic.js";

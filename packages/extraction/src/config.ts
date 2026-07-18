@@ -19,8 +19,10 @@ export function createAdaptersFromEnv(
   env: Record<string, string | undefined> = process.env,
 ): ConfiguredAdapters {
   const reductoKey = env["REDUCTO_API_KEY"];
-  const azureEndpoint = env["AZURE_DI_ENDPOINT"];
-  const azureKey = env["AZURE_DI_KEY"];
+  // Canonical names (.env.example); the short AZURE_DI_* forms are accepted
+  // as a fallback for older local files.
+  const azureEndpoint = env["AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"] ?? env["AZURE_DI_ENDPOINT"];
+  const azureKey = env["AZURE_DOCUMENT_INTELLIGENCE_KEY"] ?? env["AZURE_DI_KEY"];
   const anthropicKey = env["ANTHROPIC_API_KEY"];
 
   return {
