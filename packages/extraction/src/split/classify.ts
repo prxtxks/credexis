@@ -132,15 +132,19 @@ export interface AnthropicPageClassifierConfig {
   apiKey: string;
   model?: string; // Blueprint §4.1: Haiku-class for page classification
   fetch?: typeof globalThis.fetch;
+  /** Token usage per API call — the pipeline's cost recorder (M3.2) hooks in here. */
+  onUsage?: (usage: { model: string; inputTokens: number; outputTokens: number }) => void;
 }
 
 /** Vision/text LLM classification (Blueprint §4.1 second pass). */
 export class AnthropicPageClassifier implements PageClassifier {
   private client: Anthropic;
+  private onUsage: AnthropicPageClassifierConfig["onUsage"];
   readonly model: string;
 
   constructor(cfg: AnthropicPageClassifierConfig) {
     this.model = cfg.model ?? "claude-haiku-4-5";
+    this.onUsage = cfg.onUsage;
     this.client = new Anthropic({
       apiKey: cfg.apiKey,
       ...(cfg.fetch ? { fetch: cfg.fetch } : {}),
@@ -178,6 +182,11 @@ export class AnthropicPageClassifier implements PageClassifier {
       messages: [{ role: "user", content }],
     });
 
+    this.onUsage?.({
+      model: this.model,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    });
     if (response.stop_reason === "refusal") {
       throw new Error("page-classifier: request refused");
     }
