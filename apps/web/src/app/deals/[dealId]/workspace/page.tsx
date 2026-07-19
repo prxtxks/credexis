@@ -99,6 +99,13 @@ function WorkspaceInner() {
           {deal.data?.type.replaceAll("_", " ") ?? ""}
         </span>
         <div className="ml-auto flex items-center gap-2">
+          <a
+            href={`/api/deals/${dealId}/export${scenarioId ? `?scenario=${scenarioId}` : ""}`}
+            className="rounded-md border border-line px-2 py-1 text-sm dark:border-line-dark"
+            title="Download banker workbook (.xlsx)"
+          >
+            ⬇ XLSX
+          </a>
           <button
             aria-label={panelOpen ? "Collapse inspector" : "Expand inspector"}
             onClick={() => setParam("panel", panelOpen ? "0" : null)}

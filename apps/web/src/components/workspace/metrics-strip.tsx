@@ -9,17 +9,9 @@
  */
 
 import { trpc } from "@/lib/trpc/client";
-import { formatCents } from "@/lib/money-display";
+import { formatCents, formatRatio } from "@/lib/money-display";
 
-/** Fixed-point mantissa at a scale → display string; pure string work. */
-export function formatRatio(mantissa: string, scale: number): string {
-  const neg = mantissa.startsWith("-");
-  const digits = neg ? mantissa.slice(1) : mantissa;
-  const padded = digits.padStart(scale + 1, "0");
-  const head = padded.slice(0, padded.length - scale) || "0";
-  const tail = scale > 0 ? `.${padded.slice(padded.length - scale)}` : "";
-  return `${neg ? "-" : ""}${head}${tail}`;
-}
+export { formatRatio };
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
