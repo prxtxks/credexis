@@ -56,7 +56,13 @@ interface GridRow {
   computed: boolean;
   cells: Record<
     string,
-    { display: string; status?: string; confidence?: number | null; factId?: string }
+    {
+      display: string;
+      status?: string;
+      confidence?: number | null;
+      factId?: string;
+      verified?: boolean;
+    }
   >;
 }
 
@@ -114,6 +120,7 @@ export function SpreadGrid({
               status: c.status,
               confidence: c.confidence,
               factId: c.factId,
+              verified: c.verifiedByTranscript,
             },
           ]),
         ),
@@ -175,7 +182,11 @@ export function SpreadGrid({
           headerName: p,
           width: 130,
           type: "rightAligned",
-          valueGetter: (params) => params.data?.cells[p]?.display ?? "",
+          valueGetter: (params) => {
+            const cell = params.data?.cells[p];
+            if (!cell) return "";
+            return cell.verified ? `${cell.display} ✓IRS` : cell.display;
+          },
           cellClass: (params) => {
             const cell = params.data?.cells[p];
             if (params.data?.computed) return "text-computed font-semibold tabular-nums";
@@ -185,7 +196,8 @@ export function SpreadGrid({
           tooltipValueGetter: (params) => {
             const cell = params.data?.cells[p];
             if (!cell?.status) return "";
-            return `${cell.status} · confidence ${cell.confidence ?? "—"}`;
+            const base = `${cell.status} · confidence ${cell.confidence ?? "—"}`;
+            return cell.verified ? `${base} · verified by IRS transcript` : base;
           },
         }),
       ),

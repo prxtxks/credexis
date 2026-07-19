@@ -36,6 +36,12 @@ export interface SpreadCell {
   confidence: number | null;
   sourcePage: number | null;
   sourceLogicalDocumentId: string | null;
+  /**
+   * M9.4: an IRS transcript fact AND a parsed fact agree on this cell's
+   * value — the strongest trust signal a cell can carry. Disagreement is
+   * G5's critical tamper issue, never a silent badge downgrade.
+   */
+  verifiedByTranscript: boolean;
 }
 
 export interface SpreadRow {
@@ -69,6 +75,8 @@ export function assembleSpread(
 ): { periods: string[]; rows: SpreadRow[] } {
   const best = new Map<string, SpreadFactRow>(); // node|period → fact
   const periods = new Set<string>();
+  const transcriptValues = new Map<string, string>(); // node|period → cents
+  const parsedValues = new Map<string, Set<string>>(); // node|period → cents set
 
   for (const f of facts) {
     if (f.taxonomyNodeKey === null) continue;
@@ -76,6 +84,14 @@ export function assembleSpread(
     periods.add(f.periodLabel);
     const key = `${f.taxonomyNodeKey}|${f.periodLabel}`;
     if (better(f, best.get(key))) best.set(key, f);
+    if (f.status === "accepted") {
+      if (f.method === "transcript") transcriptValues.set(key, f.valueCents);
+      else {
+        const set = parsedValues.get(key) ?? new Set<string>();
+        set.add(f.valueCents);
+        parsedValues.set(key, set);
+      }
+    }
   }
 
   const depth = (key: string) => key.split(".").length - 1;
@@ -92,6 +108,8 @@ export function assembleSpread(
       for (const p of sortedPeriods) {
         const f = best.get(`${n.key}|${p}`);
         if (f) {
+          const cellKey = `${n.key}|${p}`;
+          const transcript = transcriptValues.get(cellKey);
           cells[p] = {
             factId: f.id,
             valueCents: f.valueCents,
@@ -100,6 +118,8 @@ export function assembleSpread(
             confidence: f.confidence,
             sourcePage: f.sourcePage,
             sourceLogicalDocumentId: f.sourceLogicalDocumentId,
+            verifiedByTranscript:
+              transcript !== undefined && (parsedValues.get(cellKey)?.has(transcript) ?? false),
           };
         }
       }

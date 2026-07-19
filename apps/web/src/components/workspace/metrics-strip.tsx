@@ -78,7 +78,11 @@ export function MetricsStrip({
   periodLabel?: string;
   scenarioId?: string | null;
 }) {
+  const utils = trpc.useUtils();
   const metrics = trpc.metrics.forDeal.useQuery({ dealId, scenarioId });
+  const recompute = trpc.metrics.recompute.useMutation({
+    onSuccess: () => void utils.invalidate(),
+  });
 
   const rows = metrics.data ?? [];
   // The strip shows the most recent period present unless one is pinned.
@@ -119,8 +123,19 @@ export function MetricsStrip({
       <Stat label="DSCR (global)" value={ratioOf("dscr_global")} accent />
       <Stat label="Global CF" value={centsOf("global_cash_flow")} />
       <PolicyChips dealId={dealId} scenarioId={scenarioId} />
-      <div className="ml-auto pr-4 text-[10px] text-ink-muted dark:text-ink-dark-muted">
-        {engineVersion ?? "no engine run yet"}
+      <div className="ml-auto flex items-center gap-2 pr-4">
+        <button
+          aria-label="Recompute"
+          title="Re-run the engine over current facts"
+          onClick={() => recompute.mutate({ dealId })}
+          disabled={recompute.isPending}
+          className="rounded border border-line px-1.5 py-0.5 text-[10px] dark:border-line-dark"
+        >
+          ↻ {recompute.isPending ? "…" : "recompute"}
+        </button>
+        <span className="text-[10px] text-ink-muted dark:text-ink-dark-muted">
+          {engineVersion ?? "no engine run yet"}
+        </span>
       </div>
     </footer>
   );
