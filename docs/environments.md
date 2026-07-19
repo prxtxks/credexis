@@ -100,6 +100,20 @@ password, via the Management API query endpoint:
   the DB password via API; it will be reset/obtained then. Pooler host:
   `aws-1-us-east-2.pooler.supabase.com` (6543 transaction / 5432 session).
 
+### Live test suites (opt-in, never CI)
+
+Gated suites that touch the live project or paid vendor APIs — each skips
+unless its flag is set alongside the credentials it needs in `.env.local`:
+
+- `RUN_LIVE_VENDOR_TESTS=1 pnpm vitest run packages/extraction` — vendor
+  smoke (Anthropic/Reducto/Azure read planted synthetic values; costs money).
+- `RUN_LIVE_E2E=1 pnpm test:e2e` — M6.6 full review loop: seeds a deal with
+  a planted G1 disagreement in the live DB, signs a GoTrue-created reviewer
+  into the real UI, resolves the queue, then asserts supersession, audit
+  actor, and a green gate re-run. Seeds and the reviewer are removed after.
+- Integration tests (`*.integration.test.ts`) run whenever
+  `SUPABASE_ACCESS_TOKEN`/`SUPABASE_PROJECT_REF` are present.
+
 ## Repository & CI
 
 - **Remote:** `github.com/prxtxks/credexis` — **private**, created fresh
