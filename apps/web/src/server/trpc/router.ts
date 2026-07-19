@@ -1,4 +1,5 @@
 import { protectedProcedure, publicProcedure, router } from "./init";
+import { addbacksRouter } from "./routers/addbacks";
 import { assignmentRouter } from "./routers/assignment";
 import { documentsRouter } from "./routers/documents";
 import { reviewRouter } from "./routers/review";
@@ -26,6 +27,9 @@ export const appRouter = router({
 
   /** Document assignment (M6.5): confirm/fix Stage-S split suggestions. */
   assignment: assignmentRouter,
+
+  /** Addback flow (M7.3): rule suggestions + audited accept/reject. */
+  addbacks: addbacksRouter,
 });
 
 export type AppRouter = typeof appRouter;
