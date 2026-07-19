@@ -77,6 +77,32 @@ describe("assembleSpread", () => {
   });
 });
 
+describe("transcript verification (M9.4)", () => {
+  it("marks a cell verified only when a parsed fact AND the transcript agree", () => {
+    const { rows } = assembleSpread(NODES, [
+      fact({ id: "parsed", method: "consensus", valueCents: "500" }),
+      fact({ id: "irs", method: "transcript", valueCents: "500" }),
+    ]);
+    const cell = rows.find((r) => r.key === "is.revenue.product_sales")!.cells["FY2023"]!;
+    expect(cell.verifiedByTranscript).toBe(true);
+  });
+
+  it("a disagreeing transcript never yields a badge (G5's tamper issue owns it)", () => {
+    const { rows } = assembleSpread(NODES, [
+      fact({ id: "parsed", method: "consensus", valueCents: "500" }),
+      fact({ id: "irs", method: "transcript", valueCents: "999" }),
+    ]);
+    const cell = rows.find((r) => r.key === "is.revenue.product_sales")!.cells["FY2023"]!;
+    expect(cell.verifiedByTranscript).toBe(false);
+  });
+
+  it("a transcript alone (no parsed fact) is data, not verification", () => {
+    const { rows } = assembleSpread(NODES, [fact({ id: "irs", method: "transcript" })]);
+    const cell = rows.find((r) => r.key === "is.revenue.product_sales")!.cells["FY2023"]!;
+    expect(cell.verifiedByTranscript).toBe(false);
+  });
+});
+
 describe("normalizeLabel", () => {
   it("lowercases and collapses whitespace, matching the mapper", () => {
     expect(normalizeLabel("  Officer   COMP  ")).toBe("officer comp");
