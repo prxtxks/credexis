@@ -41,6 +41,7 @@ describe("schema completeness (Blueprint §5)", () => {
       "form_registry",
       "learned_mappings",
       "policy_packs",
+      "transcript_consents", // M9.2
     ];
     for (const table of required) {
       expect(names, `missing table ${table}`).toContain(table);

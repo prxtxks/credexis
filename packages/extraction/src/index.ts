@@ -17,6 +17,7 @@ export { AzureDocumentIntelligenceAdapter } from "./adapters/azure-document-inte
 export * from "./split/signals.js";
 export * from "./split/classify.js";
 export * from "./split/group.js";
+export * from "./transcripts/provider.js";
 export * from "./registry/types.js";
 export * from "./registry/loader.js";
 export * from "./consensus/reconcile.js";

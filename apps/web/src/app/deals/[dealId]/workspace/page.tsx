@@ -68,6 +68,13 @@ function WorkspaceInner() {
   const docs = trpc.documents.list.useQuery({ dealId });
   const progress = trpc.review.progress.useQuery({ dealId });
   const issues = trpc.issues.forDeal.useQuery({ dealId });
+  const transcripts = trpc.transcripts.forDeal.useQuery({ dealId });
+  const setTranscripts = trpc.transcripts.setEnabled.useMutation({
+    onSuccess: () => void utils.transcripts.forDeal.invalidate({ dealId }),
+  });
+  const requestConsent = trpc.transcripts.requestConsent.useMutation({
+    onSuccess: () => void utils.transcripts.forDeal.invalidate({ dealId }),
+  });
 
   function setParam(key: string, value: string | null) {
     const next = new URLSearchParams(search.toString());
@@ -150,6 +157,51 @@ function WorkspaceInner() {
               >
                 All documents →
               </Link>
+            </RailSection>
+
+            <RailSection title="IRS transcripts">
+              {transcripts.data?.enabled ? (
+                <>
+                  {(entities.data ?? []).map((e) => {
+                    const consent = transcripts.data?.consents.find((c) => c.entityId === e.id);
+                    return (
+                      <div key={e.id} className="flex items-center gap-2 px-3 py-1 text-xs">
+                        <span className="truncate">{e.name}</span>
+                        {consent ? (
+                          <span className="ml-auto text-ink-muted dark:text-ink-dark-muted">
+                            {consent.status}
+                          </span>
+                        ) : (
+                          <button
+                            className="ml-auto text-primary underline dark:text-primary-dark"
+                            onClick={() => requestConsent.mutate({ dealId, entityId: e.id })}
+                          >
+                            request 8821
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {requestConsent.data && !requestConsent.data.requested && (
+                    <p className="px-3 py-1 text-[11px] text-severity-warning">
+                      {requestConsent.data.reason}
+                    </p>
+                  )}
+                  <button
+                    className="px-3 py-1 text-[11px] text-ink-muted underline dark:text-ink-dark-muted"
+                    onClick={() => setTranscripts.mutate({ dealId, enabled: false })}
+                  >
+                    disable for this deal
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="px-3 py-1 text-xs text-primary underline dark:text-primary-dark"
+                  onClick={() => setTranscripts.mutate({ dealId, enabled: true })}
+                >
+                  Enable IRS transcript verification
+                </button>
+              )}
             </RailSection>
 
             <RailSection title="Review">

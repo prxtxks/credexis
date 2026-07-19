@@ -10,6 +10,7 @@ import { policyRouter } from "./routers/policy";
 import { reviewRouter } from "./routers/review";
 import { sourceRouter } from "./routers/source";
 import { spreadRouter } from "./routers/spread";
+import { transcriptsRouter } from "./routers/transcripts";
 
 /**
  * Application router (M2.3). Grows with the product; today it carries the
@@ -58,6 +59,9 @@ export const appRouter = router({
 
   /** Pipeline progress (M8.8): stage timeline per document. */
   pipeline: pipelineRouter,
+
+  /** IRS transcripts (M9): flag, consents, ingest — graceful absence. */
+  transcripts: transcriptsRouter,
 });
 
 export type AppRouter = typeof appRouter;

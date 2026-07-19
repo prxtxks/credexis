@@ -13,7 +13,7 @@ export const dealsRouter = router({
     .query(async ({ ctx, input }) => {
       const { data, error } = await ctx.supabase
         .from("deals")
-        .select("id, name, type, status, policy_pack_id, created_at")
+        .select("id, name, type, status, policy_pack_id, transcripts_enabled, created_at")
         .eq("id", input.dealId)
         .maybeSingle();
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
@@ -24,6 +24,7 @@ export const dealsRouter = router({
         type: data.type as string,
         status: data.status as string,
         policyPackId: data.policy_pack_id as string,
+        transcriptsEnabled: data.transcripts_enabled as boolean,
         createdAt: data.created_at as string,
       };
     }),
