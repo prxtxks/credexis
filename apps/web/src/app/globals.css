@@ -1,7 +1,59 @@
 /*
- * Minimal reset. The V1 emerald/teal OKLCH palette and glass utilities are
- * ported verbatim in M8.1 (Blueprint §8.1) — not before.
+ * Credexis visual identity (M8.1, Blueprint §8.1) — the V1 palette the
+ * founder chose, ported into a Tailwind v4 theme. Token values come from
+ * Blueprint §8.1's verbatim quotes of V1 globals.css (the V1 file itself
+ * never entered this repo); [PRATIK] diffs against his original at the M8
+ * walkthrough. Two surgical fixes over V1, per spec: scrollbars scoped
+ * inside grid panes, and consistent focus rings for keyboard flow.
+ *
+ * DSCR traffic-light COLORS live here; the THRESHOLDS that pick which
+ * color applies come from the policy pack at render time (Iron Law #8).
  */
+
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* ── Emerald primary (V1 verbatim) ─────────────────────────────────── */
+  --color-primary: oklch(0.52 0.17 162);
+  --color-primary-dark: oklch(0.7 0.18 162);
+  --color-primary-foreground: oklch(0.985 0.005 166);
+
+  /* ── Teal-tinted neutrals (hue 166) ────────────────────────────────── */
+  --color-surface: oklch(0.985 0.005 166);
+  --color-surface-muted: oklch(0.96 0.008 166);
+  --color-surface-dark: oklch(0.17 0.012 166);
+  --color-surface-dark-muted: oklch(0.22 0.014 166);
+  --color-ink: oklch(0.24 0.02 166);
+  --color-ink-muted: oklch(0.48 0.02 166);
+  --color-ink-dark: oklch(0.93 0.01 166);
+  --color-ink-dark-muted: oklch(0.68 0.015 166);
+  --color-line: oklch(0.9 0.01 166);
+  --color-line-dark: oklch(0.32 0.015 166);
+
+  /* ── Computed-row accent + SBA badge (V1 violet) ───────────────────── */
+  --color-computed: #8b5cf6;
+
+  /* ── DSCR traffic light (thresholds arrive from the policy pack) ───── */
+  --color-dscr-good: oklch(0.52 0.17 162);
+  --color-dscr-warn: oklch(0.75 0.15 85);
+  --color-dscr-bad: oklch(0.55 0.2 25);
+
+  /* ── Severity scale (issues panel) ─────────────────────────────────── */
+  --color-severity-critical: #dc2626;
+  --color-severity-error: #ea580c;
+  --color-severity-warning: #d97706;
+  --color-severity-info: oklch(0.55 0.05 240);
+
+  --radius: 0.625rem;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* ── Base ────────────────────────────────────────────────────────────── */
+
 * {
   box-sizing: border-box;
 }
@@ -10,8 +62,92 @@ html,
 body {
   margin: 0;
   padding: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: var(--font-sans);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.dark body {
+  background: var(--color-surface-dark);
+  color: var(--color-ink-dark);
+}
+
+/* ── V1 utilities, preserved ─────────────────────────────────────────── */
+
+.glass-card {
+  border-radius: var(--radius);
+  border: 1px solid var(--color-line);
+  background: color-mix(in oklab, var(--color-surface) 82%, transparent);
+  backdrop-filter: blur(12px);
+}
+.dark .glass-card {
+  border-color: var(--color-line-dark);
+  background: color-mix(in oklab, var(--color-surface-dark-muted) 82%, transparent);
+}
+
+.gradient-mesh {
+  background:
+    radial-gradient(
+      at 20% 0%,
+      color-mix(in oklab, var(--color-primary) 14%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(
+      at 85% 15%,
+      color-mix(in oklab, var(--color-computed) 10%, transparent),
+      transparent 50%
+    ),
+    var(--color-surface);
+}
+.dark .gradient-mesh {
+  background:
+    radial-gradient(
+      at 20% 0%,
+      color-mix(in oklab, var(--color-primary-dark) 16%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(
+      at 85% 15%,
+      color-mix(in oklab, var(--color-computed) 12%, transparent),
+      transparent 50%
+    ),
+    var(--color-surface-dark);
+}
+
+.sba-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: white;
+  background: var(--color-computed);
+}
+
+/* ── Fix 1 (V1 bug): scrollbars visible only inside scroll panes ─────── */
+
+.scroll-pane {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-ink-muted) 40%, transparent) transparent;
+}
+.scroll-pane::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-pane::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--color-ink-muted) 40%, transparent);
+}
+
+/* ── Fix 2 (V1 bug): consistent focus rings for keyboard flow ────────── */
+
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.dark :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline-color: var(--color-primary-dark);
 }
