@@ -5,6 +5,7 @@ import { dealsRouter } from "./routers/deals";
 import { documentsRouter } from "./routers/documents";
 import { issuesRouter } from "./routers/issues";
 import { metricsRouter } from "./routers/metrics";
+import { pipelineRouter } from "./routers/pipeline";
 import { policyRouter } from "./routers/policy";
 import { reviewRouter } from "./routers/review";
 import { sourceRouter } from "./routers/source";
@@ -54,6 +55,9 @@ export const appRouter = router({
 
   /** Policy compliance (M8.6): the deal's pinned pack vs engine output. */
   policy: policyRouter,
+
+  /** Pipeline progress (M8.8): stage timeline per document. */
+  pipeline: pipelineRouter,
 });
 
 export type AppRouter = typeof appRouter;

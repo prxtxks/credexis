@@ -28,6 +28,7 @@ export default function DocumentsPage() {
   const dealId = params.dealId;
   const utils = trpc.useUtils();
   const docs = trpc.documents.list.useQuery({ dealId }, { refetchInterval: 2500 });
+  const progress = trpc.pipeline.progress.useQuery({ dealId }, { refetchInterval: 2500 });
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<string | null>(null);
@@ -134,7 +135,31 @@ export default function DocumentsPage() {
                     {d.status}
                   </span>
                 </td>
-                <td style={{ padding: 8, fontSize: 12 }}>{d.virusScan}</td>
+                <td style={{ padding: 8, fontSize: 12 }}>
+                  {(progress.data?.[d.id] ?? []).map((s, i) => (
+                    <span
+                      key={i}
+                      title={`${s.stage}: ${s.status}${s.error ? ` — ${s.error}` : ""}${s.model ? ` (${s.model})` : ""}`}
+                      style={{
+                        display: "inline-block",
+                        marginRight: 4,
+                        padding: "1px 6px",
+                        borderRadius: 4,
+                        fontSize: 11,
+                        color: "white",
+                        background:
+                          s.status === "succeeded"
+                            ? "#059669"
+                            : s.status === "failed"
+                              ? "#dc2626"
+                              : "#d97706",
+                      }}
+                    >
+                      {s.stage}
+                    </span>
+                  ))}
+                  {(progress.data?.[d.id] ?? []).length === 0 && d.virusScan}
+                </td>
                 <td style={{ padding: 8 }}>
                   <code style={{ fontSize: 11 }}>{d.sha256Short}</code>
                 </td>
