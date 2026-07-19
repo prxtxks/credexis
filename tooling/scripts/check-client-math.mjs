@@ -25,7 +25,7 @@ const PATTERNS = [
 ];
 
 /** Lines where the identifier is string/display work, not math. */
-const SAFE_LINE = /String\(|\.toString\(|`|throw|Error\(|\/\/|^\s*\*/;
+const SAFE_LINE = /String\(|\.toString\(|`|throw|Error\(|\/\/|^\s*\*|^\s*\/\*/;
 
 const violations = [];
 

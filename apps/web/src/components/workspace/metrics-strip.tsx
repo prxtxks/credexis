@@ -11,7 +11,7 @@
 import { trpc } from "@/lib/trpc/client";
 import { formatCents } from "@/lib/money-display";
 
-/** mantissa/scale → display string, pure string manipulation. */
+/** Fixed-point mantissa at a scale → display string; pure string work. */
 export function formatRatio(mantissa: string, scale: number): string {
   const neg = mantissa.startsWith("-");
   const digits = neg ? mantissa.slice(1) : mantissa;
