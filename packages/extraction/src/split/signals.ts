@@ -29,8 +29,8 @@ export interface PageSignals {
 
 /** Ordered — first hit wins. Most-specific patterns first. */
 const IRS_FORM_PATTERNS: ReadonlyArray<[RegExp, FormFamily, string]> = [
-  [/schedule\s+k-?1\s*\(form\s+1120-?s\)/i, "K1_1120S", "k1-1120s"],
-  [/schedule\s+k-?1\s*\(form\s+1065\)/i, "K1_1065", "k1-1065"],
+  [/schedule\s+k-?1\s*\(form\s+1120-?s\)(?!,?\s*box)/i, "K1_1120S", "k1-1120s"],
+  [/schedule\s+k-?1\s*\(form\s+1065\)(?!,?\s*box)/i, "K1_1065", "k1-1065"],
   [/schedule\s+c\s*\(form\s+1040\)|profit or loss from business/i, "1040_SCH_C", "sch-c"],
   [/schedule\s+e\s*\(form\s+1040\)|supplemental income and loss/i, "1040_SCH_E", "sch-e"],
   [/schedule\s+f\s*\(form\s+1040\)|profit or loss from farming/i, "1040_SCH_F", "sch-f"],
@@ -41,7 +41,9 @@ const IRS_FORM_PATTERNS: ReadonlyArray<[RegExp, FormFamily, string]> = [
   [/form\s+1120-?s\b/i, "1120S", "1120s"],
   [/form\s+1120\b/i, "1120", "1120"],
   [/form\s+1065\b/i, "1065", "1065"],
-  [/form\s+w-?2\b|wage and tax statement/i, "W2", "w2"],
+  // Title only — "Attach Form(s) W-2" references on 1040s must not match
+  // (real-doc regression, 2026-07-19).
+  [/wage and tax statement/i, "W2", "w2"],
   [/form\s+1040\b/i, "1040", "1040"],
 ];
 
@@ -50,8 +52,12 @@ const OMB_RE = /omb\s+no\.?\s*(1545-\d{4})/i;
 const OMB_UNIQUE: Readonly<Record<string, FormFamily>> = {
   "1545-0008": "W2",
 };
-/** 1545-0123 spans 1120/1120-S/1065; 1545-0074 spans the 1040 family. */
-const OMB_CORROBORATING = new Set(["1545-0123", "1545-0074"]);
+/** Shared OMBs corroborate only their own form group (real-doc
+ * regression: 1545-0074 must never boost a W-2 misread to 0.98). */
+const OMB_CORROBORATING: Readonly<Record<string, readonly FormFamily[]>> = {
+  "1545-0123": ["1120", "1120S", "1065", "1125E", "8825", "K1_1120S", "K1_1065"],
+  "1545-0074": ["1040", "1040_SCH_1", "1040_SCH_C", "1040_SCH_E", "1040_SCH_F"],
+};
 
 /** Statement keywords — consulted ONLY when no IRS signal fired. */
 const STATEMENT_PATTERNS: ReadonlyArray<[RegExp, FormFamily, string]> = [
@@ -86,7 +92,10 @@ export function detectPageSignals(text: string): PageSignals {
   if (omb) {
     matched.push(`omb:${omb}`);
     const unique = OMB_UNIQUE[omb];
-    if (formFamily !== null && (OMB_CORROBORATING.has(omb) || unique === formFamily)) {
+    if (
+      formFamily !== null &&
+      ((OMB_CORROBORATING[omb]?.includes(formFamily) ?? false) || unique === formFamily)
+    ) {
       confidence = 0.98;
     } else if (formFamily === null && unique) {
       formFamily = unique;
