@@ -5,6 +5,7 @@ import { dealsRouter } from "./routers/deals";
 import { documentsRouter } from "./routers/documents";
 import { issuesRouter } from "./routers/issues";
 import { metricsRouter } from "./routers/metrics";
+import { policyRouter } from "./routers/policy";
 import { reviewRouter } from "./routers/review";
 import { sourceRouter } from "./routers/source";
 import { spreadRouter } from "./routers/spread";
@@ -50,6 +51,9 @@ export const appRouter = router({
 
   /** Issues (M8.5): open gate violations for the workspace panel. */
   issues: issuesRouter,
+
+  /** Policy compliance (M8.6): the deal's pinned pack vs engine output. */
+  policy: policyRouter,
 });
 
 export type AppRouter = typeof appRouter;

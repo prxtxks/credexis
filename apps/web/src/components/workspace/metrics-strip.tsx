@@ -36,8 +36,49 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
   );
 }
 
-export function MetricsStrip({ dealId, periodLabel }: { dealId: string; periodLabel?: string }) {
-  const metrics = trpc.metrics.forDeal.useQuery({ dealId });
+function PolicyChips({ dealId, scenarioId }: { dealId: string; scenarioId: string | null }) {
+  const policy = trpc.policy.forDeal.useQuery({ dealId, scenarioId });
+  const p = policy.data;
+  if (!p) return null;
+  if (!p.available) {
+    return <span className="text-[10px] text-ink-muted dark:text-ink-dark-muted">{p.reason}</span>;
+  }
+  return (
+    <div className="flex items-center gap-1" aria-label="policy compliance">
+      {!p.certifiable && (
+        <span className="rounded bg-computed px-1.5 py-0.5 text-[10px] font-semibold text-white">
+          DRAFT PACK — advisory only
+        </span>
+      )}
+      {p.rules.map((r) => (
+        <span
+          key={r.ruleId}
+          title={`${r.label} (${r.metric})`}
+          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold text-white ${
+            r.status === "pass"
+              ? "bg-dscr-good"
+              : r.status === "fail"
+                ? "bg-dscr-bad"
+                : "bg-dscr-warn"
+          }`}
+        >
+          {r.ruleId}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function MetricsStrip({
+  dealId,
+  periodLabel,
+  scenarioId = null,
+}: {
+  dealId: string;
+  periodLabel?: string;
+  scenarioId?: string | null;
+}) {
+  const metrics = trpc.metrics.forDeal.useQuery({ dealId, scenarioId });
 
   const rows = metrics.data ?? [];
   // The strip shows the most recent period present unless one is pinned.
@@ -77,6 +118,7 @@ export function MetricsStrip({ dealId, periodLabel }: { dealId: string; periodLa
       <Stat label="DSCR (biz)" value={ratioOf("dscr_business")} accent />
       <Stat label="DSCR (global)" value={ratioOf("dscr_global")} accent />
       <Stat label="Global CF" value={centsOf("global_cash_flow")} />
+      <PolicyChips dealId={dealId} scenarioId={scenarioId} />
       <div className="ml-auto pr-4 text-[10px] text-ink-muted dark:text-ink-dark-muted">
         {engineVersion ?? "no engine run yet"}
       </div>

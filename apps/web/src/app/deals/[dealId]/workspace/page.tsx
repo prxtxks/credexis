@@ -17,6 +17,7 @@ import { MetricsStrip } from "@/components/workspace/metrics-strip";
 import { SpreadGrid, type CellSelection } from "@/components/workspace/spread-grid";
 import { SourceViewer } from "@/components/workspace/source-viewer";
 import { IssuesPanel } from "@/components/workspace/issues-panel";
+import { ScenarioInspector } from "@/components/workspace/scenario-inspector";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const TABS = [
@@ -57,7 +58,8 @@ function WorkspaceInner() {
   const tab = search.get("tab") ?? "is";
   const entityParam = search.get("entity");
   const [selection, setSelection] = useState<CellSelection | null>(null);
-  const [inspectorTab, setInspectorTab] = useState<"source" | "issues">("source");
+  const [inspectorTab, setInspectorTab] = useState<"source" | "issues" | "scenario">("source");
+  const scenarioId = search.get("scenario");
 
   const deal = trpc.deals.get.useQuery({ dealId });
   const entities = trpc.assignment.entities.useQuery({ dealId });
@@ -231,8 +233,20 @@ function WorkspaceInner() {
               >
                 Issues{issues.data && issues.data.length > 0 ? ` (${issues.data.length})` : ""}
               </button>
+              <button
+                onClick={() => setInspectorTab("scenario")}
+                className={`rounded px-2 py-1 ${inspectorTab === "scenario" ? "bg-surface-muted font-semibold dark:bg-surface-dark-muted" : ""}`}
+              >
+                Scenario
+              </button>
             </div>
-            {inspectorTab === "issues" ? (
+            {inspectorTab === "scenario" ? (
+              <ScenarioInspector
+                dealId={dealId}
+                selectedScenarioId={scenarioId}
+                onSelectScenario={(id) => setParam("scenario", id)}
+              />
+            ) : inspectorTab === "issues" ? (
               <IssuesPanel
                 dealId={dealId}
                 onOpenFact={(factId) => {
@@ -255,7 +269,7 @@ function WorkspaceInner() {
         )}
       </div>
 
-      <MetricsStrip dealId={dealId} />
+      <MetricsStrip dealId={dealId} scenarioId={scenarioId} />
     </div>
   );
 }

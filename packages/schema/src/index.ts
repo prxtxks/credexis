@@ -11,3 +11,4 @@ export const SCHEMA_PACKAGE = "@credexis/schema" as const;
 export * from "./corpus/ground-truth.js";
 export * as db from "./db/index.js";
 export * from "./seed/taxonomy.js";
+export * from "./seed/policy-pack.js";
