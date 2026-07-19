@@ -1,5 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { API_WRITE_LIMIT, RateLimiter } from "@/lib/rate-limit";
+
+/** M10.3: per-instance write throttle for /api/* (60/min per client). */
+const apiWriteLimiter = new RateLimiter(API_WRITE_LIMIT);
 
 /** Routes reachable without a session. Everything else requires sign-in. */
 const PUBLIC_PATHS = ["/login", "/auth"];
@@ -16,6 +20,15 @@ function isPublic(pathname: string): boolean {
  * signed-out, never as signed-in.
  */
 export async function middleware(request: NextRequest) {
+  // Rate limit API writes BEFORE any auth work (cheapest rejection first).
+  const { pathname: path } = request.nextUrl;
+  if (path.startsWith("/api/") && request.method !== "GET") {
+    const clientKey = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    if (!apiWriteLimiter.check(clientKey, Date.now())) {
+      return NextResponse.json({ error: "rate limited" }, { status: 429 });
+    }
+  }
+
   let response = NextResponse.next({ request });
 
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"];

@@ -4,6 +4,21 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@trpc/server': '>=11.8.0'
+  '@trpc/client': '>=11.8.0'
+  '@trpc/react-query': '>=11.8.0'
+  drizzle-orm: '>=0.45.2'
+  playwright: '>=1.55.1'
+  playwright-core: '>=1.55.1'
+  '@playwright/test': '>=1.55.1'
+  ws: '>=8.21.0'
+  yaml: '>=2.8.3'
+  postcss: '>=8.5.10'
+  uuid: '>=11.1.1'
+  '@opentelemetry/core': '>=2.8.0'
+  cookie: '>=0.7.0'
+
 importers:
 
   .:
@@ -64,7 +79,7 @@ importers:
         version: link:../../packages/shared
       '@sentry/nextjs':
         specifier: ^10.66.0
-        version: 10.66.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.54.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.19))
+        version: 10.66.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.19))
       '@supabase/ssr':
         specifier: 0.6.1
         version: 0.6.1(@supabase/supabase-js@2.55.0)
@@ -78,14 +93,14 @@ importers:
         specifier: 5.83.0
         version: 5.83.0(react@19.1.0)
       '@trpc/client':
-        specifier: 11.4.3
-        version: 11.4.3(@trpc/server@11.4.4(typescript@5.9.2))(typescript@5.9.2)
+        specifier: '>=11.8.0'
+        version: 11.18.0(@trpc/server@11.18.0(typescript@5.9.2))(typescript@5.9.2)
       '@trpc/react-query':
-        specifier: 11.4.3
-        version: 11.4.3(@tanstack/react-query@5.83.0(react@19.1.0))(@trpc/client@11.4.3(@trpc/server@11.4.4(typescript@5.9.2))(typescript@5.9.2))(@trpc/server@11.4.4(typescript@5.9.2))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.9.2)
+        specifier: '>=11.8.0'
+        version: 11.18.0(@tanstack/react-query@5.83.0(react@19.1.0))(@trpc/client@11.18.0(@trpc/server@11.18.0(typescript@5.9.2))(typescript@5.9.2))(@trpc/server@11.18.0(typescript@5.9.2))(react@19.1.0)(typescript@5.9.2)
       '@trpc/server':
-        specifier: 11.4.4
-        version: 11.4.4(typescript@5.9.2)
+        specifier: '>=11.8.0'
+        version: 11.18.0(typescript@5.9.2)
       ag-grid-community:
         specifier: ^36.0.1
         version: 36.0.1
@@ -97,12 +112,12 @@ importers:
         version: 4.4.0
       next:
         specifier: 15.5.20
-        version: 15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.54.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        version: 15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       pdfjs-dist:
         specifier: ^6.1.200
         version: 6.1.200
       postcss:
-        specifier: ^8.5.19
+        specifier: '>=8.5.10'
         version: 8.5.19
       react:
         specifier: 19.1.0
@@ -124,8 +139,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/engine
       '@playwright/test':
-        specifier: 1.54.2
-        version: 1.54.2
+        specifier: '>=1.55.1'
+        version: 1.61.1
       '@types/node':
         specifier: 24.2.0
         version: 24.2.0
@@ -151,8 +166,8 @@ importers:
         specifier: 1.3.2
         version: 1.3.2
       yaml:
-        specifier: 2.8.1
-        version: 2.8.1
+        specifier: '>=2.8.3'
+        version: 2.9.0
     devDependencies:
       '@types/node':
         specifier: 24.2.0
@@ -252,8 +267,8 @@ importers:
   packages/schema:
     dependencies:
       drizzle-orm:
-        specifier: 0.44.4
-        version: 0.44.4(@opentelemetry/api@1.9.1)(postgres@3.4.7)
+        specifier: '>=0.45.2'
+        version: 0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.7)
       postgres:
         specifier: 3.4.7
         version: 3.4.7
@@ -1468,12 +1483,6 @@ packages:
     peerDependencies:
       '@opentelemetry/api': '>=1.0.0 <1.10.0'
 
-  '@opentelemetry/core@2.7.1':
-    resolution: {integrity: sha512-QAqIj32AtK6+pEVNG7EOVxHdE06RP+FM5qpiEJ4RtDcFIqKUZHYhl7/7UY5efhwmwNAg7j8QbJVBLxMerc0+gw==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.0.0 <1.10.0'
-
   '@opentelemetry/core@2.9.0':
     resolution: {integrity: sha512-m2nckMT80NnmjTYSPjJQObBJ+8dgkoajEOUbznL8AHZ3T3yHRk2P7gI1PhEBc1+lOnrYE9UWrWHqJDsmqjmNbw==}
     engines: {node: ^18.19.0 || >=20.6.0}
@@ -1602,8 +1611,8 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
-  '@playwright/test@1.54.2':
-    resolution: {integrity: sha512-A+znathYxPf+72riFd1r1ovOLqsIIB0jKIoPjyK2kqEIe30/6jF6BC7QNluHuwUmsD2tv1XZVugN8GqfTMOxsA==}
+  '@playwright/test@1.61.1':
+    resolution: {integrity: sha512-8nKv6+0RJSL9FE4jYOEGXnPeM/Hg12qZpmqzZjRh3qM0Y7c3z1mrOTfFLids72RDQYVh9WpLEfR5WdpNX4fkig==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -1862,7 +1871,7 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       '@opentelemetry/api': ^1.9.0
-      '@opentelemetry/core': ^1.30.1 || ^2.1.0
+      '@opentelemetry/core': '>=2.8.0'
       '@opentelemetry/exporter-trace-otlp-http': '>=0.57.0 <1'
       '@opentelemetry/instrumentation': '>=0.57.1 <1'
       '@opentelemetry/sdk-trace-base': ^1.30.1 || ^2.1.0
@@ -1887,7 +1896,7 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       '@opentelemetry/api': ^1.9.0
-      '@opentelemetry/core': ^1.30.1 || ^2.1.0
+      '@opentelemetry/core': '>=2.8.0'
       '@opentelemetry/sdk-trace-base': ^1.30.1 || ^2.1.0
 
   '@sentry/react@10.66.0':
@@ -2099,24 +2108,25 @@ packages:
       react:
         optional: true
 
-  '@trpc/client@11.4.3':
-    resolution: {integrity: sha512-i2suttUCfColktXT8bqex5kHW5jpT15nwUh0hGSDiW1keN621kSUQKcLJ095blqQAUgB+lsmgSqSMmB4L9shQQ==}
+  '@trpc/client@11.18.0':
+    resolution: {integrity: sha512-wOqeg3Fvl25V1ZisQhUD3K8G60ZJDlSGJNSyeXrLH24xAo5w6GSR2Kzb1cSNY9Y+IQ2YZvYGZstBU+V/ulo/ow==}
+    hasBin: true
     peerDependencies:
-      '@trpc/server': 11.4.3
+      '@trpc/server': '>=11.8.0'
       typescript: '>=5.7.2'
 
-  '@trpc/react-query@11.4.3':
-    resolution: {integrity: sha512-z+jhAiOBD22NNhHtvF0iFp9hO36YFA7M8AiUu/XtNmMxyLd3Y9/d1SMjMwlTdnGqxEGPo41VEWBrdhDUGtUuHg==}
+  '@trpc/react-query@11.18.0':
+    resolution: {integrity: sha512-C1+Wwm2pCeUJucI+bnFpxGYjNuvV+ko1BC1T9tUxBVdrhHRCdn9ubxdevdLSAa49XRJRJiZnSuzl3Ys/yvs1vg==}
     peerDependencies:
       '@tanstack/react-query': ^5.80.3
-      '@trpc/client': 11.4.3
-      '@trpc/server': 11.4.3
+      '@trpc/client': '>=11.8.0'
+      '@trpc/server': '>=11.8.0'
       react: '>=18.2.0'
-      react-dom: '>=18.2.0'
       typescript: '>=5.7.2'
 
-  '@trpc/server@11.4.4':
-    resolution: {integrity: sha512-VkJb2xnb4rCynuwlCvgPBh5aM+Dco6fBBIo6lWAdJJRYVwtyE5bxNZBgUvRRz/cFSEAy0vmzLxF7aABDJfK5Rg==}
+  '@trpc/server@11.18.0':
+    resolution: {integrity: sha512-JAvXOuNTxgXjIDfQaOvDq1j66LMNfDJUH1IU7Slfn8EvRv2EkH6ehu3A7zpYhjO0syHHiYg77v2lG2JFJgvw7Q==}
+    hasBin: true
     peerDependencies:
       typescript: '>=5.7.2'
 
@@ -2698,10 +2708,6 @@ packages:
     resolution: {integrity: sha512-D76uU73ulSXrD1UXF4KE2TMxVVwhsnCgfAyTg9k8P6KGZjlXKrOLe4dJQKI3Bxi5wjesZoFXJWElNWBjPZMbhg==}
     engines: {node: '>=6.6.0'}
 
-  cookie@0.4.2:
-    resolution: {integrity: sha512-aSWTXFzaKWkvHO1Ny/s+ePFpvKsPnjc551iI41v3ny/ow6tBG5Vd+FuqGNhh1LxOmVzOlGUriIlOaokOvhaStA==}
-    engines: {node: '>= 0.6'}
-
   cookie@0.7.2:
     resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
     engines: {node: '>= 0.6'}
@@ -2819,8 +2825,8 @@ packages:
     resolution: {integrity: sha512-tCPWVZWZqWVx2XUsVpJRnH9Mx0ClVOf5YUHerZ5so1OKSlqww4zy1R5ksEdGRcO3tM3zj0PYN6V48TbQCL1RfA==}
     hasBin: true
 
-  drizzle-orm@0.44.4:
-    resolution: {integrity: sha512-ZyzKFpTC/Ut3fIqc2c0dPZ6nhchQXriTsqTNs4ayRgl6sZcFlMs9QZKPSHXK4bdOf41GHGWf+FrpcDDYwW+W6Q==}
+  drizzle-orm@0.45.2:
+    resolution: {integrity: sha512-kY0BSaTNYWnoDMVoyY8uxmyHjpJW1geOmBMdSSicKo9CIIWkSxMIj2rkeSR51b8KAPB7m+qysjuHme5nKP+E5Q==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -3949,7 +3955,7 @@ packages:
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
-      '@playwright/test': ^1.51.1
+      '@playwright/test': '>=1.55.1'
       babel-plugin-react-compiler: '*'
       react: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
       react-dom: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
@@ -4161,23 +4167,15 @@ packages:
   pkg-types@2.3.1:
     resolution: {integrity: sha512-y+ichcgc2LrADuhLNAx8DFjVfgz91pRxfZdI3UDhxHvcVEZsenLO+7XaU5vOp0u/7V/wZ+plyuQxtrDlZJ+yeg==}
 
-  playwright-core@1.54.2:
-    resolution: {integrity: sha512-n5r4HFbMmWsB4twG7tJLDN9gmBUeSPcsBZiWSE4DnYz9mJMAFqr2ID7+eGC9kpEnxExJ1epttwR59LEWCk8mtA==}
+  playwright-core@1.61.1:
+    resolution: {integrity: sha512-h7Qlt6m4REp25qvIdvbDtVmD4LqVXfpRxhORv9L0jzETM05p4fuPJ3dKyuSXQxDSbXnmS79HAgi9589lGSpLkg==}
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.54.2:
-    resolution: {integrity: sha512-Hu/BMoA1NAdRUuulyvQC0pEqZ4vQbGfn8f7wPXcnqQmM+zct9UliKxsIkLNmz/ku7LElUNqmaiv1TG/aL5ACsw==}
+  playwright@1.61.1:
+    resolution: {integrity: sha512-DWnY5o3YbLWK4GovuAVwpqL+1VwGNdUGrRr++8j8PtQQzvAVZUIMjKQ90fY689sEJZJBbZVw1rXaOKSTitkzPQ==}
     engines: {node: '>=18'}
     hasBin: true
-
-  postcss@8.4.31:
-    resolution: {integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
-    engines: {node: ^10 || ^12 || >=14}
-
-  postcss@8.5.16:
-    resolution: {integrity: sha512-vuwillviilfKZsg0VGj5R/YwwcHx4SLsIOI/7K6mQkWx+l5cUHTjj5g0AasTBcyXsbfTgrwsUNmVUb5xVwyPwg==}
-    engines: {node: ^10 || ^12 || >=14}
 
   postcss@8.5.19:
     resolution: {integrity: sha512-Mz8SaolMd8nB+G13WkORcxQKHZ/NE4xXevtkJHVuG+guo9/wYKlIMTKAqGdEmYOXR2ijPjTYNHssizdaVSUNdQ==}
@@ -4771,9 +4769,8 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  uuid@8.3.2:
-    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
-    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+  uuid@14.0.1:
+    resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
     hasBin: true
 
   vary@1.1.2:
@@ -4800,7 +4797,7 @@ packages:
       sugarss: ^5.0.0
       terser: ^5.16.0
       tsx: ^4.8.1
-      yaml: ^2.4.2
+      yaml: '>=2.8.3'
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -4906,18 +4903,6 @@ packages:
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
-  ws@8.17.1:
-    resolution: {integrity: sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   ws@8.21.0:
     resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
     engines: {node: '>=10.0.0'}
@@ -4958,11 +4943,6 @@ packages:
   yallist@5.0.0:
     resolution: {integrity: sha512-YgvUTfwqyc7UXVMrB+SImsVYSmTS8X/tSrtdNZMImM+n7+QTriRXyXim0mBrTXNeqzVF0KWGgHPeiyViFFrNDw==}
     engines: {node: '>=18'}
-
-  yaml@2.8.1:
-    resolution: {integrity: sha512-lcYcMxX2PO9XMGvAJkJ3OsNMw+/7FKes7/hgerGUYWIoWu5j/+YQqcZr5JnPZWzOsEBgMbSbiSTn/dv/69Mkpw==}
-    engines: {node: '>= 14.6'}
-    hasBin: true
 
   yaml@2.9.0:
     resolution: {integrity: sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==}
@@ -5860,11 +5840,6 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.1
 
-  '@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/semantic-conventions': 1.41.1
-
   '@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -5874,7 +5849,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/api-logs': 0.218.0
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/otlp-exporter-base': 0.218.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/otlp-transformer': 0.218.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-logs': 0.218.0(@opentelemetry/api@1.9.1)
@@ -5882,7 +5857,7 @@ snapshots:
   '@opentelemetry/exporter-metrics-otlp-http@0.218.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/otlp-exporter-base': 0.218.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/otlp-transformer': 0.218.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.1)
@@ -5891,7 +5866,7 @@ snapshots:
   '@opentelemetry/exporter-trace-otlp-http@0.218.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/otlp-exporter-base': 0.218.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/otlp-transformer': 0.218.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.1)
@@ -5905,7 +5880,7 @@ snapshots:
   '@opentelemetry/instrumentation-fetch@0.218.0(@opentelemetry/api@1.9.1)(supports-color@10.2.2)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/instrumentation': 0.218.0(@opentelemetry/api@1.9.1)(supports-color@10.2.2)
       '@opentelemetry/sdk-trace-web': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.41.1
@@ -5933,14 +5908,14 @@ snapshots:
   '@opentelemetry/otlp-exporter-base@0.218.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/otlp-transformer': 0.218.0(@opentelemetry/api@1.9.1)
 
   '@opentelemetry/otlp-transformer@0.218.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/api-logs': 0.218.0
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-logs': 0.218.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-metrics': 2.7.1(@opentelemetry/api@1.9.1)
@@ -5949,7 +5924,7 @@ snapshots:
   '@opentelemetry/resources@2.7.1(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.41.1
 
   '@opentelemetry/resources@2.9.0(@opentelemetry/api@1.9.1)':
@@ -5962,20 +5937,20 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/api-logs': 0.218.0
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.41.1
 
   '@opentelemetry/sdk-metrics@2.7.1(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.1)
 
   '@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.41.1
 
@@ -5991,13 +5966,13 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/context-async-hooks': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-trace-base': 2.7.1(@opentelemetry/api@1.9.1)
 
   '@opentelemetry/sdk-trace-web@2.7.1(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-trace-base': 2.7.1(@opentelemetry/api@1.9.1)
 
   '@opentelemetry/sdk-trace@2.9.0(@opentelemetry/api@1.9.1)':
@@ -6020,9 +5995,9 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@playwright/test@1.54.2':
+  '@playwright/test@1.61.1':
     dependencies:
-      playwright: 1.54.2
+      playwright: 1.61.1
 
   '@prisma/config@6.19.3(magicast@0.3.5)':
     dependencies:
@@ -6236,7 +6211,7 @@ snapshots:
     dependencies:
       '@sentry/core': 10.66.0
 
-  '@sentry/nextjs@10.66.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.54.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.19))':
+  '@sentry/nextjs@10.66.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.19))':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@rollup/plugin-commonjs': 28.0.1(rollup@4.62.2)
@@ -6250,7 +6225,7 @@ snapshots:
       '@sentry/server-utils': 10.66.0
       '@sentry/vercel-edge': 10.66.0
       '@sentry/webpack-plugin': 5.4.0(rollup@4.62.2)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.19))
-      next: 15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.54.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      next: 15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       rollup: 4.62.2
       stacktrace-parser: 0.1.11
     transitivePeerDependencies:
@@ -6498,7 +6473,7 @@ snapshots:
       '@jsonhero/path': 1.0.21
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/api-logs': 0.218.0
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/exporter-logs-otlp-http': 0.218.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/exporter-metrics-otlp-http': 0.218.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/exporter-trace-otlp-http': 0.218.0(@opentelemetry/api@1.9.1)
@@ -6565,21 +6540,20 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@trpc/client@11.4.3(@trpc/server@11.4.4(typescript@5.9.2))(typescript@5.9.2)':
+  '@trpc/client@11.18.0(@trpc/server@11.18.0(typescript@5.9.2))(typescript@5.9.2)':
     dependencies:
-      '@trpc/server': 11.4.4(typescript@5.9.2)
+      '@trpc/server': 11.18.0(typescript@5.9.2)
       typescript: 5.9.2
 
-  '@trpc/react-query@11.4.3(@tanstack/react-query@5.83.0(react@19.1.0))(@trpc/client@11.4.3(@trpc/server@11.4.4(typescript@5.9.2))(typescript@5.9.2))(@trpc/server@11.4.4(typescript@5.9.2))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.9.2)':
+  '@trpc/react-query@11.18.0(@tanstack/react-query@5.83.0(react@19.1.0))(@trpc/client@11.18.0(@trpc/server@11.18.0(typescript@5.9.2))(typescript@5.9.2))(@trpc/server@11.18.0(typescript@5.9.2))(react@19.1.0)(typescript@5.9.2)':
     dependencies:
       '@tanstack/react-query': 5.83.0(react@19.1.0)
-      '@trpc/client': 11.4.3(@trpc/server@11.4.4(typescript@5.9.2))(typescript@5.9.2)
-      '@trpc/server': 11.4.4(typescript@5.9.2)
+      '@trpc/client': 11.18.0(@trpc/server@11.18.0(typescript@5.9.2))(typescript@5.9.2)
+      '@trpc/server': 11.18.0(typescript@5.9.2)
       react: 19.1.0
-      react-dom: 19.1.0(react@19.1.0)
       typescript: 5.9.2
 
-  '@trpc/server@11.4.4(typescript@5.9.2)':
+  '@trpc/server@11.18.0(typescript@5.9.2)':
     dependencies:
       typescript: 5.9.2
 
@@ -7271,8 +7245,6 @@ snapshots:
 
   cookie-signature@1.2.2: {}
 
-  cookie@0.4.2: {}
-
   cookie@0.7.2: {}
 
   cookie@1.1.1: {}
@@ -7363,7 +7335,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.44.4(@opentelemetry/api@1.9.1)(postgres@3.4.7):
+  drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.7):
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
       postgres: 3.4.7
@@ -7413,7 +7385,7 @@ snapshots:
       '@socket.io/component-emitter': 3.1.2
       debug: 4.3.7(supports-color@10.2.2)
       engine.io-parser: 5.2.3
-      ws: 8.17.1
+      ws: 8.21.0
       xmlhttprequest-ssl: 2.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -7429,11 +7401,11 @@ snapshots:
       '@types/node': 24.2.0
       accepts: 1.3.8
       base64id: 2.0.0
-      cookie: 0.4.2
+      cookie: 1.1.1
       cors: 2.8.6
       debug: 4.3.7(supports-color@10.2.2)
       engine.io-parser: 5.2.3
-      ws: 8.17.1
+      ws: 8.21.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -7697,7 +7669,7 @@ snapshots:
       saxes: 5.0.1
       tmp: 0.2.7
       unzipper: 0.10.14
-      uuid: 8.3.2
+      uuid: 14.0.1
 
   execa@8.0.1:
     dependencies:
@@ -8250,7 +8222,7 @@ snapshots:
       nano-spawn: 1.0.3
       pidtree: 0.6.1
       string-argv: 0.3.2
-      yaml: 2.8.1
+      yaml: 2.9.0
     transitivePeerDependencies:
       - supports-color
 
@@ -8447,12 +8419,12 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  next@15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.54.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+  next@15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       '@next/env': 15.5.20
       '@swc/helpers': 0.5.15
       caniuse-lite: 1.0.30001803
-      postcss: 8.4.31
+      postcss: 8.5.19
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
       styled-jsx: 5.1.6(@babel/core@7.29.7)(react@19.1.0)
@@ -8466,7 +8438,7 @@ snapshots:
       '@next/swc-win32-arm64-msvc': 15.5.20
       '@next/swc-win32-x64-msvc': 15.5.20
       '@opentelemetry/api': 1.9.1
-      '@playwright/test': 1.54.2
+      '@playwright/test': 1.61.1
       sharp: 0.34.5
     transitivePeerDependencies:
       - '@babel/core'
@@ -8646,25 +8618,13 @@ snapshots:
       exsolve: 1.1.0
       pathe: 2.0.3
 
-  playwright-core@1.54.2: {}
+  playwright-core@1.61.1: {}
 
-  playwright@1.54.2:
+  playwright@1.61.1:
     dependencies:
-      playwright-core: 1.54.2
+      playwright-core: 1.61.1
     optionalDependencies:
       fsevents: 2.3.2
-
-  postcss@8.4.31:
-    dependencies:
-      nanoid: 3.3.15
-      picocolors: 1.1.1
-      source-map-js: 1.2.1
-
-  postcss@8.5.16:
-    dependencies:
-      nanoid: 3.3.15
-      picocolors: 1.1.1
-      source-map-js: 1.2.1
 
   postcss@8.5.19:
     dependencies:
@@ -9394,7 +9354,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  uuid@8.3.2: {}
+  uuid@14.0.1: {}
 
   vary@1.1.2: {}
 
@@ -9424,7 +9384,7 @@ snapshots:
       esbuild: 0.28.1
       fdir: 6.5.0(picomatch@4.0.5)
       picomatch: 4.0.5
-      postcss: 8.5.16
+      postcss: 8.5.19
       rollup: 4.62.2
       tinyglobby: 0.2.17
     optionalDependencies:
@@ -9558,8 +9518,6 @@ snapshots:
 
   wrappy@1.0.2: {}
 
-  ws@8.17.1: {}
-
   ws@8.21.0: {}
 
   wsl-utils@0.1.0:
@@ -9588,10 +9546,7 @@ snapshots:
 
   yallist@5.0.0: {}
 
-  yaml@2.8.1: {}
-
-  yaml@2.9.0:
-    optional: true
+  yaml@2.9.0: {}
 
   yocto-queue@0.1.0: {}
 

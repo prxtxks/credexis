@@ -34,6 +34,11 @@ test("workspace route is auth-gated (M8.2)", async ({ page }) => {
   await expect(page).toHaveURL(/\/login/);
 });
 
+test("export API rejects unauthenticated requests (M10.3)", async ({ request }) => {
+  const res = await request.get("/api/deals/00000000-0000-4000-a000-000000000001/export");
+  expect(res.status()).toBe(401);
+});
+
 test("upload API rejects unauthenticated requests (M3.1)", async ({ request }) => {
   const res = await request.post("/api/upload", { multipart: { dealId: "x" } });
   expect(res.status()).toBe(401);
