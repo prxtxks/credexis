@@ -61,3 +61,8 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .drift-check/
+
+# Sample/test tax documents (may contain real PII) — never in git
+# (corpus rules: PDFs live in the private bucket, only hashed manifests
+# are committed). Intern-provided material under analysis lives here.
+docs/testing-docs/
