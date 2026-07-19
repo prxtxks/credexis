@@ -65,3 +65,47 @@ describe("deterministic page signals (M3.5)", () => {
     expect(s.isDocumentStart).toBe(false);
   });
 });
+
+describe("real-document regressions (2026-07-19 testing-docs trial)", () => {
+  // A real 1040 page 1 says "Attach Form(s) W-2 here" — that reference must
+  // never classify the page as a W-2 (it did, at 0.98 via shared-OMB boost).
+  it("1040 page mentioning 'Attach Form(s) W-2' stays a 1040", () => {
+    const s = detectPageSignals(
+      "Form 1040 U.S. Individual Income Tax Return 2023 OMB No. 1545-0074\n" +
+        "Attach Form(s) W-2 here. Also attach Forms W-2G and 1099-R if tax was withheld.",
+    );
+    expect(s.formFamily).toBe("1040");
+    expect(s.confidence).toBeGreaterThanOrEqual(0.9);
+  });
+
+  it("a real W-2 (Wage and Tax Statement + its own OMB) still classifies", () => {
+    const s = detectPageSignals("Form W-2 Wage and Tax Statement 2024 OMB No. 1545-0008 Copy B");
+    expect(s.formFamily).toBe("W2");
+  });
+
+  // Schedule SE references "Schedule K-1 (Form 1065), box 14, code A" — a
+  // reference with a box citation is not a K-1 title page.
+  it("Schedule SE citing a K-1 box is not a K-1", () => {
+    const s = detectPageSignals(
+      "Schedule SE (Form 1040) Self-Employment Tax\n" +
+        "Net farm profit or (loss) from Schedule F, line 34, and farm partnerships, " +
+        "Schedule K-1 (Form 1065), box 14, code A",
+    );
+    expect(s.formFamily).not.toBe("K1_1065");
+  });
+
+  it("a real K-1 title page still classifies", () => {
+    const s = detectPageSignals(
+      "Schedule K-1 (Form 1065) 2023 Department of the Treasury Internal Revenue Service " +
+        "Partner's Share of Income, Deductions, Credits, etc.",
+    );
+    expect(s.formFamily).toBe("K1_1065");
+  });
+
+  // The shared OMB 1545-0074 must only corroborate 1040-family pages —
+  // never boost an unrelated family to 0.98.
+  it("shared OMB numbers corroborate only compatible families", () => {
+    const s = detectPageSignals("Wage and Tax Statement mention on a page with OMB No. 1545-0074");
+    expect(s.confidence).toBeLessThan(0.98);
+  });
+});
