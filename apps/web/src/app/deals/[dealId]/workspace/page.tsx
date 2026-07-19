@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { MetricsStrip } from "@/components/workspace/metrics-strip";
+import { SpreadGrid } from "@/components/workspace/spread-grid";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const TABS = [
@@ -52,9 +53,11 @@ function WorkspaceInner() {
   const railOpen = search.get("rail") !== "0";
   const panelOpen = search.get("panel") !== "0";
   const tab = search.get("tab") ?? "is";
+  const entityParam = search.get("entity");
 
   const deal = trpc.deals.get.useQuery({ dealId });
   const entities = trpc.assignment.entities.useQuery({ dealId });
+  const entityId = entityParam ?? entities.data?.[0]?.id ?? null;
   const docs = trpc.documents.list.useQuery({ dealId });
   const progress = trpc.review.progress.useQuery({ dealId });
 
@@ -101,12 +104,20 @@ function WorkspaceInner() {
           >
             <RailSection title="Entities">
               {(entities.data ?? []).map((e) => (
-                <div key={e.id} className="px-3 py-1 text-sm">
+                <button
+                  key={e.id}
+                  onClick={() => setParam("entity", e.id === entities.data?.[0]?.id ? null : e.id)}
+                  className={`block w-full px-3 py-1 text-left text-sm ${
+                    e.id === entityId
+                      ? "bg-surface-muted font-semibold dark:bg-surface-dark-muted"
+                      : ""
+                  }`}
+                >
                   {e.name}
                   <span className="ml-2 text-xs text-ink-muted dark:text-ink-dark-muted">
                     {e.kind}
                   </span>
-                </div>
+                </button>
               ))}
               {(entities.data ?? []).length === 0 && (
                 <p className="px-3 text-xs text-ink-muted dark:text-ink-dark-muted">
@@ -172,10 +183,22 @@ function WorkspaceInner() {
               </button>
             ))}
           </div>
-          <div className="scroll-pane flex-1 p-4">
-            <div className="glass-card flex h-full items-center justify-center text-sm text-ink-muted dark:text-ink-dark-muted">
-              {TABS.find((t) => t.key === tab)?.label} spread — the AG Grid lands here (M8.3).
-            </div>
+          <div className="scroll-pane flex-1 p-2">
+            {(tab === "is" || tab === "bs" || tab === "gcf") && entityId ? (
+              <SpreadGrid dealId={dealId} entityId={entityId} statement={tab} />
+            ) : tab === "tax" ? (
+              <div className="glass-card flex h-full items-center justify-center text-sm text-ink-muted dark:text-ink-dark-muted">
+                Tax spread — registry-line rows render here once extraction runs land facts.
+              </div>
+            ) : tab === "proforma" ? (
+              <div className="glass-card flex h-full items-center justify-center text-sm text-ink-muted dark:text-ink-dark-muted">
+                Pro-forma — post-acquisition projection view (scenario-driven, M8.6+).
+              </div>
+            ) : (
+              <div className="glass-card flex h-full items-center justify-center text-sm text-ink-muted dark:text-ink-dark-muted">
+                Add an entity to this deal to open its spread.
+              </div>
+            )}
           </div>
         </main>
 

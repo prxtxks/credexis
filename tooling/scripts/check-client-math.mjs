@@ -40,7 +40,9 @@ function scan(dir) {
     const lines = readFileSync(path, "utf8").split("\n");
     lines.forEach((line, i) => {
       if (SAFE_LINE.test(line)) return;
-      if (PATTERNS.some((p) => p.test(line))) {
+      // String literals are display text, not math — blank their contents.
+      const code = line.replace(/"[^"]*"|'[^']*'/g, '""');
+      if (PATTERNS.some((p) => p.test(code))) {
         violations.push(`${path}:${i + 1}  ${line.trim()}`);
       }
     });
