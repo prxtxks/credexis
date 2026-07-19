@@ -61,6 +61,7 @@ function WorkspaceInner() {
   const [inspectorTab, setInspectorTab] = useState<"source" | "issues" | "scenario">("source");
   const scenarioId = search.get("scenario");
 
+  const utils = trpc.useUtils();
   const deal = trpc.deals.get.useQuery({ dealId });
   const entities = trpc.assignment.entities.useQuery({ dealId });
   const entityId = entityParam ?? entities.data?.[0]?.id ?? null;
@@ -196,7 +197,10 @@ function WorkspaceInner() {
                 dealId={dealId}
                 entityId={entityId}
                 statement={tab}
-                onSelectCell={setSelection}
+                onSelectCell={(sel) => {
+                  setSelection(sel);
+                  setInspectorTab("source");
+                }}
               />
             ) : tab === "tax" ? (
               <div className="glass-card flex h-full items-center justify-center text-sm text-ink-muted dark:text-ink-dark-muted">
@@ -258,7 +262,10 @@ function WorkspaceInner() {
               <SourceViewer
                 dealId={dealId}
                 selection={selection}
-                onMutated={() => setSelection(null)}
+                onMutated={() => {
+                  setSelection(null);
+                  void utils.invalidate(); // fresh engine output everywhere
+                }}
               />
             ) : (
               <div className="glass-card flex h-full items-center justify-center p-4 text-center text-sm text-ink-muted dark:text-ink-dark-muted">

@@ -88,8 +88,18 @@ export function SpreadGrid({
     const isHidden = (key: string) =>
       [...collapsed].some((c) => key !== c && key.startsWith(`${c}.`));
 
+    // Only rows with facts somewhere beneath them render — a 100-row empty
+    // taxonomy is noise (and unscrollable in tests). Ancestors of any
+    // populated row stay visible for structure.
+    const populated = new Set<string>();
+    for (const r of data.rows) {
+      if (Object.keys(r.cells).length === 0) continue;
+      const parts = r.key.split(".");
+      for (let i = 1; i <= parts.length; i++) populated.add(parts.slice(0, i).join("."));
+    }
+
     const rows: GridRow[] = data.rows
-      .filter((r) => !isHidden(r.key))
+      .filter((r) => populated.has(r.key) && !isHidden(r.key))
       .map((r) => ({
         key: r.key,
         label: r.label,
