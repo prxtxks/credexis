@@ -176,6 +176,21 @@ function computePeriodMetrics(
     emitRatio("debt_to_tnw", totalLiabilities, tnw);
   }
 
+  /* ── guarantor personal cash flow (M7.4) ────────────────────────────── */
+  // Personal debt service (mortgage, auto, cards, …) lives INSIDE the
+  // outflow section, so personal_cash_flow is already net of it — the
+  // global DSCR denominator stays the business loan's debt service.
+  const personalIncome = ledger.section("pcf.income");
+  const personalOutflow = ledger.section("pcf.outflow");
+  if (personalIncome !== null || personalOutflow !== null) {
+    emitCents("personal_income_total", personalIncome);
+    emitCents("personal_outflow_total", personalOutflow);
+    emitCents(
+      "personal_cash_flow",
+      subCents(personalIncome ?? cents(0n), personalOutflow ?? cents(0n)),
+    );
+  }
+
   return out;
 }
 
@@ -199,13 +214,31 @@ export function computeMetrics(input: EngineInput): EngineResult {
   }
 
   const cfadsByCell = new Map<string, Cents>();
+  const globalByPeriod = new Map<string, Cents>(); // Σ CFADS + Σ personal CF
+  const addToGlobal = (periodLabel: string, v: Cents) => {
+    globalByPeriod.set(periodLabel, addCents(globalByPeriod.get(periodLabel) ?? cents(0n), v));
+  };
   for (const { entityId, periodLabel, ledger } of ledgers.values()) {
     const cellMetrics = computePeriodMetrics(entityId, periodLabel, ledger, input);
     metrics.push(...cellMetrics);
-    const cfads = cellMetrics.find((m) => m.metric === "cfads");
-    if (cfads && cfads.value.kind === "cents") {
-      cfadsByCell.set(`${entityId}|${periodLabel}`, cfads.value.cents);
+    for (const m of cellMetrics) {
+      if (m.value.kind !== "cents") continue;
+      if (m.metric === "cfads") {
+        cfadsByCell.set(`${entityId}|${periodLabel}`, m.value.cents);
+        addToGlobal(periodLabel, m.value.cents);
+      }
+      if (m.metric === "personal_cash_flow") addToGlobal(periodLabel, m.value.cents);
     }
+  }
+
+  /* ── global cash flow per period (M7.4, deal-scoped) ────────────────── */
+  for (const [periodLabel, v] of globalByPeriod) {
+    metrics.push({
+      metric: "global_cash_flow",
+      entityId: null,
+      periodLabel,
+      value: centsValue(v),
+    });
   }
 
   /* ── scenario metrics (deal-global) ─────────────────────────────────── */
@@ -243,6 +276,16 @@ export function computeMetrics(input: EngineInput): EngineResult {
           entityId,
           periodLabel,
           value: { kind: "ratio", ratio: divideCentsToDecimal(cfads, ads, RATIO_SCALE) },
+        });
+      }
+      // Global DSCR (M7.4): combined cash flow over the same debt service —
+      // personal debt service is already inside personal outflows.
+      for (const [periodLabel, gcf] of globalByPeriod) {
+        metrics.push({
+          metric: "dscr_global",
+          entityId: null,
+          periodLabel,
+          value: { kind: "ratio", ratio: divideCentsToDecimal(gcf, ads, RATIO_SCALE) },
         });
       }
     }
