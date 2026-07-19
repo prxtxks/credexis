@@ -42,5 +42,22 @@
     "typescript": "5.9.2",
     "typescript-eslint": "8.39.0",
     "vitest": "3.2.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "@trpc/server": ">=11.8.0",
+      "@trpc/client": ">=11.8.0",
+      "@trpc/react-query": ">=11.8.0",
+      "drizzle-orm": ">=0.45.2",
+      "playwright": ">=1.55.1",
+      "playwright-core": ">=1.55.1",
+      "@playwright/test": ">=1.55.1",
+      "ws": ">=8.21.0",
+      "yaml": ">=2.8.3",
+      "postcss": ">=8.5.10",
+      "uuid": ">=11.1.1",
+      "@opentelemetry/core": ">=2.8.0",
+      "cookie": ">=0.7.0"
+    }
   }
 }

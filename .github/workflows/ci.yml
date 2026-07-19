@@ -31,6 +31,22 @@ jobs:
       - name: Scan repository
         run: gitleaks git --redact --verbose --config .gitleaks.toml
 
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # M10.3: high+ advisories block the merge. A new upstream advisory is
+      # fixed by adding a patched-version override in root package.json
+      # ("pnpm.overrides") — see the existing entries.
+      - run: pnpm audit --prod --audit-level high
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
