@@ -5,6 +5,7 @@ import { dealsRouter } from "./routers/deals";
 import { documentsRouter } from "./routers/documents";
 import { metricsRouter } from "./routers/metrics";
 import { reviewRouter } from "./routers/review";
+import { spreadRouter } from "./routers/spread";
 
 /**
  * Application router (M2.3). Grows with the product; today it carries the
@@ -38,6 +39,9 @@ export const appRouter = router({
 
   /** Deals (M8.2 rail / M8.7 dashboard). */
   deals: dealsRouter,
+
+  /** Spread grid (M8.3): taxonomy × periods + computed rows + label learning. */
+  spread: spreadRouter,
 });
 
 export type AppRouter = typeof appRouter;
