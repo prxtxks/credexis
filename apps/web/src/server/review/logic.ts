@@ -105,9 +105,20 @@ export function buildSupersession(
   correctedCents: string,
   userId: string,
   note?: string,
+  opts?: {
+    /**
+     * The spread's cell override (M8.4) supersedes ACCEPTED facts; the
+     * review queue stays suggested-only. Either way the original is never
+     * mutated (Iron Law #5).
+     */
+    allowAccepted?: boolean;
+  },
 ): SupersessionPlan {
-  if (oldFact.status !== "suggested") {
-    throw new Error(`only suggested facts are correctable in review (got "${oldFact.status}")`);
+  const correctable = opts?.allowAccepted
+    ? oldFact.status === "suggested" || oldFact.status === "accepted"
+    : oldFact.status === "suggested";
+  if (!correctable) {
+    throw new Error(`fact is not correctable in this flow (got "${oldFact.status}")`);
   }
   if (!INT_RE.test(correctedCents)) {
     throw new Error(`corrected value must be integer cents as a string (got "${correctedCents}")`);
