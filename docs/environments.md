@@ -31,17 +31,17 @@ git**, and the **service-role key never appears in a request path**.
 **[PRATIK] M0.5** — fill in as each service is procured. Nothing is assumed
 live until recorded here.
 
-| Service                     | Status             | Notes                                                                                                                                 |
-| --------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Supabase (fresh project)    | ✅ Live            | Org `Credexis`, project `Credexis Web App`, us-east-2, Postgres 17. Fresh — no V1 reuse.                                              |
-| Vercel                      | ✅ Live            | `credexis-web.vercel.app` — middleware auth verified in production (2026-07-18).                                                      |
-| Trigger.dev org             | ✅ Live            | Secret key + project id verified (2026-07-18). `ingest-document` task built (M3.1); deploy pending `TRIGGER_ACCESS_TOKEN` ([PRATIK]). |
-| Sentry                      | ✅ DSN provisioned | Wiring lands with M10.2.                                                                                                              |
-| Anthropic API               | ✅ Live            | Key verified (2026-07-18). ⚠️ Confirm org ZDR status before REAL tax docs ([PRATIK]).                                                 |
-| Reducto                     | ✅ Live            | Key verified (2026-07-18). Primary extractor candidate (M3.4).                                                                        |
-| Extend                      | ✅ Key provisioned | Bake-off candidate; adapter not yet implemented (optional third contender).                                                           |
-| Azure Document Intelligence | ✅ Live            | Resource `credexis-docintel`; endpoint+key verified (2026-07-18). Prebuilt-tax for 1040.                                              |
-| Transcript provider (M9)    | ☐ Not provisioned  | TaxStatus / Halcyon-class.                                                                                                            |
+| Service                     | Status            | Notes                                                                                                                                 |
+| --------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Supabase (fresh project)    | ✅ Live           | Org `Credexis`, project `Credexis Web App`, us-east-2, Postgres 17. Fresh — no V1 reuse.                                              |
+| Vercel                      | ✅ Live           | `credexis-web.vercel.app` — middleware auth verified in production (2026-07-18).                                                      |
+| Trigger.dev org             | ✅ Live           | Secret key + project id verified (2026-07-18). `ingest-document` task built (M3.1); deploy pending `TRIGGER_ACCESS_TOKEN` ([PRATIK]). |
+| Sentry                      | ☐ DSN NOT set     | M10.2 wiring is live but DSN-gated → currently inert. Paste `SENTRY_DSN` (+ `NEXT_PUBLIC_SENTRY_DSN`) to enable ([PRATIK]).           |
+| Anthropic API               | ✅ Live           | Key verified (2026-07-18). ⚠️ Confirm org ZDR status before REAL tax docs ([PRATIK]).                                                 |
+| Reducto                     | ✅ Live           | Key verified (2026-07-18). Primary extractor candidate (M3.4).                                                                        |
+| Extend                      | ☐ Key NOT set     | `.env.local` line is an empty placeholder (audit 2026-07-19). Optional third bake-off contender.                                      |
+| Azure Document Intelligence | ✅ Live           | Resource `credexis-docintel`; endpoint+key verified (2026-07-18). Prebuilt-tax for 1040.                                              |
+| Transcript provider (M9)    | ☐ Not provisioned | TaxStatus / Halcyon-class.                                                                                                            |
 
 **[PRATIK] pending review (M2.6):** policy pack `sop-50-10-8-2026-03` is
 seeded with `reviewStatus: "draft"` — every threshold (DSCR 1.15/1.10, 10%
@@ -99,6 +99,16 @@ password, via the Management API query endpoint:
   the app runtime needs a Postgres connection (M2.3). Supabase never exposes
   the DB password via API; it will be reset/obtained then. Pooler host:
   `aws-1-us-east-2.pooler.supabase.com` (6543 transaction / 5432 session).
+
+### .env.local hygiene (audit 2026-07-19)
+
+Several template lines carry inline `# comments` after an empty value
+(`EXTEND_API_KEY=            # optional`). Two consequences: (1) naive
+"is it set" checks see the comment as a value — verify with real API
+calls, not greps; (2) dotenv keeps unquoted trailing text, so a value
+followed by an inline comment can absorb it (`NEXT_PUBLIC_APP_URL` has
+one — harmless today, trap later). When filling a line, delete the
+comment.
 
 ### Live test suites (opt-in, never CI)
 
