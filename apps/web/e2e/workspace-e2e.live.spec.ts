@@ -166,6 +166,12 @@ test.describe("M8.9 workspace flow (live)", () => {
       timeout: 20_000,
     });
 
+    // Banker workbook export (M10.1) responds with a real xlsx.
+    const exportRes = await page.request.get(`/api/deals/${T.dealId}/export`);
+    expect(exportRes.status()).toBe(200);
+    expect(exportRes.headers()["content-type"]).toContain("spreadsheetml");
+    expect((await exportRes.body()).length).toBeGreaterThan(5_000);
+
     // The override is a supersession in the DB, attributed to the reviewer.
     const factRes = await runSql(`
       select method, status, value_cents::text as v, created_by
