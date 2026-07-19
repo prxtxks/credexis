@@ -267,6 +267,33 @@ export function computeMetrics(input: EngineInput): EngineResult {
       },
     );
 
+    // Structure metrics for the policy vocabulary (M7.5). Percentages are
+    // scale-4 ratios (1000 mantissa = 10.00%) — the bps encoding as decimal.
+    const st = s.structure;
+    if (
+      st?.equityInjectionCents !== undefined &&
+      st.totalProjectCostCents !== undefined &&
+      BigInt(st.totalProjectCostCents) > 0n
+    ) {
+      metrics.push({
+        metric: "equity_injection_pct",
+        entityId: null,
+        periodLabel: null,
+        value: {
+          kind: "ratio",
+          ratio: divideCentsToDecimal(st.equityInjectionCents, st.totalProjectCostCents, 4),
+        },
+      });
+    }
+    if (st?.sbaGuarantyBps !== undefined) {
+      metrics.push({
+        metric: "sba_guaranty_pct",
+        entityId: null,
+        periodLabel: null,
+        value: { kind: "ratio", ratio: makeDecimal(BigInt(st.sbaGuarantyBps), 4) },
+      });
+    }
+
     // DSCR per entity+period wherever CFADS exists (the spread's DSCR row).
     if (BigInt(ads) > 0n) {
       for (const [key, cfads] of cfadsByCell) {

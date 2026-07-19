@@ -45,6 +45,13 @@ export interface EngineScenario {
   interestOnlyMonths?: number;
   /** Replacement salary for the working owner — the CFADS deduction. */
   replacementSalaryCents?: Cents;
+  /** Deal-structure inputs the policy vocabulary evaluates (M7.5). */
+  structure?: {
+    equityInjectionCents?: Cents;
+    totalProjectCostCents?: Cents;
+    /** The proposed SBA guaranty percentage, bps. */
+    sbaGuarantyBps?: number;
+  };
 }
 
 export type MetricValue = { kind: "cents"; cents: Cents } | { kind: "ratio"; ratio: FixedDecimal };
