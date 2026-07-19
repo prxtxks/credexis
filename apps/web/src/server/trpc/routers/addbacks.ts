@@ -102,6 +102,44 @@ export const addbacksRouter = router({
     return { suggested: fresh.length };
   }),
 
+  /** Manual addback from the source viewer (M8.4) — explicit category, audited. */
+  create: underwriterProcedure
+    .input(
+      z.object({
+        dealId: z.string().uuid(),
+        factId: z.string().uuid().nullish(),
+        category: z.enum([
+          "officer_comp",
+          "depreciation_amortization",
+          "interest",
+          "one_time",
+          "rent_adjustment",
+          "discretionary",
+        ]),
+        amountCents: z.string().regex(/^-?\d+$/),
+        note: z.string().max(500).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { data, error } = await ctx.supabase
+        .from("addbacks")
+        .insert({
+          tenant_id: ctx.profile.tenantId,
+          deal_id: input.dealId,
+          fact_id: input.factId ?? null,
+          category: input.category,
+          state: "accepted", // an explicit human action IS the decision
+          amount_cents: input.amountCents,
+          note: input.note ?? null,
+          created_by: ctx.profile.id,
+        })
+        .select("id")
+        .single();
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+      await recomputeDeal(ctx.supabase, ctx.profile.tenantId, input.dealId);
+      return { addbackId: data.id as string };
+    }),
+
   /** Decide an addback. Re-decisions are allowed; the audit log keeps history. */
   decide: underwriterProcedure
     .input(

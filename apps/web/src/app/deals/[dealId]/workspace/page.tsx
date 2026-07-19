@@ -9,12 +9,13 @@
  * M8.4, issues in M8.5, scenarios in M8.6 — the shell mounts their slots.
  */
 
-import { Suspense, type ReactNode } from "react";
+import { Suspense, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { MetricsStrip } from "@/components/workspace/metrics-strip";
-import { SpreadGrid } from "@/components/workspace/spread-grid";
+import { SpreadGrid, type CellSelection } from "@/components/workspace/spread-grid";
+import { SourceViewer } from "@/components/workspace/source-viewer";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const TABS = [
@@ -54,6 +55,7 @@ function WorkspaceInner() {
   const panelOpen = search.get("panel") !== "0";
   const tab = search.get("tab") ?? "is";
   const entityParam = search.get("entity");
+  const [selection, setSelection] = useState<CellSelection | null>(null);
 
   const deal = trpc.deals.get.useQuery({ dealId });
   const entities = trpc.assignment.entities.useQuery({ dealId });
@@ -185,7 +187,12 @@ function WorkspaceInner() {
           </div>
           <div className="scroll-pane flex-1 p-2">
             {(tab === "is" || tab === "bs" || tab === "gcf") && entityId ? (
-              <SpreadGrid dealId={dealId} entityId={entityId} statement={tab} />
+              <SpreadGrid
+                dealId={dealId}
+                entityId={entityId}
+                statement={tab}
+                onSelectCell={setSelection}
+              />
             ) : tab === "tax" ? (
               <div className="glass-card flex h-full items-center justify-center text-sm text-ink-muted dark:text-ink-dark-muted">
                 Tax spread — registry-line rows render here once extraction runs land facts.
@@ -208,9 +215,17 @@ function WorkspaceInner() {
             aria-label="inspector"
             className="scroll-pane w-[360px] shrink-0 border-l border-line p-4 max-lg:hidden dark:border-line-dark"
           >
-            <div className="glass-card flex h-full items-center justify-center p-4 text-center text-sm text-ink-muted dark:text-ink-dark-muted">
-              Select a cell for its source (M8.4) · issues (M8.5) · loan scenario inputs (M8.6).
-            </div>
+            {selection ? (
+              <SourceViewer
+                dealId={dealId}
+                selection={selection}
+                onMutated={() => setSelection(null)}
+              />
+            ) : (
+              <div className="glass-card flex h-full items-center justify-center p-4 text-center text-sm text-ink-muted dark:text-ink-dark-muted">
+                Select a cell for its source · issues (M8.5) · loan scenario inputs (M8.6).
+              </div>
+            )}
           </aside>
         )}
       </div>

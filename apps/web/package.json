@@ -23,6 +23,7 @@
     "ag-grid-community": "^36.0.1",
     "ag-grid-react": "^36.0.1",
     "next": "15.5.20",
+    "pdfjs-dist": "^6.1.200",
     "postcss": "^8.5.19",
     "react": "19.1.0",
     "react-dom": "19.1.0",

@@ -5,6 +5,7 @@ import { dealsRouter } from "./routers/deals";
 import { documentsRouter } from "./routers/documents";
 import { metricsRouter } from "./routers/metrics";
 import { reviewRouter } from "./routers/review";
+import { sourceRouter } from "./routers/source";
 import { spreadRouter } from "./routers/spread";
 
 /**
@@ -42,6 +43,9 @@ export const appRouter = router({
 
   /** Spread grid (M8.3): taxonomy × periods + computed rows + label learning. */
   spread: spreadRouter,
+
+  /** Source viewer (M8.4): lineage + signed PDF URL + override/revert. */
+  source: sourceRouter,
 });
 
 export type AppRouter = typeof appRouter;

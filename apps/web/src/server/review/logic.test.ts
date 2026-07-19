@@ -93,11 +93,23 @@ describe("buildSupersession (Iron Law #5) — corrections never mutate", () => {
 
   it("refuses to correct anything that is not in review", () => {
     expect(() => buildSupersession({ ...oldFact, status: "accepted" }, "1", "u")).toThrow(
-      /only suggested/,
+      /not correctable/,
     );
     expect(() => buildSupersession({ ...oldFact, status: "overridden" }, "1", "u")).toThrow(
-      /only suggested/,
+      /not correctable/,
     );
+  });
+
+  it("allowAccepted (M8.4 spread override) supersedes accepted facts, never resolved ones", () => {
+    const plan = buildSupersession({ ...oldFact, status: "accepted" }, "1", "u", undefined, {
+      allowAccepted: true,
+    });
+    expect(plan.patch).toEqual({ status: "overridden" });
+    expect(() =>
+      buildSupersession({ ...oldFact, status: "overridden" }, "1", "u", undefined, {
+        allowAccepted: true,
+      }),
+    ).toThrow(/not correctable/);
   });
 
   it("refuses non-integer money (floats never touch a fact)", () => {
