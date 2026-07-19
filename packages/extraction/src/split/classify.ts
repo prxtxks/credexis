@@ -105,11 +105,12 @@ const LLM_JSON_SCHEMA = {
         type: "object",
         properties: {
           page: { type: "integer" },
+          // anyOf, not type-union + enum: the API's schema validator
+          // rejects enum values inside a union type (live finding, 2026-07-19).
           form_family: {
-            type: ["string", "null"],
-            enum: [...formFamilySchema.options, null],
+            anyOf: [{ type: "string", enum: [...formFamilySchema.options] }, { type: "null" }],
           },
-          tax_year: { type: ["integer", "null"] },
+          tax_year: { anyOf: [{ type: "integer" }, { type: "null" }] },
           is_document_start: { type: "boolean" },
           confidence: { type: "number" },
         },
