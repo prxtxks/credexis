@@ -15,15 +15,20 @@ import { cents } from "@credexis/shared";
 import {
   computeMetrics,
   ENGINE_VERSION,
+  runGates,
+  DEFAULT_GATE_CONFIG,
   type EngineAddback,
   type EngineFact,
+  type GateFact,
 } from "@credexis/engine";
+import { TAXONOMY_V1 } from "@credexis/schema";
 import { bigintFromDb } from "../addbacks/logic";
 import { metricInsertRows, scenarioFromRow, type ScenarioRow } from "./logic";
 
 export interface RecomputeResult {
   scenarios: { id: string | null; metrics: number }[];
   skipped: { id: string; reason: string }[];
+  openIssues?: number;
 }
 
 export async function recomputeDeal(
@@ -34,9 +39,11 @@ export async function recomputeDeal(
   const [factsRes, addbacksRes, scenariosRes, periodsRes] = await Promise.all([
     supabase
       .from("facts")
-      .select("id, entity_id, taxonomy_node_key, value_cents, method, status, periods(label)")
+      .select(
+        "id, entity_id, taxonomy_node_key, registry_field_id, value_cents, method, status, source_logical_document_id, periods(label)",
+      )
       .eq("deal_id", dealId)
-      .eq("status", "accepted"),
+      .in("status", ["accepted", "suggested"]), // engine uses accepted; gates see both
     supabase
       .from("addbacks")
       .select("id, category, state, amount_cents, facts(entity_id, periods(label))")
@@ -131,5 +138,49 @@ export async function recomputeDeal(
     }
     result.scenarios.push({ id: scenarioId, metrics: rows.length });
   }
+
+  // ── Gates after every recompute (M6.1: "after every pipeline run and
+  // every override") → the issues panel (M8.5). Sync = resolve all open,
+  // insert the fresh violations; append-mostly, no deletes.
+  const gateFacts: GateFact[] = (factsRes.data ?? []).map((f) => ({
+    id: f.id as string,
+    entityId: f.entity_id as string,
+    periodLabel: (f.periods as unknown as { label: string } | null)?.label ?? "(unknown period)",
+    taxonomyNodeKey: (f.taxonomy_node_key as string | null) ?? null,
+    registryFieldId: (f.registry_field_id as string | null) ?? null,
+    valueCents: bigintFromDb(f.value_cents as number),
+    method: f.method as GateFact["method"],
+    status: f.status as GateFact["status"],
+    logicalDocumentId: (f.source_logical_document_id as string | null) ?? null,
+  }));
+  const gateRun = runGates(gateFacts, {
+    ...DEFAULT_GATE_CONFIG,
+    taxonomy: TAXONOMY_V1.map((n) => ({ key: n.key, parentKey: n.parentKey })),
+    registryRelations: [], // registry relation specs join with the tax spread
+    registryFlows: [],
+  });
+
+  const { error: resolveErr } = await supabase
+    .from("issues")
+    .update({ status: "resolved", resolved_at: new Date().toISOString() })
+    .eq("deal_id", dealId)
+    .eq("status", "open");
+  if (resolveErr) throw new Error(`issues resolve: ${resolveErr.message}`);
+
+  if (gateRun.issues.length > 0) {
+    const { error: issueErr } = await supabase.from("issues").insert(
+      gateRun.issues.map((i) => ({
+        tenant_id: tenantId,
+        deal_id: dealId,
+        gate: i.gate,
+        severity: i.severity,
+        fact_ids: i.implicatedFactIds,
+        message: i.message,
+        status: "open",
+      })),
+    );
+    if (issueErr) throw new Error(`issues insert: ${issueErr.message}`);
+  }
+  result.openIssues = gateRun.issues.length;
   return result;
 }
