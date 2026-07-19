@@ -5,7 +5,7 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { protectedProcedure, router } from "../init";
+import { protectedProcedure, router, underwriterProcedure } from "../init";
 
 export const dealsRouter = router({
   get: protectedProcedure
@@ -26,6 +26,112 @@ export const dealsRouter = router({
         policyPackId: data.policy_pack_id as string,
         createdAt: data.created_at as string,
       };
+    }),
+
+  /** Pipeline board (M8.7): deals + form families present + headline DSCR. */
+  board: protectedProcedure.query(async ({ ctx }) => {
+    const [dealsRes, ldRes, dscrRes] = await Promise.all([
+      ctx.supabase
+        .from("deals")
+        .select("id, name, type, status, created_at")
+        .order("created_at", { ascending: false }),
+      ctx.supabase.from("logical_documents").select("document_id, form_family, documents(deal_id)"),
+      ctx.supabase
+        .from("computed_metrics")
+        .select("deal_id, metric, period_label, ratio_mantissa, ratio_scale")
+        .eq("metric", "dscr_business")
+        .is("scenario_id", null),
+    ]);
+    for (const r of [dealsRes, ldRes, dscrRes]) {
+      if (r.error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: r.error.message });
+    }
+
+    const familiesByDeal = new Map<string, Set<string>>();
+    for (const ld of ldRes.data ?? []) {
+      const dealId = (ld.documents as unknown as { deal_id: string } | null)?.deal_id;
+      if (!dealId) continue;
+      const set = familiesByDeal.get(dealId) ?? new Set<string>();
+      set.add(ld.form_family as string);
+      familiesByDeal.set(dealId, set);
+    }
+
+    // Headline DSCR per deal: latest period's business DSCR (rendered as-is).
+    const dscrByDeal = new Map<string, { mantissa: string; scale: number; period: string }>();
+    for (const m of dscrRes.data ?? []) {
+      if (m.ratio_mantissa === null || m.period_label === null) continue;
+      const cur = dscrByDeal.get(m.deal_id as string);
+      if (!cur || (m.period_label as string) > cur.period) {
+        dscrByDeal.set(m.deal_id as string, {
+          mantissa: String(m.ratio_mantissa),
+          scale: (m.ratio_scale as number) ?? 2,
+          period: m.period_label as string,
+        });
+      }
+    }
+
+    return (dealsRes.data ?? []).map((d) => ({
+      id: d.id as string,
+      name: d.name as string,
+      type: d.type as string,
+      status: d.status as string,
+      createdAt: d.created_at as string,
+      formFamilies: [...(familiesByDeal.get(d.id as string) ?? [])],
+      dscr: dscrByDeal.get(d.id as string) ?? null,
+    }));
+  }),
+
+  /** New-deal wizard (M8.7): deal + entities in one step, pinned to the
+   *  current policy pack. */
+  create: underwriterProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(160),
+        type: z.enum(["business_acquisition", "working_capital", "real_estate", "refinance"]),
+        entities: z
+          .array(
+            z.object({
+              name: z.string().min(1).max(160),
+              kind: z.enum(["applicant", "target", "guarantor", "spouse", "epc", "oc"]),
+            }),
+          )
+          .min(1)
+          .max(10),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Pin the newest policy pack (Iron Law #8: the deal keeps this version).
+      const { data: pack, error: packErr } = await ctx.supabase
+        .from("policy_packs")
+        .select("id")
+        .order("effective_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (packErr || !pack) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "no policy pack seeded" });
+      }
+
+      const { data: deal, error: dealErr } = await ctx.supabase
+        .from("deals")
+        .insert({
+          tenant_id: ctx.profile.tenantId,
+          name: input.name,
+          type: input.type,
+          policy_pack_id: pack.id as string,
+        })
+        .select("id")
+        .single();
+      if (dealErr) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: dealErr.message });
+
+      const { error: entErr } = await ctx.supabase.from("entities").insert(
+        input.entities.map((e) => ({
+          tenant_id: ctx.profile.tenantId,
+          deal_id: deal.id as string,
+          name: e.name,
+          kind: e.kind,
+        })),
+      );
+      if (entErr) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: entErr.message });
+      return { dealId: deal.id as string };
     }),
 
   list: protectedProcedure.query(async ({ ctx }) => {
