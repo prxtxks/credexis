@@ -16,6 +16,7 @@ import { trpc } from "@/lib/trpc/client";
 import { MetricsStrip } from "@/components/workspace/metrics-strip";
 import { SpreadGrid, type CellSelection } from "@/components/workspace/spread-grid";
 import { SourceViewer } from "@/components/workspace/source-viewer";
+import { IssuesPanel } from "@/components/workspace/issues-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const TABS = [
@@ -56,12 +57,14 @@ function WorkspaceInner() {
   const tab = search.get("tab") ?? "is";
   const entityParam = search.get("entity");
   const [selection, setSelection] = useState<CellSelection | null>(null);
+  const [inspectorTab, setInspectorTab] = useState<"source" | "issues">("source");
 
   const deal = trpc.deals.get.useQuery({ dealId });
   const entities = trpc.assignment.entities.useQuery({ dealId });
   const entityId = entityParam ?? entities.data?.[0]?.id ?? null;
   const docs = trpc.documents.list.useQuery({ dealId });
   const progress = trpc.review.progress.useQuery({ dealId });
+  const issues = trpc.issues.forDeal.useQuery({ dealId });
 
   function setParam(key: string, value: string | null) {
     const next = new URLSearchParams(search.toString());
@@ -215,7 +218,29 @@ function WorkspaceInner() {
             aria-label="inspector"
             className="scroll-pane w-[360px] shrink-0 border-l border-line p-4 max-lg:hidden dark:border-line-dark"
           >
-            {selection ? (
+            <div className="mb-2 flex gap-1 text-xs">
+              <button
+                onClick={() => setInspectorTab("source")}
+                className={`rounded px-2 py-1 ${inspectorTab === "source" ? "bg-surface-muted font-semibold dark:bg-surface-dark-muted" : ""}`}
+              >
+                Source
+              </button>
+              <button
+                onClick={() => setInspectorTab("issues")}
+                className={`rounded px-2 py-1 ${inspectorTab === "issues" ? "bg-surface-muted font-semibold dark:bg-surface-dark-muted" : ""}`}
+              >
+                Issues{issues.data && issues.data.length > 0 ? ` (${issues.data.length})` : ""}
+              </button>
+            </div>
+            {inspectorTab === "issues" ? (
+              <IssuesPanel
+                dealId={dealId}
+                onOpenFact={(factId) => {
+                  setSelection({ factId, nodeKey: "", periodLabel: "" });
+                  setInspectorTab("source");
+                }}
+              />
+            ) : selection ? (
               <SourceViewer
                 dealId={dealId}
                 selection={selection}
@@ -223,7 +248,7 @@ function WorkspaceInner() {
               />
             ) : (
               <div className="glass-card flex h-full items-center justify-center p-4 text-center text-sm text-ink-muted dark:text-ink-dark-muted">
-                Select a cell for its source · issues (M8.5) · loan scenario inputs (M8.6).
+                Select a cell for its source · loan scenario inputs land in M8.6.
               </div>
             )}
           </aside>

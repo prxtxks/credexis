@@ -3,6 +3,7 @@ import { addbacksRouter } from "./routers/addbacks";
 import { assignmentRouter } from "./routers/assignment";
 import { dealsRouter } from "./routers/deals";
 import { documentsRouter } from "./routers/documents";
+import { issuesRouter } from "./routers/issues";
 import { metricsRouter } from "./routers/metrics";
 import { reviewRouter } from "./routers/review";
 import { sourceRouter } from "./routers/source";
@@ -46,6 +47,9 @@ export const appRouter = router({
 
   /** Source viewer (M8.4): lineage + signed PDF URL + override/revert. */
   source: sourceRouter,
+
+  /** Issues (M8.5): open gate violations for the workspace panel. */
+  issues: issuesRouter,
 });
 
 export type AppRouter = typeof appRouter;
