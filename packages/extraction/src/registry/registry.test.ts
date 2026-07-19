@@ -126,3 +126,21 @@ describe("year-override mechanism (IRS renumbering absorber)", () => {
     expect(merged.find((f) => f.fieldId === "t.line1")?.lineNumber).toBe("1");
   });
 });
+
+describe("1120-S 2023 renumbering (real-document finding, 2026-07-19)", () => {
+  it("prints ordinary income at line 22, total deductions at 21, other at 20", () => {
+    const entry = getRegistryEntry("1120S", 2023)!;
+    const byId = new Map(entry.fields.map((f) => [f.fieldId, f]));
+    expect(byId.get("f1120s.line19_energy")?.lineNumber).toBe("19");
+    expect(byId.get("f1120s.line19")?.lineNumber).toBe("20");
+    expect(byId.get("f1120s.line20")?.lineNumber).toBe("21");
+    expect(byId.get("f1120s.line21")?.lineNumber).toBe("22");
+    expect(byId.get("f1120s.line21")?.label).toMatch(/Ordinary business income/);
+  });
+
+  it("2024 carries the same numbering", () => {
+    const entry = getRegistryEntry("1120S", 2024)!;
+    const byId = new Map(entry.fields.map((f) => [f.fieldId, f]));
+    expect(byId.get("f1120s.line21")?.lineNumber).toBe("22");
+  });
+});

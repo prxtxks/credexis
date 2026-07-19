@@ -1,5 +1,10 @@
 /**
  * Business return registries: 1120-S, 1120, 1065 (tax years 2023–2025).
+ *
+ * ⚠️ 1120-S line numbering verified against real filed 2023/2024 returns
+ * (see the §179D insertion below). 1120 and 1065 still carry unverified
+ * numbering — [PRATIK]/M4.1 must check them against printed forms before
+ * extraction trusts their line numbers.
  * Line numbers verified against the 2023 printed forms; 2024/2025 carried
  * the same numbering (empty overrides — the mechanism is there for when
  * the IRS renumbers). ⚠️ [PRATIK] reviews field lists against real
@@ -64,9 +69,16 @@ export const F1120S: FormDefinition = {
       money("f1120s.line18", "18", "Employee benefit programs", {
         taxonomyNodeKey: "is.opex.employee_benefits",
       }),
-      money("f1120s.line19", "19", "Other deductions", { taxonomyNodeKey: "is.opex.misc" }),
-      money("f1120s.line20", "20", "Total deductions", { taxonomyNodeKey: "is.opex.total" }),
-      money("f1120s.line21", "21", "Ordinary business income (loss)", {
+      // 2023 revision inserted §179D at line 19 and renumbered everything
+      // below it — verified against three REAL filed 2023/2024 returns
+      // (2026-07-19; the base data previously carried pre-2023 numbering).
+      // Field ids stay stable; printed line numbers tell the truth.
+      money("f1120s.line19_energy", "19", "Energy efficient commercial buildings deduction", {
+        taxonomyNodeKey: "is.opex.misc",
+      }),
+      money("f1120s.line19", "20", "Other deductions", { taxonomyNodeKey: "is.opex.misc" }),
+      money("f1120s.line20", "21", "Total deductions", { taxonomyNodeKey: "is.opex.total" }),
+      money("f1120s.line21", "22", "Ordinary business income (loss)", {
         taxonomyNodeKey: "is.net_income",
       }),
     ],
