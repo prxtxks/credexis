@@ -33,3 +33,13 @@ export function formatRatio(mantissa: string, scale: number): string {
   const tail = scale > 0 ? `.${padded.slice(padded.length - scale)}` : "";
   return `${neg ? "-" : ""}${head}${tail}`;
 }
+
+/** Integer micro-USD string → "$1.23" display; pure string work. */
+export function formatMicroUsd(microUsd: string): string {
+  const neg = microUsd.startsWith("-");
+  const digits = (neg ? microUsd.slice(1) : microUsd).padStart(7, "0");
+  const dollars = digits.slice(0, -6);
+  const frac = digits.slice(-6, -4); // 2dp display
+  const withCommas = dollars.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${neg ? "-" : ""}$${withCommas}.${frac}`;
+}

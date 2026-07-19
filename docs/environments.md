@@ -114,6 +114,21 @@ unless its flag is set alongside the credentials it needs in `.env.local`:
 - Integration tests (`*.integration.test.ts`) run whenever
   `SUPABASE_ACCESS_TOKEN`/`SUPABASE_PROJECT_REF` are present.
 
+### Observability (M10.2)
+
+- **Sentry**: server + client SDKs are DSN-gated (`SENTRY_DSN`; mirror as
+  `NEXT_PUBLIC_SENTRY_DSN` for browser capture — also in Vercel env).
+  `sendDefaultPii` off; request bodies/cookies/headers stripped
+  (tax PII never leaves). Pipeline tasks capture failures under the
+  `pipeline` environment. Alert rules (failure rate, new issue) are
+  configured in the Sentry dashboard — [PRATIK], one-time.
+- **Structured logs**: pipeline tasks emit JSON lines with run/document/deal
+  ids (Trigger.dev log viewer / any drain).
+- **Cost dashboard**: `/costs` aggregates extraction_runs per deal — spend
+  by stage, failed-run count, and a ⚠ flag over the $10/deal envelope
+  (Blueprint §12). Source-map upload needs `SENTRY_ORG` / `SENTRY_PROJECT`
+  / `SENTRY_AUTH_TOKEN` (optional; runtime capture works without).
+
 ## Repository & CI
 
 - **Remote:** `github.com/prxtxks/credexis` — **private**, created fresh

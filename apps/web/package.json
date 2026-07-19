@@ -14,6 +14,7 @@
     "@credexis/extraction": "workspace:*",
     "@credexis/schema": "workspace:*",
     "@credexis/shared": "workspace:*",
+    "@sentry/nextjs": "^10.66.0",
     "@supabase/ssr": "0.6.1",
     "@supabase/supabase-js": "2.55.0",
     "@tailwindcss/postcss": "^4.3.3",

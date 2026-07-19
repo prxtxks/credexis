@@ -140,6 +140,9 @@ export default function DashboardPage() {
           {showWizard ? "Close" : "New deal"}
         </button>
         <div className="ml-auto flex items-center gap-2">
+          <Link href="/costs" className="text-sm text-ink-muted underline dark:text-ink-dark-muted">
+            costs
+          </Link>
           <ThemeToggle />
           <form action="/auth/signout" method="post">
             <button type="submit" className="text-sm text-ink-muted dark:text-ink-dark-muted">

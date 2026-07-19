@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCents, parseDollarsInput } from "./money-display";
+import { formatCents, formatMicroUsd, parseDollarsInput } from "./money-display";
 
 describe("formatCents — string ops only (the client never computes)", () => {
   it.each<[string, string]>([
@@ -26,5 +26,15 @@ describe("parseDollarsInput — human input → integer-cent string", () => {
     ["", null],
   ])("%j → %j", (input, want) => {
     expect(parseDollarsInput(input)).toBe(want);
+  });
+});
+
+describe("formatMicroUsd (M10.2 cost display)", () => {
+  it("renders integer micro-USD as dollars via string slicing", () => {
+    expect(formatMicroUsd("0")).toBe("$0.00");
+    expect(formatMicroUsd("2000")).toBe("$0.00"); // sub-cent spend truncates
+    expect(formatMicroUsd("1234567")).toBe("$1.23");
+    expect(formatMicroUsd("10000000")).toBe("$10.00");
+    expect(formatMicroUsd("1234567890123")).toBe("$1,234,567.89");
   });
 });
