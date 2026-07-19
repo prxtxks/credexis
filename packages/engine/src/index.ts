@@ -12,3 +12,5 @@ export * from "./gates/types.js";
 export * from "./gates/gates.js";
 export * from "./confidence/scorer.js";
 export * from "./amortization/amortization.js";
+export * from "./core/types.js";
+export * from "./core/compute.js";
