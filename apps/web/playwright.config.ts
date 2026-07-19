@@ -17,7 +17,9 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "html" : "list",
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    // E2E_TARGET_URL points the suite at a deployed environment (e.g.
+    // production) — the local webServer still boots but goes unused.
+    baseURL: process.env.E2E_TARGET_URL ?? `http://localhost:${PORT}`,
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
