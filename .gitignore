@@ -66,3 +66,6 @@ Thumbs.db
 # (corpus rules: PDFs live in the private bucket, only hashed manifests
 # are committed). Intern-provided material under analysis lives here.
 docs/testing-docs/
+
+# Local Trigger.dev CLI auth (contains a PAT) — never commit
+.trigger-local-config/
