@@ -11,6 +11,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@credexis/extraction": "workspace:*",
     "@credexis/schema": "workspace:*",
     "@credexis/shared": "workspace:*",
     "@supabase/ssr": "0.6.1",

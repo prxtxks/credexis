@@ -50,6 +50,13 @@
       "when": 1784436738962,
       "tag": "0006_recompute-metrics",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784441079706,
+      "tag": "0007_transcripts",
+      "breakpoints": true
     }
   ]
 }
