@@ -1,6 +1,7 @@
 import { protectedProcedure, publicProcedure, router } from "./init";
 import { addbacksRouter } from "./routers/addbacks";
 import { assignmentRouter } from "./routers/assignment";
+import { dealsRouter } from "./routers/deals";
 import { documentsRouter } from "./routers/documents";
 import { metricsRouter } from "./routers/metrics";
 import { reviewRouter } from "./routers/review";
@@ -34,6 +35,9 @@ export const appRouter = router({
 
   /** Engine output + scenarios (M7.7): recompute on every mutation. */
   metrics: metricsRouter,
+
+  /** Deals (M8.2 rail / M8.7 dashboard). */
+  deals: dealsRouter,
 });
 
 export type AppRouter = typeof appRouter;
