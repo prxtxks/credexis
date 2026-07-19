@@ -35,13 +35,17 @@ const reviewerPassword = `pw-${crypto.randomUUID()}`;
 let reviewerId: string | null = null;
 
 const CLEANUP = `
-  delete from public.audit_log where tenant_id = '${T.tenantId}';
+  delete from public.computed_metrics where deal_id = '${T.dealId}';
   delete from public.issues where deal_id = '${T.dealId}';
   delete from public.facts where deal_id = '${T.dealId}';
   delete from public.periods where tenant_id = '${T.tenantId}';
   delete from public.entities where deal_id = '${T.dealId}';
   delete from public.deals where id = '${T.dealId}';
   delete from public.profiles where tenant_id = '${T.tenantId}';
+  -- LAST among tenant-referencing rows: deleting facts above FIRES the
+  -- audit trigger, creating fresh audit_log rows — purging audit_log any
+  -- earlier leaves those behind and the tenants delete hits the FK.
+  delete from public.audit_log where tenant_id = '${T.tenantId}';
   delete from public.tenants where id = '${T.tenantId}';
   delete from public.policy_packs where id = '${T.packId}';
 `;
@@ -116,7 +120,10 @@ test.describe("M6.6 review loop (live)", () => {
   });
 
   test.afterAll(async () => {
-    await runSql(CLEANUP);
+    // Assert — a silently failing cleanup leaves rows that dup-break the
+    // NEXT run's seed (exactly how the audit-trigger ordering bug surfaced).
+    const cleaned = await runSql(CLEANUP);
+    expect(cleaned.ok, JSON.stringify(cleaned.body)).toBe(true);
     if (reviewerId) await adminDeleteUser(reviewerId);
   });
 
@@ -192,5 +199,18 @@ test.describe("M6.6 review loop (live)", () => {
     const after = await runGatesOverDeal();
     expect(after.issues.filter((i) => i.blocking)).toHaveLength(0);
     expect(after.blockedFactIds.size).toBe(0);
+
+    // 7. M7.7: each review mutation recomputed the spread in-request —
+    //    engine-stamped metric rows exist (revenue_total = the corrected Σ).
+    const metricsRes = await runSql(`
+      select metric, value_cents::text as value_cents, engine_version
+      from public.computed_metrics
+      where deal_id = '${T.dealId}' and metric = 'revenue_total';
+    `);
+    expect(metricsRes.ok).toBe(true);
+    const metricRows = metricsRes.body as Record<string, unknown>[];
+    expect(metricRows).toHaveLength(1);
+    expect(metricRows[0]!["value_cents"]).toBe(SALES_CENTS);
+    expect(metricRows[0]!["engine_version"]).toMatch(/^engine-v/);
   });
 });

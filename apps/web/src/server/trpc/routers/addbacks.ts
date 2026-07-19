@@ -11,6 +11,7 @@ import { suggestAddbacks, type EngineFact } from "@credexis/engine";
 import { cents } from "@credexis/shared";
 import { protectedProcedure, router, underwriterProcedure } from "../init";
 import { bigintFromDb, newSuggestions } from "../../addbacks/logic";
+import { recomputeDeal } from "../../metrics/recompute";
 
 const dealId = z.object({ dealId: z.string().uuid() });
 
@@ -114,10 +115,12 @@ export const addbacksRouter = router({
         .from("addbacks")
         .update({ state: input.state, updated_at: new Date().toISOString() })
         .eq("id", input.addbackId)
-        .select("id, state")
+        .select("id, state, deal_id")
         .maybeSingle();
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       if (!data) throw new TRPCError({ code: "NOT_FOUND", message: "addback not found" });
+      // M7.7: an addback decision changes SDE/CFADS — recompute before returning.
+      await recomputeDeal(ctx.supabase, ctx.profile.tenantId, data.deal_id as string);
       return { addbackId: data.id as string, state: data.state as string };
     }),
 });

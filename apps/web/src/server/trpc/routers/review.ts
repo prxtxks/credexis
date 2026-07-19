@@ -8,6 +8,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure, router, underwriterProcedure } from "../init";
+import { recomputeDeal } from "../../metrics/recompute";
 import {
   buildSupersession,
   orderQueue,
@@ -72,7 +73,7 @@ export const reviewRouter = router({
         .update({ status: "accepted" })
         .eq("id", input.factId)
         .eq("status", "suggested") // optimistic guard: review-only transition
-        .select("id")
+        .select("id, deal_id")
         .maybeSingle();
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       if (!data) {
@@ -81,6 +82,8 @@ export const reviewRouter = router({
           message: "fact is not in review (already resolved or not visible)",
         });
       }
+      // M7.7: a finalized fact changes the spread — recompute before returning.
+      await recomputeDeal(ctx.supabase, ctx.profile.tenantId, data.deal_id as string);
       return { factId: data.id as string, status: "accepted" as const };
     }),
 
@@ -146,6 +149,7 @@ export const reviewRouter = router({
         });
       }
 
+      await recomputeDeal(ctx.supabase, ctx.profile.tenantId, oldFact.deal_id as string);
       return {
         supersededFactId: input.factId,
         overrideFactId: inserted.id as string,
@@ -162,10 +166,11 @@ export const reviewRouter = router({
         .update({ status: "rejected" })
         .eq("id", input.factId)
         .eq("status", "suggested")
-        .select("id")
+        .select("id, deal_id")
         .maybeSingle();
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       if (!data) throw new TRPCError({ code: "CONFLICT", message: "fact is not in review" });
+      await recomputeDeal(ctx.supabase, ctx.profile.tenantId, data.deal_id as string);
       return { factId: data.id as string, status: "rejected" as const };
     }),
 
