@@ -43,6 +43,13 @@
       "when": 1784392244320,
       "tag": "0005_assignment-audit",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784436738962,
+      "tag": "0006_recompute-metrics",
+      "breakpoints": true
     }
   ]
 }

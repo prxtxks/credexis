@@ -2,6 +2,7 @@ import { protectedProcedure, publicProcedure, router } from "./init";
 import { addbacksRouter } from "./routers/addbacks";
 import { assignmentRouter } from "./routers/assignment";
 import { documentsRouter } from "./routers/documents";
+import { metricsRouter } from "./routers/metrics";
 import { reviewRouter } from "./routers/review";
 
 /**
@@ -30,6 +31,9 @@ export const appRouter = router({
 
   /** Addback flow (M7.3): rule suggestions + audited accept/reject. */
   addbacks: addbacksRouter,
+
+  /** Engine output + scenarios (M7.7): recompute on every mutation. */
+  metrics: metricsRouter,
 });
 
 export type AppRouter = typeof appRouter;

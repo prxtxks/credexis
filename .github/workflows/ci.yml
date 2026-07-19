@@ -44,6 +44,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm format:check
+      # Iron Law #3: no metric/money arithmetic in apps/web (M7.7).
+      - run: pnpm check:client-math
 
   typecheck:
     name: Typecheck

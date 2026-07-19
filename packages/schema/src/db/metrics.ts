@@ -63,6 +63,13 @@ export const computedMetrics = pgTable(
     /** Null entity = deal-global (e.g. global cash flow DSCR). */
     entityId: uuid("entity_id").references(() => entities.id),
     periodId: uuid("period_id").references(() => periods.id),
+    /**
+     * The engine's period label ("FY2023"). Deal-global metrics (global
+     * cash flow, global DSCR) are period-scoped without belonging to one
+     * entity's periods row, so the label is stored denormalized; period_id
+     * stays for entity-scoped metrics.
+     */
+    periodLabel: text("period_label"),
     valueKind: metricValueKind("value_kind").notNull(),
     /** Populated when value_kind = cents. */
     valueCents: bigint("value_cents", { mode: "bigint" }),
