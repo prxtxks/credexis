@@ -1,0 +1,21 @@
+{
+  "id": "k1-1120s-2023-native-001",
+  "form_family": "K1_1120S",
+  "tax_year": 2023,
+  "entity": "guarantor",
+  "quality": "native",
+  "synthetic": false,
+  "pdf_sha256": "90be8dba78aaea3a69dc6fcebdfa024e4f6a6710a7f63a368501f7014214d67b",
+  "page_count": 25,
+  "labeled_by": "claude (AI draft, arithmetic-verified vs parent return x allocation)",
+  "labeled_at": "2026-07-20T18:00:00Z",
+  "fields": [
+    {
+      "registry_field_id": "k1s.box1",
+      "period": "FY2023",
+      "value_cents": "5556400",
+      "page": 7,
+      "note": "Ordinary business income (loss) — other registry boxes (2, 4, 5a, 11, 16d) blank on this K-1"
+    }
+  ]
+}
