@@ -23,6 +23,8 @@ export interface DocumentScore {
   missed: number;
   /** Extracted for a (field, period) not in ground truth. */
   spurious: number;
+  /** Open-set mode only: extractions outside the labeled set (reported, not penalized). */
+  uncovered: number;
   auto_accepted: number;
   auto_accepted_correct: number;
   /** Wrong or spurious values that were auto-accepted — the cardinal sin. */
@@ -104,7 +106,21 @@ function aggregateByKey<
 }
 
 /** Score one document's extraction against its ground truth. */
-export function scoreDocument(gt: GroundTruthDocument, result: ExtractionResult): DocumentScore {
+export interface ScoreOptions {
+  /**
+   * Open-set ground truth (statements): labels cover totals + majors, not
+   * every printed line — an extraction outside the labeled set is
+   * "uncovered", not wrong. Tax forms stay closed-set: the registry
+   * defines the complete field universe, so unknown keys ARE spurious.
+   */
+  openSet?: boolean;
+}
+
+export function scoreDocument(
+  gt: GroundTruthDocument,
+  result: ExtractionResult,
+  opts: ScoreOptions = {},
+): DocumentScore {
   const truthByKey = aggregateByKey(gt.fields);
   const aggregatedExtraction = [...aggregateByKey(result.fields).values()];
   const seen = new Set<string>();
@@ -112,6 +128,7 @@ export function scoreDocument(gt: GroundTruthDocument, result: ExtractionResult)
   let correct = 0;
   let wrong = 0;
   let spurious = 0;
+  let uncovered = 0;
   let autoAccepted = 0;
   let autoAcceptedCorrect = 0;
   let silentWrong = 0;
@@ -131,8 +148,12 @@ export function scoreDocument(gt: GroundTruthDocument, result: ExtractionResult)
     if (isAuto) autoAccepted += 1;
 
     if (truth === undefined) {
-      spurious += 1;
-      if (isAuto) silentWrong += 1;
+      if (opts.openSet) {
+        uncovered += 1; // outside the labeled set — reported, not penalized
+      } else {
+        spurious += 1;
+        if (isAuto) silentWrong += 1;
+      }
       continue;
     }
     const matches = truth.value_cents === ex.value_cents;
@@ -156,6 +177,7 @@ export function scoreDocument(gt: GroundTruthDocument, result: ExtractionResult)
     wrong,
     missed,
     spurious,
+    uncovered,
     auto_accepted: autoAccepted,
     auto_accepted_correct: autoAcceptedCorrect,
     silent_wrong: silentWrong,

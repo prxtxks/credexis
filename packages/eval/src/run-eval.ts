@@ -156,7 +156,10 @@ async function bakeOff(root: string): Promise<void> {
           console.log(`  ${doc.groundTruth.id}: unsupported/empty — skipped`);
           continue;
         }
-        scores.push(scoreDocument(doc.groundTruth, result));
+        const openSet = ["PNL", "BALANCE_SHEET", "DEBT_SCHEDULE"].includes(
+          doc.groundTruth.form_family,
+        );
+        scores.push(scoreDocument(doc.groundTruth, result, { openSet }));
         console.log(`  ${doc.groundTruth.id}: ${result.fields.length} fields`);
       } catch (e) {
         console.log(`  ${doc.groundTruth.id}: ERROR ${String((e as Error).message).slice(0, 120)}`);

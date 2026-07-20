@@ -122,8 +122,26 @@ export function validateStructure(
       const mapping = mapped.get(t.row.label);
       if (mapping?.taxonomyNodeKey) {
         for (const [col, v] of t.valuesCents) {
-          if (v !== null) record(mapping.taxonomyNodeKey, col, v);
+          if (v !== null) {
+            record(mapping.taxonomyNodeKey, col, v);
+            // Totals are facts too (bake-off finding): the G1 gate checks
+            // .total nodes against their children, which requires the
+            // total fact to EXIST — and underwriters read totals first.
+            const period = binding.byColumn.get(col);
+            if (period) {
+              facts.push({
+                taxonomyNodeKey: mapping.taxonomyNodeKey,
+                periodLabel: period.label,
+                valueCents: mulCentsByInt(v, BigInt(binding.scale)),
+                page: opts.page,
+                sourceLabel: t.row.label,
+                mappingMethod: mapping.method,
+              });
+            }
+          }
         }
+      } else if (t.row.label !== "") {
+        unmappedLabels.add(t.row.label);
       }
       // Parsed vs computed (only meaningful when a block precedes it and
       // M5.2 could not verify it — verified rows already proved themselves).

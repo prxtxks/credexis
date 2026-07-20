@@ -98,8 +98,10 @@ export function parsePeriodHeader(raw: string): CanonicalPeriod | null {
 
   // Month range: "Jan - Jun 2025", "January 1 - June 30, 2025",
   // "January through June 30,2025" (CPA phrasing; comma spacing varies).
+  // Separator may be a dash, "through"/"to", or (vendor line-break loss)
+  // bare whitespace — the month-name lookup rejects false matches.
   m =
-    /^([a-z]+)\.? ?(?:\d{1,2},? ?)?(?:[-–]|through|thru|to) ?([a-z]+)\.? ?(?:\d{1,2},? ?)?(\d{4})$/i.exec(
+    /^([a-z]+)\.? ?(?:\d{1,2},? ?)?(?:[-–]|through|thru|to|\s) ?([a-z]+)\.? ?(?:\d{1,2},? ?)?(\d{4})$/i.exec(
       text,
     );
   if (m?.[1] && m[2] && m[3]) {
@@ -213,10 +215,13 @@ export interface PeriodBinding {
 
 /** Period-shaped substrings inside merged title text (search, not match). */
 const PERIOD_SUBSTRING_RES = [
-  // "January through June 30,2025", "Jan 1 - Sep 30, 2025"
-  /[a-z]+\.? ?(?:\d{1,2},? ?)?(?:[-\u2013]|through|thru|to) ?[a-z]+\.? ?(?:\d{1,2},? ?)?\d{4}/gi,
-  // "As of June 30, 2025", "December 31, 2024"
-  /(?:as of )?[a-z]+\.? \d{1,2},? \d{4}/gi,
+  // "January through June 30,2025", "Jan 1 - Sep 30, 2025",
+  // "January December 2024" (vendor lost the separator to a line break)
+  /[a-z]+\.? ?(?:\d{1,2},? ?)?(?:[-\u2013]|through|thru|to|\s) ?[a-z]+\.? ?(?:\d{1,2},? ?)?\d{4}/gi,
+  // "As of June 30, 2025" — the literal "as of" is REQUIRED in search
+  // mode: bare Month-Day-Year substrings match print-date footers
+  // ("Thursday, February 6, 2025 02:13 PM") and hijack the period.
+  /as of [a-z]+\.? \d{1,2},? \d{4}/gi,
   // "TTM Jun 2025", "Trailing Twelve Months ended June 30, 2025"
   /(?:ttm|trailing twelve months)(?: ended?)? [a-z]+\.? ?(?:\d{1,2},? )?\d{4}/gi,
 ];
@@ -257,8 +262,20 @@ export function bindPeriods(grid: StatementGrid, pages: LayoutPage[] = []): Peri
   // grids — one column, one period, no guessing about order. Multi-column
   // grids with unbound columns stay null → review owns them (Iron Law #4:
   // binding is by identity, never by position).
-  if (grid.columnIds.length === 1) {
-    const col = grid.columnIds[0]!;
+  // Effective value column: label-continuation columns hold no numbers
+  // (real balance sheets often print an indent column). When exactly ONE
+  // column carries the numeric cells, the title fallback may bind it even
+  // though the grid nominally has several columns.
+  const numericByCol = new Map<number, number>();
+  for (const row of grid.rows) {
+    for (const [col, cell] of row.cells) {
+      if (/\d/.test(cell.text)) numericByCol.set(col, (numericByCol.get(col) ?? 0) + 1);
+    }
+  }
+  const numericCols = grid.columnIds.filter((c) => (numericByCol.get(c) ?? 0) >= 2);
+
+  if (grid.columnIds.length === 1 || numericCols.length === 1) {
+    const col = grid.columnIds.length === 1 ? grid.columnIds[0]! : numericCols[0]!;
     if (!byColumn.get(col)) {
       for (const p of pages.filter((p) => p.page === grid.page || p.page === 1)) {
         for (const block of p.textBlocks) {
