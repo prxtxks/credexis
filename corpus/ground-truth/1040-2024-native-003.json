@@ -1,0 +1,104 @@
+{
+  "id": "1040-2024-native-003",
+  "form_family": "1040",
+  "tax_year": 2024,
+  "entity": "guarantor",
+  "quality": "native",
+  "synthetic": false,
+  "pdf_sha256": "83f944bc59c8fd460ea337d89e8afaabeed2784cc37394b3749dc02ba16465fe",
+  "page_count": 31,
+  "labeled_by": "pratik",
+  "labeled_at": "2026-07-19T16:00:00Z",
+  "fields": [
+    {
+      "registry_field_id": "f1040.line1a",
+      "period": "FY2024",
+      "value_cents": "4200000",
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line2b",
+      "period": "FY2024",
+      "value_cents": null,
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line3b",
+      "period": "FY2024",
+      "value_cents": null,
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line4b",
+      "period": "FY2024",
+      "value_cents": null,
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line5b",
+      "period": "FY2024",
+      "value_cents": null,
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line6b",
+      "period": "FY2024",
+      "value_cents": null,
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line7",
+      "period": "FY2024",
+      "value_cents": null,
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line8",
+      "period": "FY2024",
+      "value_cents": "793800",
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line9",
+      "period": "FY2024",
+      "value_cents": "4993800",
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line10",
+      "period": "FY2024",
+      "value_cents": null,
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line11",
+      "period": "FY2024",
+      "value_cents": "4993800",
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line12",
+      "period": "FY2024",
+      "value_cents": "2190000",
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line15",
+      "period": "FY2024",
+      "value_cents": "2645000",
+      "page": 5
+    },
+    {
+      "registry_field_id": "f1040.line22",
+      "period": "FY2024",
+      "value_cents": "84600",
+      "page": 6
+    },
+    {
+      "registry_field_id": "f1040.line24",
+      "period": "FY2024",
+      "value_cents": "84600",
+      "page": 6
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+{
+  "id": "1120s-2023-scanned-001",
+  "form_family": "1120S",
+  "tax_year": 2023,
+  "entity": "target",
+  "quality": "scanned",
+  "synthetic": false,
+  "pdf_sha256": "56e7f1f37abed1b08f968c4923464cf8647f44a8d2418ea49e61648f83d479d1",
+  "page_count": 19,
+  "labeled_by": "pratik",
+  "labeled_at": "2026-07-19T16:00:00Z",
+  "fields": [
+    {
+      "registry_field_id": "f1120s.line1a",
+      "period": "FY2023",
+      "value_cents": "97744200",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line1b",
+      "period": "FY2023",
+      "value_cents": "83400",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line1c",
+      "period": "FY2023",
+      "value_cents": "97660800",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line2",
+      "period": "FY2023",
+      "value_cents": "75703400",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line3",
+      "period": "FY2023",
+      "value_cents": "21957400",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line4",
+      "period": "FY2023",
+      "value_cents": null,
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line5",
+      "period": "FY2023",
+      "value_cents": "62200",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line6",
+      "period": "FY2023",
+      "value_cents": "22019600",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line7",
+      "period": "FY2023",
+      "value_cents": "2340000",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line8",
+      "period": "FY2023",
+      "value_cents": "4322700",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line9",
+      "period": "FY2023",
+      "value_cents": "520600",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line10",
+      "period": "FY2023",
+      "value_cents": "824200",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line11",
+      "period": "FY2023",
+      "value_cents": "600000",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line12",
+      "period": "FY2023",
+      "value_cents": "6443100",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line13",
+      "period": "FY2023",
+      "value_cents": "1798500",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line14",
+      "period": "FY2023",
+      "value_cents": "205900",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line15",
+      "period": "FY2023",
+      "value_cents": null,
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line16",
+      "period": "FY2023",
+      "value_cents": "963100",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line17",
+      "period": "FY2023",
+      "value_cents": null,
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line18",
+      "period": "FY2023",
+      "value_cents": null,
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line19",
+      "period": "FY2023",
+      "value_cents": "11492100",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line20",
+      "period": "FY2023",
+      "value_cents": "29510200",
+      "page": 1
+    },
+    {
+      "registry_field_id": "f1120s.line21",
+      "period": "FY2023",
+      "value_cents": "-7490600",
+      "page": 1,
+      "note": "printed line 22 value added during registry-renumbering remap"
+    }
+  ]
+}
