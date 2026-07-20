@@ -161,11 +161,14 @@ export function buildRealExtractors(env: VendorEnv): Record<string, EvalExtracto
           apiKey: env.AZURE_DOCUMENT_INTELLIGENCE_KEY,
         })
       : null;
+  // Evals are latency-tolerant → Message Batches API (50% off) unless
+  // explicitly disabled. The live pipeline never batches.
+  const batch = process.env["EVAL_NO_BATCH"] === "1" ? null : { pollIntervalMs: 5_000 };
   const claude = env.ANTHROPIC_API_KEY
-    ? new AnthropicVisionAdapter({ apiKey: env.ANTHROPIC_API_KEY })
+    ? new AnthropicVisionAdapter({ apiKey: env.ANTHROPIC_API_KEY, batch })
     : null;
   const labelClassifier = env.ANTHROPIC_API_KEY
-    ? new AnthropicLabelClassifier({ apiKey: env.ANTHROPIC_API_KEY })
+    ? new AnthropicLabelClassifier({ apiKey: env.ANTHROPIC_API_KEY, batch })
     : null;
 
   const rows: Record<string, EvalExtractor> = {};

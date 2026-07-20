@@ -197,3 +197,47 @@ describe("AnthropicLabelClassifier (recorded response — no live calls)", () =>
     expect(out[0]?.taxonomyNodeKey).toBeNull(); // unknown key → review, not trust
   });
 });
+
+const classifyOnce = (c: AnthropicLabelClassifier) => c.classifyLabels(["Rent"], "PNL");
+
+describe("cost levers (M10.5, verified live 2026-07-20)", () => {
+  it("carries the chart-of-accounts prefix with a cache_control marker", async () => {
+    const capture: { body?: string } = {};
+    const recorded = {
+      id: "msg_cache",
+      type: "message",
+      role: "assistant",
+      model: "claude-haiku-4-5",
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            mappings: [{ label: "Rent", taxonomy_node: "is.opex.rent", confidence: 0.95 }],
+          }),
+        },
+      ],
+      stop_reason: "end_turn",
+      stop_sequence: null,
+      usage: { input_tokens: 500, output_tokens: 40 },
+    };
+    const classifier = new AnthropicLabelClassifier({
+      apiKey: "test",
+      fetch: async (_url, init) => {
+        capture.body = init?.body as string;
+        return new Response(JSON.stringify(recorded), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      },
+    });
+    await classifyOnce(classifier);
+    const body = JSON.parse(capture.body!) as {
+      system: { text: string; cache_control?: { type: string } }[];
+    };
+    expect(Array.isArray(body.system)).toBe(true);
+    const cached = body.system.at(-1)!;
+    expect(cached.cache_control).toEqual({ type: "ephemeral" });
+    expect(cached.text).toContain("Chart of accounts");
+    expect(cached.text).toContain("is.opex.royalties_franchise"); // guidance included
+  });
+});

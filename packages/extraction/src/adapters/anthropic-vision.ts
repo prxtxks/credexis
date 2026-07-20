@@ -15,6 +15,12 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import {
+  createMessageMaybeBatch,
+  BATCH_DISCOUNT_NUM,
+  BATCH_DISCOUNT_DEN,
+  type BatchOptions,
+} from "./anthropic-batch.js";
 import { z } from "zod";
 import {
   fieldCandidateSchema,
@@ -34,6 +40,8 @@ export interface AnthropicVisionConfig {
   outputMicroUsdPerMtok?: bigint;
   /** Injectable transport — contract tests pass a recorded-response fetch. */
   fetch?: typeof globalThis.fetch;
+  /** Route through the Message Batches API (50%% off, latency-tolerant callers only). */
+  batch?: BatchOptions | null;
 }
 
 const DEFAULT_MODEL = "claude-sonnet-5";
@@ -119,11 +127,13 @@ export class AnthropicVisionAdapter implements ExtractorAdapter {
   private client: Anthropic;
   private inRate: bigint;
   private outRate: bigint;
+  private batch: BatchOptions | null;
 
   constructor(cfg: AnthropicVisionConfig) {
     this.model = cfg.model ?? DEFAULT_MODEL;
     this.inRate = cfg.inputMicroUsdPerMtok ?? DEFAULT_INPUT_RATE;
     this.outRate = cfg.outputMicroUsdPerMtok ?? DEFAULT_OUTPUT_RATE;
+    this.batch = cfg.batch ?? null;
     this.client = new Anthropic({
       apiKey: cfg.apiKey,
       ...(cfg.fetch ? { fetch: cfg.fetch } : {}),
@@ -147,27 +157,41 @@ export class AnthropicVisionAdapter implements ExtractorAdapter {
       })
       .join("\n");
 
-    const response = await this.client.messages.create({
-      model: this.model,
-      max_tokens: 16000,
-      thinking: { type: "disabled" },
-      system: SYSTEM_PROMPT,
-      output_config: {
-        format: { type: "json_schema", schema: RESPONSE_JSON_SCHEMA },
-      },
-      messages: [
-        {
-          role: "user",
-          content: [
-            mediaBlock(doc),
-            {
-              type: "text",
-              text: `Locate and transcribe these fields. Return one candidate per requested field id (value_text null when absent):\n${fieldList}`,
-            },
-          ],
+    // Field definitions are identical for every document of a (family,
+    // year) — a cacheable prefix. The variable document follows in the
+    // user turn, so cache hits cover instructions + field list + schema.
+    const { message: response } = await createMessageMaybeBatch(
+      this.client,
+      {
+        model: this.model,
+        max_tokens: 16000,
+        thinking: { type: "disabled" },
+        system: [
+          { type: "text", text: SYSTEM_PROMPT },
+          {
+            type: "text",
+            text: `Fields to locate (one candidate per field id; value_text null when absent):\n${fieldList}`,
+            cache_control: { type: "ephemeral" },
+          },
+        ],
+        output_config: {
+          format: { type: "json_schema", schema: RESPONSE_JSON_SCHEMA },
         },
-      ],
-    });
+        messages: [
+          {
+            role: "user",
+            content: [
+              mediaBlock(doc),
+              {
+                type: "text",
+                text: "Locate and transcribe the requested fields in this document.",
+              },
+            ],
+          },
+        ],
+      },
+      this.batch,
+    );
 
     if (response.stop_reason === "refusal") {
       throw new Error("anthropic-vision: request refused by safety classifiers");
@@ -202,7 +226,11 @@ export class AnthropicVisionAdapter implements ExtractorAdapter {
         vendorVersion: this.version,
         model: response.model,
         pageCount: doc.pageCount ?? 1,
-        costMicroUsd: (inTokens * this.inRate + outTokens * this.outRate) / 1_000_000n,
+        costMicroUsd:
+          ((inTokens * this.inRate + outTokens * this.outRate) *
+            (this.batch ? BATCH_DISCOUNT_NUM : 1n)) /
+          (this.batch ? BATCH_DISCOUNT_DEN : 1n) /
+          1_000_000n,
       },
     };
   }
