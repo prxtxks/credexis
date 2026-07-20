@@ -1,7 +1,49 @@
 {
   "version": 1,
-  "updated_at": "2026-07-19T22:35:16.776Z",
+  "updated_at": "2026-07-20T06:12:53.905Z",
   "documents": [
+    {
+      "id": "1040-2024-native-001",
+      "ground_truth_path": "ground-truth/1040-2024-native-001.json",
+      "pdf_sha256": "e5d4cdc40ad7d94f7edf17e1c87a9d143dece39c70538cd41967de9ab7b53cbc",
+      "pdf_bytes": 307185,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "1040-2024-native-002",
+      "ground_truth_path": "ground-truth/1040-2024-native-002.json",
+      "pdf_sha256": "ee706019afd41926140934a6acd940f799038982785de2750ee89ece3e439298",
+      "pdf_bytes": 1945019,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "1040-2024-native-003",
+      "ground_truth_path": "ground-truth/1040-2024-native-003.json",
+      "pdf_sha256": "83f944bc59c8fd460ea337d89e8afaabeed2784cc37394b3749dc02ba16465fe",
+      "pdf_bytes": 132315,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "1120s-2023-native-001",
+      "ground_truth_path": "ground-truth/1120s-2023-native-001.json",
+      "pdf_sha256": "90be8dba78aaea3a69dc6fcebdfa024e4f6a6710a7f63a368501f7014214d67b",
+      "pdf_bytes": 695243,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "1120s-2023-scanned-001",
+      "ground_truth_path": "ground-truth/1120s-2023-scanned-001.json",
+      "pdf_sha256": "56e7f1f37abed1b08f968c4923464cf8647f44a8d2418ea49e61648f83d479d1",
+      "pdf_bytes": 1538330,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "1120s-2024-native-001",
+      "ground_truth_path": "ground-truth/1120s-2024-native-001.json",
+      "pdf_sha256": "463edecaab52c5cdaabeee6ebf352b599c8c54cace29b31a8ec3a50b0c96ca1e",
+      "pdf_bytes": 855720,
+      "pdf_bucket_key": null
+    },
     {
       "id": "bs-monthly-native-001",
       "ground_truth_path": "ground-truth/bs-monthly-native-001.json",
