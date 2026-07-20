@@ -33,6 +33,12 @@ export const registryFieldSchema = z.object({
   sign: z.union([z.literal(1), z.literal(-1)]).default(1),
   /** IRS money fields with a separate cents box. */
   hasCentsBox: z.boolean().default(false),
+  /**
+   * Location/disambiguation guidance relayed verbatim to extraction
+   * vendors (e.g. "the adjacent box 17 amount is NOT this field").
+   * Guidance about WHERE a value lives — never about what it should be.
+   */
+  hint: z.string().nullable().default(null),
   /** Canonical taxonomy node this line maps to (fact writing, M4.5). */
   taxonomyNodeKey: z.string().nullable().default(null),
 });

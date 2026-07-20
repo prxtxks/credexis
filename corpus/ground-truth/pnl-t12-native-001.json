@@ -1,0 +1,231 @@
+{
+  "id": "pnl-t12-native-001",
+  "form_family": "PNL",
+  "tax_year": null,
+  "entity": "target",
+  "quality": "native",
+  "synthetic": false,
+  "pdf_sha256": "3c4c2ce287806409909b12ab35bb6e7e7a6e1232008381df72eeb22e0bf272dc",
+  "page_count": 2,
+  "labeled_by": "pratik + claude (AI draft, human number-verified 2026-07-20)",
+  "labeled_at": "2026-07-20T17:00:00Z",
+  "fields": [
+    {
+      "taxonomy_node": "is.revenue.rental_income",
+      "period": "TTM2025-09",
+      "value_cents": "70313470",
+      "page": 1,
+      "note": "ROOM RENTAL (hotel room revenue — no dedicated node)"
+    },
+    {
+      "taxonomy_node": "is.revenue.other",
+      "period": "TTM2025-09",
+      "value_cents": "1195661",
+      "page": 1,
+      "note": "MISC. INCOME"
+    },
+    {
+      "taxonomy_node": "is.revenue.total",
+      "period": "TTM2025-09",
+      "value_cents": "71509131",
+      "page": 1,
+      "note": "Total Sales"
+    },
+    {
+      "taxonomy_node": "is.gross_profit",
+      "period": "TTM2025-09",
+      "value_cents": "71509131",
+      "page": 1,
+      "note": "Gross Profit (no COGS)"
+    },
+    {
+      "taxonomy_node": "is.opex.marketing_advertising",
+      "period": "TTM2025-09",
+      "value_cents": "12711",
+      "page": 1,
+      "note": "ADVERTISING"
+    },
+    {
+      "taxonomy_node": "is.opex.amortization",
+      "period": "TTM2025-09",
+      "value_cents": "857196",
+      "page": 1,
+      "note": "AMORTIZATION EXPENSE"
+    },
+    {
+      "taxonomy_node": "is.opex.bank_charges",
+      "period": "TTM2025-09",
+      "value_cents": "273142",
+      "page": 1,
+      "note": "BANK CHARGES"
+    },
+    {
+      "taxonomy_node": "is.opex.merchant_fees",
+      "period": "TTM2025-09",
+      "value_cents": "2152148",
+      "page": 1,
+      "note": "CREDIT CARD FEES"
+    },
+    {
+      "taxonomy_node": "is.opex.depreciation",
+      "period": "TTM2025-09",
+      "value_cents": "8174604",
+      "page": 1,
+      "note": "DEPRECIATION"
+    },
+    {
+      "taxonomy_node": "is.opex.dues_subscriptions",
+      "period": "TTM2025-09",
+      "value_cents": "141600",
+      "page": 1,
+      "note": "DUES & SUBSCRIPTIONS"
+    },
+    {
+      "taxonomy_node": "is.opex.royalties_franchise",
+      "period": "TTM2025-09",
+      "value_cents": "11907211",
+      "page": 1,
+      "note": "FRANCHISE FEE EXPENSE"
+    },
+    {
+      "taxonomy_node": "is.opex.insurance",
+      "period": "TTM2025-09",
+      "value_cents": "4544582",
+      "page": 1,
+      "note": "INSURANCE"
+    },
+    {
+      "taxonomy_node": "is.opex.professional_fees",
+      "period": "TTM2025-09",
+      "value_cents": "1686551",
+      "page": 1,
+      "note": "LEGAL & ACCOUNTING — JUDGMENT CALL (combined)"
+    },
+    {
+      "taxonomy_node": "is.opex.licenses_permits",
+      "period": "TTM2025-09",
+      "value_cents": "37500",
+      "page": 1,
+      "note": "LICENSES, PERMITS & FEES"
+    },
+    {
+      "taxonomy_node": "is.opex.repairs_maintenance",
+      "period": "TTM2025-09",
+      "value_cents": "3886925",
+      "page": 1,
+      "note": "MAINTENANCE & REPAIRS"
+    },
+    {
+      "taxonomy_node": "is.opex.office_expense",
+      "period": "TTM2025-09",
+      "value_cents": "372088",
+      "page": 1,
+      "note": "OFFICE EXPENSE"
+    },
+    {
+      "taxonomy_node": "is.opex.salaries_wages",
+      "period": "TTM2025-09",
+      "value_cents": "13224333",
+      "page": 1,
+      "note": "SALARIES (officer 23,660.54 + manager 33,761.66 broken out in Add-Backs)"
+    },
+    {
+      "taxonomy_node": "is.opex.security",
+      "period": "TTM2025-09",
+      "value_cents": "538500",
+      "page": 1,
+      "note": "SECURITY"
+    },
+    {
+      "taxonomy_node": "is.opex.supplies",
+      "period": "TTM2025-09",
+      "value_cents": "2475828",
+      "page": 1,
+      "note": "OPERATING SUPPLIES"
+    },
+    {
+      "taxonomy_node": "is.opex.other_taxes",
+      "period": "TTM2025-09",
+      "value_cents": "149559",
+      "page": 1,
+      "note": "TAXES - GENERAL (was mis-drafted as 269.39 = the Sales Tax Discounts figure; caught in review prep — math now closes exactly)"
+    },
+    {
+      "taxonomy_node": "is.opex.payroll_taxes",
+      "period": "TTM2025-09",
+      "value_cents": "1080965",
+      "page": 1,
+      "note": "TAXES - PAYROLL"
+    },
+    {
+      "taxonomy_node": "is.opex.telephone_internet",
+      "period": "TTM2025-09",
+      "value_cents": "68277",
+      "page": 1,
+      "note": "TELEPHONE-CELL PHONE"
+    },
+    {
+      "taxonomy_node": "is.opex.training",
+      "period": "TTM2025-09",
+      "value_cents": "79208",
+      "page": 1,
+      "note": "TRAINING & SEMINARS"
+    },
+    {
+      "taxonomy_node": "is.opex.commissions_paid",
+      "period": "TTM2025-09",
+      "value_cents": "1732262",
+      "page": 1,
+      "note": "TRAVEL AGENT FEES — JUDGMENT CALL (OTA commissions)"
+    },
+    {
+      "taxonomy_node": "is.opex.utilities",
+      "period": "TTM2025-09",
+      "value_cents": "10645034",
+      "page": 1,
+      "note": "UTILITIES"
+    },
+    {
+      "taxonomy_node": "is.opex.total",
+      "period": "TTM2025-09",
+      "value_cents": "64040224",
+      "page": 1,
+      "note": "Total Operating Expenses"
+    },
+    {
+      "taxonomy_node": "is.operating_income",
+      "period": "TTM2025-09",
+      "value_cents": "7468907",
+      "page": 1,
+      "note": "Operating Income (Loss)"
+    },
+    {
+      "taxonomy_node": "is.other.other_income",
+      "period": "TTM2025-09",
+      "value_cents": "26939",
+      "page": 1,
+      "note": "SALES TAX DISCOUNTS — Other Income (Expenses) section"
+    },
+    {
+      "taxonomy_node": "is.other.interest_income",
+      "period": "TTM2025-09",
+      "value_cents": "9",
+      "page": 1,
+      "note": "INTEREST REVENUE 0.09"
+    },
+    {
+      "taxonomy_node": "is.other.interest_expense",
+      "period": "TTM2025-09",
+      "value_cents": "-23937440",
+      "page": 1,
+      "note": "INTEREST EXPENSE (239,374.40) — Other Income (Expenses) section"
+    },
+    {
+      "taxonomy_node": "is.net_income",
+      "period": "TTM2025-09",
+      "value_cents": "-16441585",
+      "page": 1,
+      "note": "Net Income (Loss) (164,415.85)"
+    }
+  ]
+}

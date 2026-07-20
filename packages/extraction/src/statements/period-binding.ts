@@ -121,6 +121,28 @@ export function parsePeriodHeader(raw: string): CanonicalPeriod | null {
     }
   }
 
+  // Same-month day range: "April 1-30, 2025" (QuickBooks custom-range
+  // reports). A full-month span collapses to the plain month period;
+  // a partial span keeps its exact dates — never rounded to a month.
+  m = /^([a-z]+)\.? (\d{1,2})\s?[-–]\s?(\d{1,2}),? (\d{4})$/i.exec(text);
+  if (m?.[1] && m[2] && m[3] && m[4]) {
+    const mm = month(m[1]);
+    const d1 = Number(m[2]);
+    const d2 = Number(m[3]);
+    const y = Number(m[4]);
+    if (mm !== null && d1 >= 1 && d2 >= d1 && d2 <= eom(y, mm)) {
+      const full = d1 === 1 && d2 === eom(y, mm);
+      return {
+        kind: "interim",
+        startDate: iso(y, mm, d1),
+        endDate: iso(y, mm, d2),
+        label: full
+          ? `${y}-${String(mm).padStart(2, "0")}`
+          : `${iso(y, mm, d1)}..${iso(y, mm, d2)}`,
+      };
+    }
+  }
+
   // Single month: "Jan 2025", "January 2025"
   m = /^([a-z]+)\.? (\d{4})$/i.exec(text);
   if (m?.[1] && m[2]) {
@@ -224,6 +246,16 @@ const PERIOD_SUBSTRING_RES = [
   /as of [a-z]+\.? \d{1,2},? \d{4}/gi,
   // "TTM Jun 2025", "Trailing Twelve Months ended June 30, 2025"
   /(?:ttm|trailing twelve months)(?: ended?)? [a-z]+\.? ?(?:\d{1,2},? )?\d{4}/gi,
+  // "April 1-30, 2025" — same-month day ranges (QuickBooks custom-range
+  // reports; the actual Travelodge title format). Print-date footers
+  // ("Monday, September 29, 2025") carry no day-range dash → no match.
+  /\b[a-z]+\.? \d{1,2} ?[-–] ?\d{1,2},? \d{4}\b/gi,
+  // "April 2025" — bare single-month titles (Travelodge scorecard skip,
+  // 2026-07-20). LAST so a range's embedded month-year ("January
+  // December 2024") never wins over the range itself. Print-date
+  // footers stay safe: they interpose a day ("February 6, 2025"), and
+  // the month-name lookup in parsePeriodHeader rejects non-months.
+  /\b[a-z]+\.? \d{4}\b/gi,
 ];
 
 export function findPeriodInText(text: string): CanonicalPeriod | null {
