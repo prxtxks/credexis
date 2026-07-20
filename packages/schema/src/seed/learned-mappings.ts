@@ -97,6 +97,7 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "INTEREST REVENUE", node: "is.other.interest_income" },
   { label: "Other Income", node: "is.other.other_income" },
   { label: "Total Other Income", node: "is.other.other_income" },
+  { label: "SALES TAX DISCOUNTS", node: "is.other.other_income" },
   { label: "Net Ordinary Income", node: "is.operating_income" },
   { label: "Net Operating Income", node: "is.operating_income" },
   { label: "Operating Income (Loss)", node: "is.operating_income" },
