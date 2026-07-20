@@ -18,6 +18,8 @@
     "clean": "rm -rf dist .turbo *.tsbuildinfo"
   },
   "dependencies": {
+    "@credexis/extraction": "workspace:*",
+    "@credexis/pipeline": "workspace:*",
     "@credexis/schema": "workspace:*"
   },
   "devDependencies": {

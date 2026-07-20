@@ -18,6 +18,7 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { loadCorpus } from "./corpus.js";
 import { MOCK_EXTRACTORS } from "./mock-extractors.js";
+import { buildRealExtractors, canonPeriod } from "./real-extractors.js";
 import {
   findRegressions,
   toBaselineMetrics,
@@ -47,6 +48,7 @@ function repoRoot(): string {
 
 async function main(): Promise<void> {
   const root = repoRoot();
+  if (process.argv.includes("--bake-off")) return bakeOff(root);
   const extractorName = arg("--extractor") ?? process.env["EVAL_EXTRACTOR"] ?? "perfect";
   const extractor = MOCK_EXTRACTORS[extractorName];
   if (!extractor) throw new Error(`unknown extractor "${extractorName}" (perfect|noisy)`);
@@ -105,6 +107,84 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   console.log("  no regression vs eval-baseline.json");
+}
+
+/**
+ * M3.4 vendor bake-off: every REAL extractor over the REAL corpus, live
+ * vendor calls (RUN_LIVE_VENDOR_TESTS=1 required — this costs money).
+ * Produces eval-output/bake-off-report.md; never touches the CI baseline.
+ */
+async function bakeOff(root: string): Promise<void> {
+  if (process.env["RUN_LIVE_VENDOR_TESTS"] !== "1") {
+    throw new Error("--bake-off makes LIVE vendor calls; set RUN_LIVE_VENDOR_TESTS=1");
+  }
+  const rows = buildRealExtractors({
+    REDUCTO_API_KEY: process.env["REDUCTO_API_KEY"],
+    AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT: process.env["AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"],
+    AZURE_DOCUMENT_INTELLIGENCE_KEY: process.env["AZURE_DOCUMENT_INTELLIGENCE_KEY"],
+    ANTHROPIC_API_KEY: process.env["ANTHROPIC_API_KEY"],
+  });
+  const only = arg("--only");
+  const corpusDir = resolve(root, arg("--corpus-dir") ?? "corpus");
+  const limit = arg("--limit") ? Number(arg("--limit")) : Infinity;
+  const docs = (await loadCorpus(corpusDir))
+    .filter((d) => !d.groundTruth.synthetic && d.pdfPath !== null)
+    .slice(0, limit === Infinity ? undefined : limit);
+  // Period display suffixes are canonicalized on BOTH sides (formatting
+  // only; values untouched — Iron Law #9).
+  const canonDocs = docs.map((d) => ({
+    ...d,
+    groundTruth: {
+      ...d.groundTruth,
+      fields: d.groundTruth.fields.map((f) => ({ ...f, period: canonPeriod(f.period) })),
+    },
+  }));
+
+  const sections: string[] = [];
+  const summaryLines: string[] = [
+    "| Extractor | Docs | Fields | Precision | Recall | Auto-accept prec | Silent wrong | Cost |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- |",
+  ];
+  for (const [key, extractor] of Object.entries(rows)) {
+    if (only && key !== only) continue;
+    console.log(`bake-off: running ${key} over ${canonDocs.length} docs…`);
+    const scores = [];
+    for (const doc of canonDocs) {
+      try {
+        const result = await extractor.extract(doc);
+        if (result.fields.length === 0) {
+          console.log(`  ${doc.groundTruth.id}: unsupported/empty — skipped`);
+          continue;
+        }
+        scores.push(scoreDocument(doc.groundTruth, result));
+        console.log(`  ${doc.groundTruth.id}: ${result.fields.length} fields`);
+      } catch (e) {
+        console.log(`  ${doc.groundTruth.id}: ERROR ${String((e as Error).message).slice(0, 120)}`);
+      }
+    }
+    if (scores.length === 0) continue;
+    const s = summarize(scores);
+    const pct = (x: number | null) => (x === null ? "—" : `${(x * 100).toFixed(2)}%`);
+    const usd = (m: bigint) => `$${(Number(m) / 1e6).toFixed(2)}`;
+    summaryLines.push(
+      `| ${extractor.name} | ${scores.length} | ${s.ground_truth_fields} | ${pct(s.field_precision)} | ${pct(s.field_recall)} | ${pct(s.auto_accept_precision)} | ${s.silent_wrong_count} | ${usd(s.cost_micro_usd_total)} |`,
+    );
+    sections.push(
+      `## ${extractor.name}\n\n${toMarkdown({
+        version: 1,
+        generated_at: new Date().toISOString(),
+        extractor: `${extractor.name}@${extractor.version}`,
+        real: s,
+        synthetic_harness_check: null,
+      })}`,
+    );
+  }
+
+  const outDir = join(root, "eval-output");
+  await mkdir(outDir, { recursive: true });
+  const md = `# Vendor bake-off (M3.4) — real corpus, live calls\n\nGenerated ${new Date().toISOString()}\n\n${summaryLines.join("\n")}\n\n${sections.join("\n\n")}\n`;
+  await writeFile(join(outDir, "bake-off-report.md"), md, "utf8");
+  console.log("bake-off report → eval-output/bake-off-report.md");
 }
 
 main().catch((err: unknown) => {
