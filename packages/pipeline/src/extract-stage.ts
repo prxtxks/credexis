@@ -45,7 +45,8 @@ export interface FactInsert {
   deal_id: string;
   entity_id: string;
   period_id: string;
-  taxonomy_node_key: string;
+  /** Null for registry-only facts (derived tax lines — AGI, taxable income). */
+  taxonomy_node_key: string | null;
   registry_field_id: string | null;
   value_cents: string;
   source_logical_document_id: string;
@@ -328,8 +329,10 @@ async function extractTaxForm(
     if (!score || score.decision === "reject") continue;
     const value = f.valueCents ?? f.path1?.cents ?? f.path2?.cents ?? null;
     if (value === null) continue; // both paths read "absent" — no fact (null-vs-zero)
+    // Derived lines (AGI, taxable income) have no taxonomy placement by
+    // design — they insert as registry-only facts (null taxonomy) so G4/G5
+    // and the Tax Spread see them; statement aggregation never does.
     const taxonomyNodeKey = fieldById.get(f.fieldId)?.taxonomyNodeKey ?? null;
-    if (!taxonomyNodeKey) continue; // registry rows without placement feed G4/G5 later
     rows.push({
       tenant_id: input.tenantId,
       deal_id: input.dealId,

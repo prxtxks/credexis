@@ -15,6 +15,7 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import { trpc } from "@/lib/trpc/client";
 import { MetricsStrip } from "@/components/workspace/metrics-strip";
 import { SpreadGrid, type CellSelection } from "@/components/workspace/spread-grid";
+import { TaxSpreadGrid } from "@/components/workspace/tax-spread-grid";
 import { SourceViewer } from "@/components/workspace/source-viewer";
 import { IssuesPanel } from "@/components/workspace/issues-panel";
 import { ScenarioInspector } from "@/components/workspace/scenario-inspector";
@@ -261,10 +262,15 @@ function WorkspaceInner() {
                   setInspectorTab("source");
                 }}
               />
-            ) : tab === "tax" ? (
-              <div className="glass-card flex h-full items-center justify-center text-sm text-ink-muted dark:text-ink-dark-muted">
-                Tax spread — registry-line rows render here once extraction runs land facts.
-              </div>
+            ) : tab === "tax" && entityId ? (
+              <TaxSpreadGrid
+                dealId={dealId}
+                entityId={entityId}
+                onSelectCell={(sel) => {
+                  setSelection(sel);
+                  setInspectorTab("source");
+                }}
+              />
             ) : tab === "proforma" ? (
               <div className="glass-card flex h-full items-center justify-center text-sm text-ink-muted dark:text-ink-dark-muted">
                 Pro-forma — post-acquisition projection view (scenario-driven, M8.6+).

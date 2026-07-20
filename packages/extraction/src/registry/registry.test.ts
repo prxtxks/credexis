@@ -3,6 +3,7 @@ import { TAXONOMY_V1 } from "@credexis/schema";
 import {
   getRegistryEntry,
   listRegistryEntries,
+  registryGateSpecs,
   REGISTRY_DEFINITIONS,
   REGISTRY_TAX_YEARS,
   toFieldRequests,
@@ -97,6 +98,38 @@ describe("toFieldRequests bridge (registry → ExtractorAdapter)", () => {
       label: "Depreciation not claimed elsewhere",
     });
     expect(line14?.aliases).toContain("Depreciation (attach Form 4562)");
+  });
+});
+
+describe("registryGateSpecs (gate wiring: M6.1 G4 ← M4.1 data)", () => {
+  /** bigint-safe canonical serialization for content comparison. */
+  const canon = (v: unknown) =>
+    JSON.stringify(v, (_k, val: unknown) => (typeof val === "bigint" ? `${val}n` : val));
+
+  it("returns each relation and flow exactly once (id-deduped across years)", () => {
+    const { relations, flows } = registryGateSpecs();
+    expect(new Set(relations.map((r) => r.id)).size).toBe(relations.length);
+    expect(new Set(flows.map((f) => f.id)).size).toBe(flows.length);
+    // The flagship examples survive the dedup.
+    expect(relations.some((r) => r.id === "1040.agi")).toBe(true);
+    expect(flows.some((f) => f.id === "4562.to_1120s")).toBe(true);
+  });
+
+  it("no relation/flow id carries divergent content across tax years (dedup precondition)", () => {
+    // first-wins dedup is only sound while every year agrees. A year
+    // override that rewrites a relation must fail HERE, not silently apply
+    // one year's arithmetic to another year's facts.
+    const seen = new Map<string, string>();
+    for (const entry of listRegistryEntries()) {
+      for (const spec of [...entry.relations, ...entry.flows]) {
+        const body = canon(spec);
+        const prior = seen.get(spec.id);
+        if (prior !== undefined) {
+          expect(body, `divergent content for ${spec.id}`).toBe(prior);
+        }
+        seen.set(spec.id, body);
+      }
+    }
   });
 });
 

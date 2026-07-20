@@ -8,7 +8,13 @@
  */
 
 import type { FormFamily } from "@credexis/schema";
-import { registryEntrySchema, type FormDefinition, type RegistryEntry } from "./types.js";
+import {
+  registryEntrySchema,
+  type CrossFormFlow,
+  type FormDefinition,
+  type InFormRelation,
+  type RegistryEntry,
+} from "./types.js";
 import type { FieldRequest } from "../types.js";
 import { F1120, F1120S, F1065 } from "./data/business-returns.js";
 import { F1040, F1040_SCH_1, F1040_SCH_C, F1040_SCH_E } from "./data/personal-returns.js";
@@ -72,6 +78,24 @@ export function getRegistryEntry(formFamily: FormFamily, taxYear: number): Regis
 
 export function listRegistryEntries(): RegistryEntry[] {
   return [...registry().values()];
+}
+
+/**
+ * Gate wiring (M6.1 G4 ← M4.1 data): every registry relation and cross-form
+ * flow as one flat, id-deduped list — the data shape the engine's GateConfig
+ * consumes. Ids repeat across tax years (2023–2025 share definitions);
+ * first-wins is safe ONLY while no year override rewrites a relation — the
+ * registry test pins that invariant, so a divergent override fails CI and
+ * forces period-aware gate config instead of silently mixing years.
+ */
+export function registryGateSpecs(): { relations: InFormRelation[]; flows: CrossFormFlow[] } {
+  const relations = new Map<string, InFormRelation>();
+  const flows = new Map<string, CrossFormFlow>();
+  for (const entry of listRegistryEntries()) {
+    for (const rel of entry.relations) if (!relations.has(rel.id)) relations.set(rel.id, rel);
+    for (const flow of entry.flows) if (!flows.has(flow.id)) flows.set(flow.id, flow);
+  }
+  return { relations: [...relations.values()], flows: [...flows.values()] };
 }
 
 /** Bridge into the ExtractorAdapter contract (M3.3) — M4.2/M4.3 use this. */

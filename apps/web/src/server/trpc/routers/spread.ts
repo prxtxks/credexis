@@ -6,6 +6,7 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { listRegistryEntries } from "@credexis/extraction";
 import { protectedProcedure, router, underwriterProcedure } from "../init";
 import {
   assembleSpread,
@@ -13,6 +14,7 @@ import {
   type SpreadFactRow,
   type TaxonomyNodeRow,
 } from "../../spread/logic";
+import { assembleTaxSpread, type RegistryRowMeta, type TaxFactRow } from "../../spread/tax-logic";
 
 /** Tab → taxonomy key prefix. Tax/Pro-Forma tabs read other sources. */
 const STATEMENT_PREFIX: Record<string, string> = {
@@ -21,6 +23,28 @@ const STATEMENT_PREFIX: Record<string, string> = {
   gcf: "pcf",
   debt: "debt",
 };
+
+/**
+ * Registry rows for the Tax Spread. The latest tax year wins a field's
+ * display identity (line numbers can drift across years — the id is the
+ * identity); family order and field order follow the registry data files.
+ */
+function registryRowMeta(): RegistryRowMeta[] {
+  const latestByFamily = new Map<string, ReturnType<typeof listRegistryEntries>[number]>();
+  for (const entry of listRegistryEntries()) {
+    const cur = latestByFamily.get(entry.formFamily);
+    if (!cur || entry.taxYear > cur.taxYear) latestByFamily.set(entry.formFamily, entry);
+  }
+  return [...latestByFamily.values()].flatMap((entry) =>
+    entry.fields.map((f) => ({
+      fieldId: f.fieldId,
+      formFamily: entry.formFamily,
+      lineNumber: f.lineNumber,
+      label: f.label,
+      taxonomyNodeKey: f.taxonomyNodeKey,
+    })),
+  );
+}
 
 export const spreadRouter = router({
   forDeal: protectedProcedure
@@ -96,6 +120,41 @@ export const spreadRouter = router({
         }));
 
       return { periods, rows, computed };
+    }),
+
+  /**
+   * Tax Spread (M8.3 tax tab, ADR-0002 follow-up): registry-keyed rows per
+   * form family — the only spread that can show registry-only facts
+   * (derived lines like AGI that carry no taxonomy placement).
+   */
+  taxForDeal: protectedProcedure
+    .input(z.object({ dealId: z.string().uuid(), entityId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const factsRes = await ctx.supabase
+        .from("facts")
+        .select(
+          "id, registry_field_id, taxonomy_node_key, value_cents, method, status, confidence, source_page, source_logical_document_id, periods(label)",
+        )
+        .eq("deal_id", input.dealId)
+        .eq("entity_id", input.entityId)
+        .not("registry_field_id", "is", null);
+      if (factsRes.error)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: factsRes.error.message });
+
+      const facts: TaxFactRow[] = (factsRes.data ?? []).map((f) => ({
+        id: f.id as string,
+        registryFieldId: f.registry_field_id as string,
+        taxonomyNodeKey: (f.taxonomy_node_key as string | null) ?? null,
+        periodLabel: (f.periods as unknown as { label: string } | null)?.label ?? "(unknown)",
+        valueCents: String(f.value_cents),
+        method: f.method as string,
+        status: f.status as string,
+        confidence: (f.confidence as number | null) ?? null,
+        sourcePage: (f.source_page as number | null) ?? null,
+        sourceLogicalDocumentId: (f.source_logical_document_id as string | null) ?? null,
+      }));
+
+      return assembleTaxSpread(registryRowMeta(), facts);
     }),
 
   /**

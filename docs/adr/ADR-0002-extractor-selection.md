@@ -92,7 +92,7 @@ Field-level diagnosis on sliced pages: Reducto alone found **every**
 labeled 1040/1120-S value with zero errors — the residual recall gap is
 now the fact model, not the engines: derived lines (AGI, taxable income)
 deliberately carry no taxonomy link and are dropped after extraction
-(follow-up task: registry-only facts). The P&L precision number (37%) is
+(follow-up task: registry-only facts — since landed as M4.8). The P&L precision number (37%) is
 dominated by one column-per-month statement scored against FY-total
 labels — a period-granularity representation question; all its wrongs
 routed to review (nothing silent). Multi-column balance sheets remain
