@@ -1,7 +1,28 @@
 {
   "version": 1,
-  "updated_at": "2026-07-11T15:06:12.848Z",
+  "updated_at": "2026-07-19T22:35:16.776Z",
   "documents": [
+    {
+      "id": "bs-monthly-native-001",
+      "ground_truth_path": "ground-truth/bs-monthly-native-001.json",
+      "pdf_sha256": "48ce4a172e977fe6e6ca4b1f87f8957662dad097250bb120bef44106112cdf7a",
+      "pdf_bytes": 59413,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "pnl-annual-native-001",
+      "ground_truth_path": "ground-truth/pnl-annual-native-001.json",
+      "pdf_sha256": "472a2240807855cb687a100c8af6d57a417264cfeef190020b6e77b94dee15ad",
+      "pdf_bytes": 41954,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "pnl-halfyear-native-001",
+      "ground_truth_path": "ground-truth/pnl-halfyear-native-001.json",
+      "pdf_sha256": "89c3b5472808d2d3ee155df006c7c75886d76f484c153dedcbb3c240e7b3e547",
+      "pdf_bytes": 143380,
+      "pdf_bucket_key": null
+    },
     {
       "id": "synthetic-1040-2024-001",
       "ground_truth_path": "ground-truth/synthetic-1040-2024-001.json",

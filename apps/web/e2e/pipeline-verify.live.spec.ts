@@ -28,6 +28,10 @@ const uploaderPassword = `pw-${crypto.randomUUID()}`;
 let uploaderId: string | null = null;
 
 const CLEANUP = `
+  delete from public.computed_metrics where deal_id = '${T.dealId}';
+  delete from public.issues where deal_id = '${T.dealId}';
+  delete from public.facts where deal_id = '${T.dealId}';
+  delete from public.periods where tenant_id = '${T.tenantId}';
   delete from public.extraction_runs where deal_id = '${T.dealId}';
   delete from public.pages where tenant_id = '${T.tenantId}';
   delete from public.logical_documents where tenant_id = '${T.tenantId}';
@@ -84,7 +88,7 @@ test.describe("M3.1 deployed pipeline (live)", () => {
   });
 
   test("real 25-page return: upload → deployed task → processed + split", async ({ page }) => {
-    test.setTimeout(360_000);
+    test.setTimeout(900_000);
 
     await page.goto("/login");
     await page.getByLabel("Email").fill(uploaderEmail);
@@ -131,11 +135,43 @@ test.describe("M3.1 deployed pipeline (live)", () => {
       where deal_id = '${T.dealId}' order by started_at;
     `);
     const runRows = runs.body as { stage: string; status: string; page_count: number | null }[];
-    expect(runRows.map((r) => [r.stage, r.status])).toEqual([
+    // Extraction (M4.5) appends its own rows behind these — assert the
+    // ingest stages specifically, not the whole list.
+    const ingestRuns = runRows.filter((r) => r.stage === "ingest" || r.stage === "split_classify");
+    expect(ingestRuns.map((r) => [r.stage, r.status])).toEqual([
       ["ingest", "succeeded"],
       ["split_classify", "succeeded"],
     ]);
-    expect(runRows[1]!.page_count).toBe(25);
+    expect(ingestRuns[1]!.page_count).toBe(25);
+
+    // Extraction stage (M4.5): facts landed from the real return, with
+    // registry lineage. Both vendor paths ran live — poll generously.
+    await expect
+      .poll(
+        async () => {
+          const res = await runSql(
+            `select count(*)::int as n from public.facts where deal_id = '${T.dealId}';`,
+          );
+          return (res.body as { n: number }[])[0]?.n ?? 0;
+        },
+        { message: "no facts extracted", timeout: 480_000, intervals: [15_000] },
+      )
+      .toBeGreaterThan(3);
+
+    const factsRes = await runSql(`
+      select registry_field_id, method, status, count(*)::int as n
+      from public.facts where deal_id = '${T.dealId}'
+      group by registry_field_id, method, status order by registry_field_id limit 50;
+    `);
+    const factRows = factsRes.body as { registry_field_id: string | null; method: string }[];
+    expect(factRows.some((f) => f.registry_field_id?.startsWith("f1120s."))).toBe(true);
+
+    const runsRes2 = await runSql(`
+      select stage, status from public.extraction_runs
+      where deal_id = '${T.dealId}' and stage like 'extract%';
+    `);
+    const extractRuns = runsRes2.body as { stage: string; status: string }[];
+    expect(extractRuns.length).toBeGreaterThanOrEqual(2); // both paths recorded
 
     // And the UI shows the outcome (stage chips + processed status).
     await page.reload();

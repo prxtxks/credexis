@@ -96,10 +96,14 @@ describe("scoreDocument", () => {
     expect(s.missed).toBe(3);
   });
 
-  it("counts duplicate extractions of one field as spurious", () => {
+  it("a double-emitted line aggregates — the inflated sum scores WRONG", () => {
+    // Aggregation semantics (2026-07-19): same-identity extractions sum;
+    // emitting one line twice inflates the value and is caught as wrong
+    // (silent when fully auto-accepted), not waved through as spurious.
     const s = scoreDocument(gt, result([ex("line1", 100n), ex("line1", 100n)]));
-    expect(s.correct).toBe(1);
-    expect(s.spurious).toBe(1);
+    expect(s.correct).toBe(0);
+    expect(s.wrong).toBe(1);
+    expect(s.silent_wrong).toBe(1);
   });
 
   it("carries document cost through", () => {
@@ -140,5 +144,28 @@ describe("summarize", () => {
     const m = summarize([scoreDocument(gt, result([ex("line1", 100n), ex("line2", 200n)]))]);
     expect(m.per_form["1120S"]?.precision).toBe(1);
     expect(m.per_quality["native"]?.fields).toBe(2);
+  });
+});
+
+describe("same-key aggregation (real-corpus finding, 2026-07-19)", () => {
+  // Two printed lines mapping to one identity ("Pest Control" + "Trash
+  // Removal" both → is.opex.misc): the identity's truth is their sum.
+  const gt = gtDoc([
+    { id: "is.opex.misc", cents: "16500" },
+    { id: "is.opex.misc", cents: "146500" },
+  ]);
+
+  it("duplicate-key lines score as their sum — not spurious/silent-wrong", () => {
+    const s = scoreDocument(gt, result([ex("is.opex.misc", 16500n), ex("is.opex.misc", 146500n)]));
+    expect(s).toMatchObject({ correct: 1, wrong: 0, spurious: 0, silent_wrong: 0 });
+  });
+
+  it("a merged extraction is auto-accepted only when every part was", () => {
+    const s = scoreDocument(
+      gt,
+      result([ex("is.opex.misc", 16500n), ex("is.opex.misc", 146500n, "review")]),
+    );
+    expect(s.auto_accepted).toBe(0);
+    expect(s.correct).toBe(1);
   });
 });

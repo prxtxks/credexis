@@ -229,6 +229,9 @@ importers:
 
   packages/pipeline:
     dependencies:
+      '@credexis/engine':
+        specifier: workspace:*
+        version: link:../engine
       '@credexis/extraction':
         specifier: workspace:*
         version: link:../extraction

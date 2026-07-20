@@ -22,11 +22,17 @@ export default defineConfig({
         for (const [name, value] of Object.entries(required)) {
           if (!value) throw new Error(`syncEnvVars: ${name} missing in deploy environment`);
         }
+        const optional = [
+          "SENTRY_DSN",
+          "REDUCTO_API_KEY",
+          "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT",
+          "AZURE_DOCUMENT_INTELLIGENCE_KEY",
+        ];
         return [
           ...Object.entries(required).map(([name, value]) => ({ name, value })),
-          ...(process.env["SENTRY_DSN"]
-            ? [{ name: "SENTRY_DSN", value: process.env["SENTRY_DSN"] }]
-            : []),
+          ...optional.flatMap((name) =>
+            process.env[name] ? [{ name, value: process.env[name] }] : [],
+          ),
         ];
       }),
     ],

@@ -35,7 +35,13 @@ export interface ExtractionRunInsert {
   tenantId: string;
   dealId: string;
   documentId: string;
-  stage: "ingest" | "split_classify";
+  stage:
+    | "ingest"
+    | "split_classify"
+    | "extract_path1"
+    | "extract_path2"
+    | "extract_consensus"
+    | "extract_statement";
   extractorName: string;
   extractorVersion: string;
   model: string | null;

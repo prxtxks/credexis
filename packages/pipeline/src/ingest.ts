@@ -14,6 +14,7 @@ import { sha256Hex } from "@credexis/shared";
 import {
   classifyBundle,
   groupIntoLogicalDocuments,
+  inheritBundleYear,
   type PageClassifier,
   type PageInput,
 } from "@credexis/extraction";
@@ -121,7 +122,7 @@ export async function runIngest(deps: IngestDeps, payload: IngestPayload): Promi
       const { pageCount, pageTexts } = await (deps.extractPdf ?? extractPdfText)(bytes);
       const pages: PageInput[] = pageTexts.map((text, i) => ({ page: i + 1, text }));
       const classifications = await classifyBundle(pages, deps.classifier);
-      const spans = await groupIntoLogicalDocuments(pages, classifications);
+      const spans = inheritBundleYear(await groupIntoLogicalDocuments(pages, classifications));
 
       for (const span of spans) {
         const id = await deps.db.insertLogicalDocument({

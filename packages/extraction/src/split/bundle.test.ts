@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest";
 import { classifyBundle, type PageClassifier, type PageInput } from "./classify.js";
-import { groupIntoLogicalDocuments } from "./group.js";
+import { groupIntoLogicalDocuments, inheritBundleYear } from "./group.js";
 
 /* ── synthetic bundle construction ──────────────────────────────────── */
 
@@ -247,5 +247,46 @@ describe("LLM fallback path (mock classifier)", () => {
     expect(seen).toHaveLength(5); // exactly the signal-less pages
     expect(classifications.filter((c) => c.method === "llm")).toHaveLength(5);
     expect(classifications.filter((c) => c.method === "unresolved")).toHaveLength(0);
+  });
+});
+
+describe("inheritBundleYear (2026-07-19 real-document finding)", () => {
+  const span = (family, year, start = 1) => ({
+    formFamily: family,
+    taxYear: year,
+    pageStart: start,
+    pageEnd: start,
+    confidence: 0.9,
+    contentSha256: "x",
+    duplicateOf: null,
+    entityHint: null,
+  });
+
+  it("undated tax-form spans inherit the bundle's single year", () => {
+    const out = inheritBundleYear([
+      span("1120S", null),
+      span("K1_1120S", 2023, 7),
+      span("4562", 2023, 9),
+    ]);
+    expect(out[0].taxYear).toBe(2023);
+  });
+
+  it("multiple distinct years → no inference", () => {
+    const out = inheritBundleYear([
+      span("1120S", null),
+      span("K1_1120S", 2022, 7),
+      span("4562", 2023, 9),
+    ]);
+    expect(out[0].taxYear).toBeNull();
+  });
+
+  it("statements never inherit a tax year", () => {
+    const out = inheritBundleYear([span("PNL", null), span("K1_1120S", 2023, 7)]);
+    expect(out[0].taxYear).toBeNull();
+  });
+
+  it("no dated spans at all → unchanged", () => {
+    const out = inheritBundleYear([span("1120S", null)]);
+    expect(out[0].taxYear).toBeNull();
   });
 });

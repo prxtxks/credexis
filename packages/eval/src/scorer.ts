@@ -58,9 +58,55 @@ function fieldKey(f: {
   return `${f.registry_field_id ?? ""}|${f.taxonomy_node ?? ""}|${f.period}`;
 }
 
+/**
+ * Aggregate same-key fields (two printed lines mapping to one taxonomy
+ * node — e.g. "Pest Control" and "Trash Removal" both → is.opex.misc):
+ * the node-level truth IS the sum of its mapped lines. Values are summed
+ * over non-null parts (all-null → null); a merged extraction counts as
+ * auto-accepted only when EVERY part was (a review-flagged part means
+ * the node's value never fully skipped review).
+ */
+function aggregateByKey<
+  T extends {
+    registry_field_id?: string | undefined;
+    taxonomy_node?: string | undefined;
+    period: string;
+    value_cents: bigint | null;
+    outcome?: string;
+  },
+>(fields: T[]): Map<string, T> {
+  const out = new Map<string, T>();
+  for (const f of fields) {
+    const key = fieldKey(f);
+    const prev = out.get(key);
+    if (!prev) {
+      out.set(key, { ...f });
+      continue;
+    }
+    const sum =
+      prev.value_cents === null && f.value_cents === null
+        ? null
+        : (prev.value_cents ?? 0n) + (f.value_cents ?? 0n);
+    out.set(key, {
+      ...prev,
+      value_cents: sum,
+      ...(prev.outcome !== undefined || f.outcome !== undefined
+        ? {
+            outcome:
+              prev.outcome === "auto_accept" && f.outcome === "auto_accept"
+                ? "auto_accept"
+                : "review",
+          }
+        : {}),
+    });
+  }
+  return out;
+}
+
 /** Score one document's extraction against its ground truth. */
 export function scoreDocument(gt: GroundTruthDocument, result: ExtractionResult): DocumentScore {
-  const truthByKey = new Map(gt.fields.map((f) => [fieldKey(f), f]));
+  const truthByKey = aggregateByKey(gt.fields);
+  const aggregatedExtraction = [...aggregateByKey(result.fields).values()];
   const seen = new Set<string>();
 
   let correct = 0;
@@ -70,7 +116,7 @@ export function scoreDocument(gt: GroundTruthDocument, result: ExtractionResult)
   let autoAcceptedCorrect = 0;
   let silentWrong = 0;
 
-  for (const ex of result.fields) {
+  for (const ex of aggregatedExtraction) {
     const key = fieldKey(ex);
     if (seen.has(key)) {
       // Duplicate extraction for the same identity: everything after the

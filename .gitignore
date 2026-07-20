@@ -69,3 +69,6 @@ docs/testing-docs/
 
 # Local Trigger.dev CLI auth (contains a PAT) — never commit
 .trigger-local-config/
+
+# Trigger.dev CLI build artifacts
+.trigger/

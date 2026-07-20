@@ -8,10 +8,23 @@
 import { task } from "@trigger.dev/sdk";
 import * as Sentry from "@sentry/node";
 import { z } from "zod";
-import { AnthropicPageClassifier } from "@credexis/extraction";
+import {
+  AnthropicLabelClassifier,
+  AnthropicPageClassifier,
+  AnthropicVisionAdapter,
+  AzureDocumentIntelligenceAdapter,
+  ReductoAdapter,
+} from "@credexis/extraction";
 import { runIngest, type IngestResult } from "../ingest.js";
 import { logEvent } from "../log.js";
-import { serviceClient, supabaseDb, supabaseStorage } from "../supabase.js";
+import { runExtractStage } from "../extract-stage.js";
+import {
+  serviceClient,
+  supabaseDb,
+  supabaseExtractDb,
+  supabaseMappingsStore,
+  supabaseStorage,
+} from "../supabase.js";
 
 const payloadSchema = z.object({
   documentId: z.string().uuid(),
@@ -68,6 +81,83 @@ export const ingestDocument = task({
         ...(result.reason ? { reason: result.reason } : {}),
       });
       if (result.status === "failed") Sentry.captureMessage(`ingest failed: ${result.reason}`);
+
+      // ── Extraction stage (M4.5/M5.5): logical documents → facts. ──
+      try {
+        if (result.status === "processed" && result.logicalDocuments.length > 0) {
+          const reducto = process.env["REDUCTO_API_KEY"]
+            ? new ReductoAdapter({ apiKey: process.env["REDUCTO_API_KEY"] })
+            : null;
+          const azure =
+            process.env["AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"] &&
+            process.env["AZURE_DOCUMENT_INTELLIGENCE_KEY"]
+              ? new AzureDocumentIntelligenceAdapter({
+                  endpoint: process.env["AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"],
+                  apiKey: process.env["AZURE_DOCUMENT_INTELLIGENCE_KEY"],
+                })
+              : null;
+          const vision = anthropicKey ? new AnthropicVisionAdapter({ apiKey: anthropicKey }) : null;
+
+          // Fetch the persisted logical docs (entity assignments included).
+          const { data: lds } = await client
+            .from("logical_documents")
+            .select("id, form_family, tax_year, page_start, page_end, entity_id")
+            .eq("document_id", payload.documentId);
+          const { data: doc } = await client
+            .from("documents")
+            .select("storage_path, mime_type")
+            .eq("id", payload.documentId)
+            .single();
+
+          if (doc && (doc.mime_type as string) === "application/pdf") {
+            const bytes = await supabaseStorage(client).download(doc.storage_path as string);
+            const extract = await runExtractStage(
+              {
+                db: supabaseExtractDb(client),
+                // Blueprint routing: Azure prebuilt-tax for the 1040 family,
+                // Reducto for business returns + statement layout. Bake-off
+                // (M3.4) may reroute; the seam is this function.
+                path1ForFamily: (family) =>
+                  family.startsWith("1040") || family === "W2"
+                    ? (azure ?? reducto)
+                    : (reducto ?? azure),
+                path2: vision,
+                statementLayout: reducto ?? azure,
+                labelClassifier: anthropicKey
+                  ? new AnthropicLabelClassifier({ apiKey: anthropicKey })
+                  : null,
+                mappingsStore: supabaseMappingsStore(client),
+              },
+              {
+                tenantId: payload.tenantId,
+                dealId: payload.dealId,
+                documentId: payload.documentId,
+                bytes,
+                mimeType: "application/pdf",
+                logicalDocuments: (lds ?? []).map((ld) => ({
+                  id: ld.id as string,
+                  formFamily: ld.form_family as string,
+                  taxYear: (ld.tax_year as number | null) ?? null,
+                  pageStart: ld.page_start as number,
+                  pageEnd: ld.page_end as number,
+                  entityId: (ld.entity_id as string | null) ?? null,
+                })),
+              },
+            );
+            logEvent(log, "extracted", {
+              facts: extract.factsInserted,
+              documents: extract.perDocument.length,
+              skipped: extract.perDocument.filter((d) => d.skipped).length,
+            });
+          }
+        }
+      } catch (e) {
+        // Extraction failing must NOT retry the task: ingest already
+        // committed logical documents and a re-run would duplicate them.
+        // The document stays processed; facts can be re-extracted later.
+        logEvent(log, "extract-errored", { error: (e as Error).message.slice(0, 300) });
+        Sentry.captureException(e);
+      }
       return result;
     } catch (e) {
       logEvent(log, "errored", { error: (e as Error).message });
