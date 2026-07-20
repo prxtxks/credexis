@@ -17,6 +17,7 @@
  * vendor gave one) and every path writes an extraction_runs row.
  */
 
+import { slicePdfPages } from "./pdf.js";
 import {
   getRegistryEntry,
   reconcile,
@@ -240,7 +241,14 @@ async function extractTaxForm(
     return 0;
   }
 
-  const doc: DocumentInput = { bytes: input.bytes, mimeType: input.mimeType };
+  // Adapters see ONLY this logical document's pages (bake-off finding:
+  // whole bundles bury the form and inflate cost). Sliced pages are
+  // 1-based relative to the slice = logical-relative already.
+  const slice =
+    input.mimeType === "application/pdf"
+      ? await slicePdfPages(input.bytes, ld.pageStart, ld.pageEnd)
+      : { bytes: input.bytes, pageCount: null, sliced: false };
+  const doc: DocumentInput = { bytes: slice.bytes, mimeType: input.mimeType };
   const path1Adapter = deps.path1ForFamily(ld.formFamily);
 
   const settle = async (
@@ -332,7 +340,7 @@ async function extractTaxForm(
       value_cents: value.toString(),
       source_logical_document_id: ld.id,
       // Adapter pages are physical (whole file); facts store logical-relative.
-      source_page: f.page !== null ? f.page - ld.pageStart + 1 : null,
+      source_page: f.page !== null ? (slice.sliced ? f.page : f.page - ld.pageStart + 1) : null,
       source_bbox: f.bbox,
       method: f.outcome === "consensus" ? "consensus" : f.path1 ? "vendor" : "llm",
       confidence: score.confidence,
@@ -394,11 +402,19 @@ async function extractStatement(
   }
   const statement = ld.formFamily === "PNL" ? ("PNL" as const) : ("BALANCE_SHEET" as const);
   const t0 = now();
+  // Same slice discipline as the tax path: the layout vendor parses only
+  // this statement's pages (slice pages are logical-relative 1..N).
+  const slice =
+    input.mimeType === "application/pdf"
+      ? await slicePdfPages(input.bytes, ld.pageStart, ld.pageEnd)
+      : { bytes: input.bytes, pageCount: null, sliced: false };
   const layout = await deps.statementLayout.parseLayout({
-    bytes: input.bytes,
+    bytes: slice.bytes,
     mimeType: input.mimeType,
   });
-  const pages = layout.pages.filter((p) => p.page >= ld.pageStart && p.page <= ld.pageEnd);
+  const pages = slice.sliced
+    ? layout.pages
+    : layout.pages.filter((p) => p.page >= ld.pageStart && p.page <= ld.pageEnd);
   const grids = pagesToGrids(pages);
 
   let inserted = 0;
@@ -407,13 +423,21 @@ async function extractStatement(
     const binding = bindPeriods(grid, pages);
     const typed = typeRows(grid);
     const labels = [...new Set(typed.map((r) => r.row.label).filter((l) => l.trim() !== ""))];
-    const mapped = await mapLabels(
-      labels,
-      statement,
-      input.tenantId,
-      deps.mappingsStore,
-      deps.labelClassifier,
-    );
+    // A dead classifier (rate limit, credits, outage) must DEGRADE, not
+    // abort the document: retry with learned mappings only — unmapped
+    // labels route to review instead of losing the whole statement.
+    let mapped;
+    try {
+      mapped = await mapLabels(
+        labels,
+        statement,
+        input.tenantId,
+        deps.mappingsStore,
+        deps.labelClassifier,
+      );
+    } catch {
+      mapped = await mapLabels(labels, statement, input.tenantId, deps.mappingsStore, null);
+    }
     const mappedByLabel = new Map(mapped.map((m) => [m.label, m]));
     const validated = validateStructure(typed, binding, mappedByLabel, {
       statement,
@@ -451,7 +475,7 @@ async function extractStatement(
         registry_field_id: null,
         value_cents: draft.valueCents.toString(),
         source_logical_document_id: ld.id,
-        source_page: draft.page - ld.pageStart + 1,
+        source_page: slice.sliced ? draft.page : draft.page - ld.pageStart + 1,
         source_bbox: null, // grid-level geometry joins with the bake-off vendor work
         method: "vendor",
         confidence: mapping?.confidence ?? 0.5,

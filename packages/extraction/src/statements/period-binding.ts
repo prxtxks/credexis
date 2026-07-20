@@ -96,8 +96,12 @@ export function parsePeriodHeader(raw: string): CanonicalPeriod | null {
     };
   }
 
-  // Month range: "Jan - Jun 2025", "January 1 - June 30, 2025"
-  m = /^([a-z]+)\.? ?(?:\d{1,2},? )?[-–] ?([a-z]+)\.? ?(?:\d{1,2},? )?(\d{4})$/i.exec(text);
+  // Month range: "Jan - Jun 2025", "January 1 - June 30, 2025",
+  // "January through June 30,2025" (CPA phrasing; comma spacing varies).
+  m =
+    /^([a-z]+)\.? ?(?:\d{1,2},? ?)?(?:[-–]|through|thru|to) ?([a-z]+)\.? ?(?:\d{1,2},? ?)?(\d{4})$/i.exec(
+      text,
+    );
   if (m?.[1] && m[2] && m[3]) {
     const m1 = month(m[1]);
     const m2 = month(m[2]);
@@ -145,6 +149,25 @@ export function parsePeriodHeader(raw: string): CanonicalPeriod | null {
         label: `As of ${point}`,
       };
     }
+  }
+
+  // Numeric month-end column header: "10/31/24", "02/28/2025" (T12
+  // spreads). Only exact month-ends are periods — any other date is a
+  // transaction date, not a column identity.
+  m = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(text);
+  if (m?.[1] && m[2] && m[3]) {
+    const mm = Number(m[1]);
+    const d = Number(m[2]);
+    const y = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
+    if (mm >= 1 && mm <= 12 && d === eom(y, mm)) {
+      return {
+        kind: "interim",
+        startDate: iso(y, mm, 1),
+        endDate: iso(y, mm, d),
+        label: `${y}-${String(mm).padStart(2, "0")}`,
+      };
+    }
+    return null;
   }
 
   // Fiscal year: "FY2024", "FY 2024", bare "2024"
@@ -206,6 +229,27 @@ export function bindPeriods(grid: StatementGrid, pages: LayoutPage[] = []): Peri
     if (parsedAny) headerRowIndexes.push(row.rowIndex);
     // Stop once every column is bound.
     if (grid.columnIds.every((c) => byColumn.get(c))) break;
+  }
+
+  // Page-title fallback (real CPA statements print the period in the
+  // title block, not a table cell): allowed ONLY for single-value-column
+  // grids — one column, one period, no guessing about order. Multi-column
+  // grids with unbound columns stay null → review owns them (Iron Law #4:
+  // binding is by identity, never by position).
+  if (grid.columnIds.length === 1) {
+    const col = grid.columnIds[0]!;
+    if (!byColumn.get(col)) {
+      for (const p of pages.filter((p) => p.page === grid.page || p.page === 1)) {
+        for (const block of p.textBlocks) {
+          const period = parsePeriodHeader(block.text);
+          if (period) {
+            byColumn.set(col, period);
+            break;
+          }
+        }
+        if (byColumn.get(col)) break;
+      }
+    }
   }
 
   for (const col of grid.columnIds) {

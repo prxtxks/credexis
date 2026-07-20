@@ -270,3 +270,102 @@ describe("runExtractStage — statements", () => {
     expect(db.runs.at(-1)).toMatchObject({ stage: "extract_statement", status: "succeeded" });
   });
 });
+
+describe("statement extraction resilience (bake-off finding, 2026-07-20)", () => {
+  it("a throwing label classifier degrades to learned-mappings-only — never aborts", async () => {
+    const db = new FakeDb();
+    const layout: LayoutParseResult = {
+      pages: [
+        {
+          page: 1,
+          textBlocks: [],
+          tables: [
+            {
+              page: 1,
+              bbox: { x: 0.1, y: 0.1, w: 0.8, h: 0.5 },
+              cells: [
+                { rowIndex: 0, colIndex: 0, text: "", bbox: { x: 0.1, y: 0.1, w: 0.2, h: 0.02 } },
+                {
+                  rowIndex: 0,
+                  colIndex: 1,
+                  text: "FY2024",
+                  bbox: { x: 0.5, y: 0.1, w: 0.2, h: 0.02 },
+                },
+                {
+                  rowIndex: 1,
+                  colIndex: 0,
+                  text: "Rent",
+                  bbox: { x: 0.1, y: 0.2, w: 0.2, h: 0.02 },
+                },
+                {
+                  rowIndex: 1,
+                  colIndex: 1,
+                  text: "12,000.00",
+                  bbox: { x: 0.5, y: 0.2, w: 0.2, h: 0.02 },
+                },
+                {
+                  rowIndex: 2,
+                  colIndex: 0,
+                  text: "Zorbified Fees",
+                  bbox: { x: 0.1, y: 0.3, w: 0.2, h: 0.02 },
+                },
+                {
+                  rowIndex: 2,
+                  colIndex: 1,
+                  text: "500.00",
+                  bbox: { x: 0.5, y: 0.3, w: 0.2, h: 0.02 },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      run: { ...RUN },
+    };
+    const layoutAdapter = {
+      name: "layout",
+      async parseLayout() {
+        return layout;
+      },
+      async extractFields() {
+        throw new Error("unused");
+      },
+    } as unknown as ExtractorAdapter;
+
+    const store = new InMemoryMappingsStore();
+    await store.upsert(null, {
+      labelNorm: "rent",
+      taxonomyNodeKey: "is.opex.rent",
+      confidence: 1,
+      source: "human",
+      usageCount: 1,
+    });
+
+    const deps = baseDeps({
+      db,
+      statementLayout: layoutAdapter,
+      mappingsStore: store,
+      // Classifier is DOWN (credits/outage): the unknown label must route
+      // to review, the known label must still become a fact.
+      labelClassifier: {
+        classifyLabels: () => Promise.reject(new Error("credit balance is too low")),
+      },
+    });
+    const result = await runExtractStage(deps, {
+      ...INPUT,
+      logicalDocuments: [
+        {
+          id: "ld-p",
+          formFamily: "PNL",
+          taxYear: null,
+          pageStart: 1,
+          pageEnd: 1,
+          entityId: "ent-1",
+        },
+      ],
+    });
+
+    expect(result.perDocument[0]?.skipped).toBeUndefined();
+    expect(db.facts.some((f) => f.taxonomy_node_key === "is.opex.rent")).toBe(true);
+  });
+});

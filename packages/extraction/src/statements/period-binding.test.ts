@@ -114,3 +114,89 @@ describe("bindPeriods — geometric column binding", () => {
     expect(detectUnitScale(plain, [])).toBe(1);
   });
 });
+
+describe("real CPA statement headers (bake-off findings, 2026-07-20)", () => {
+  it("parses 'through' ranges, with sloppy comma spacing", () => {
+    expect(parsePeriodHeader("January through June 30,2025")).toMatchObject({
+      kind: "interim",
+      startDate: "2025-01-01",
+      endDate: "2025-06-30",
+      label: "2025-01..2025-06",
+    });
+    expect(parsePeriodHeader("January through December 2024")).toMatchObject({
+      kind: "fiscal_year",
+      label: "FY2024",
+    });
+  });
+
+  it("parses numeric month-end column headers (T12 spreads)", () => {
+    expect(parsePeriodHeader("10/31/24")).toMatchObject({
+      kind: "interim",
+      startDate: "2024-10-01",
+      endDate: "2024-10-31",
+      label: "2024-10",
+    });
+    expect(parsePeriodHeader("02/28/25")).toMatchObject({ label: "2025-02" });
+    // A non-month-end numeric date is a transaction date, not a period.
+    expect(parsePeriodHeader("10/15/24")).toBeNull();
+  });
+
+  it("binds a single value column from the PAGE TITLE when cells carry no header", () => {
+    const grid: StatementGrid = {
+      page: 2,
+      bbox: { x: 0, y: 0, w: 1, h: 1 },
+      columnIds: [1],
+      rows: [
+        { rowIndex: 0, label: "Current Assets", labelX: 0, cells: new Map() },
+        {
+          rowIndex: 1,
+          label: "Petty Cash",
+          labelX: 0,
+          cells: new Map([[1, { text: "$ 500.00", bbox: null }]]),
+        },
+      ],
+    };
+    const pages = [
+      {
+        page: 2,
+        textBlocks: [
+          { text: "Maitripriya LLC", bbox: { x: 0.3, y: 0.02, w: 0.4, h: 0.02 } },
+          { text: "Balance Sheet", bbox: { x: 0.35, y: 0.05, w: 0.3, h: 0.02 } },
+          { text: "As of May 31, 2025", bbox: { x: 0.33, y: 0.08, w: 0.34, h: 0.02 } },
+        ],
+        tables: [],
+      },
+    ];
+    const binding = bindPeriods(grid, pages as never);
+    expect(binding.byColumn.get(1)).toMatchObject({ label: "As of 2025-05-31" });
+  });
+
+  it("never guesses for MULTI-column grids from page text (review owns it)", () => {
+    const grid: StatementGrid = {
+      page: 1,
+      bbox: { x: 0, y: 0, w: 1, h: 1 },
+      columnIds: [1, 2],
+      rows: [
+        {
+          rowIndex: 0,
+          label: "Sales",
+          labelX: 0,
+          cells: new Map([
+            [1, { text: "100", bbox: null }],
+            [2, { text: "200", bbox: null }],
+          ]),
+        },
+      ],
+    };
+    const pages = [
+      {
+        page: 1,
+        textBlocks: [{ text: "January through June 30,2025", bbox: { x: 0, y: 0, w: 1, h: 0.02 } }],
+        tables: [],
+      },
+    ];
+    const binding = bindPeriods(grid, pages as never);
+    expect(binding.byColumn.get(1)).toBeNull();
+    expect(binding.byColumn.get(2)).toBeNull();
+  });
+});
