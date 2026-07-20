@@ -7,6 +7,7 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { LearnedMapping, LearnedMappingsStore } from "@credexis/extraction";
 import type {
   DbPort,
   DocumentRow,
@@ -16,6 +17,7 @@ import type {
   StoragePort,
   VirusScanStatus,
 } from "./ports.js";
+import type { ExtractDbPort, FactInsert } from "./extract-stage.js";
 
 const DEAL_DOCUMENTS_BUCKET = "deal-documents";
 
@@ -122,6 +124,102 @@ export function supabaseStorage(client: SupabaseClient): StoragePort {
         .download(storagePath);
       if (error || !data) throw new Error(`storage download: ${error?.message ?? "no data"}`);
       return new Uint8Array(await data.arrayBuffer());
+    },
+  };
+}
+
+/* ── extraction-stage ports (M4.5/M5.5) ─────────────────────────────── */
+
+export function supabaseExtractDb(client: SupabaseClient): ExtractDbPort {
+  return {
+    async getDealEntities(dealId: string) {
+      const { data, error } = await client
+        .from("entities")
+        .select("id, kind")
+        .eq("deal_id", dealId);
+      if (error) throw new Error(`entities select: ${error.message}`);
+      return (data ?? []).map((e) => ({ id: e.id as string, kind: e.kind as string }));
+    },
+
+    async findOrCreatePeriod(row) {
+      const { data: existing, error: selErr } = await client
+        .from("periods")
+        .select("id")
+        .eq("entity_id", row.entityId)
+        .eq("label", row.label)
+        .maybeSingle();
+      if (selErr) throw new Error(`periods select: ${selErr.message}`);
+      if (existing) return existing.id as string;
+      const { data, error } = await client
+        .from("periods")
+        .insert({
+          tenant_id: row.tenantId,
+          entity_id: row.entityId,
+          kind: row.kind,
+          label: row.label,
+          start_date: row.startDate,
+          end_date: row.endDate,
+        })
+        .select("id")
+        .single();
+      if (error) throw new Error(`periods insert: ${error.message}`);
+      return data.id as string;
+    },
+
+    async insertFacts(rows: FactInsert[]) {
+      if (rows.length === 0) return 0;
+      const { error } = await client.from("facts").insert(rows);
+      if (error) throw new Error(`facts insert: ${error.message}`);
+      return rows.length;
+    },
+
+    async insertExtractionRun(row: ExtractionRunInsert) {
+      return supabaseDb(client).insertExtractionRun(row);
+    },
+  };
+}
+
+/** learned_mappings-backed store for the taxonomy mapper (M5.4). */
+export function supabaseMappingsStore(client: SupabaseClient): LearnedMappingsStore {
+  const toMapping = (r: Record<string, unknown>): LearnedMapping => ({
+    labelNorm: r["label_norm"] as string,
+    taxonomyNodeKey: r["taxonomy_node_key"] as string,
+    confidence: r["confidence"] as number,
+    source: (r["source"] as "human" | "llm") ?? "llm",
+    usageCount: r["usage_count"] as number,
+  });
+  return {
+    async findExact(tenantId, labelNorm) {
+      let q = client.from("learned_mappings").select("*").eq("label_norm", labelNorm);
+      q = tenantId === null ? q.is("tenant_id", null) : q.eq("tenant_id", tenantId);
+      const { data, error } = await q.maybeSingle();
+      if (error) throw new Error(`learned_mappings select: ${error.message}`);
+      return data ? toMapping(data) : null;
+    },
+    async listAll(tenantId) {
+      let q = client.from("learned_mappings").select("*").limit(5000);
+      q = tenantId === null ? q.is("tenant_id", null) : q.eq("tenant_id", tenantId);
+      const { data, error } = await q;
+      if (error) throw new Error(`learned_mappings list: ${error.message}`);
+      return (data ?? []).map(toMapping);
+    },
+    async upsert(tenantId, mapping) {
+      const existing = await this.findExact(tenantId, mapping.labelNorm);
+      // A human mapping is never downgraded by an LLM write-back.
+      if (existing?.source === "human" && mapping.source === "llm") return;
+      const { error } = await client.from("learned_mappings").upsert(
+        {
+          tenant_id: tenantId,
+          label_norm: mapping.labelNorm,
+          taxonomy_node_key: mapping.taxonomyNodeKey,
+          confidence: mapping.confidence,
+          source: mapping.source,
+          usage_count: (existing?.usageCount ?? 0) + 1,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "tenant_id,label_norm" },
+      );
+      if (error) throw new Error(`learned_mappings upsert: ${error.message}`);
     },
   };
 }

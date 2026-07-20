@@ -1,0 +1,98 @@
+{
+  "id": "pnl-annual-native-001",
+  "form_family": "PNL",
+  "tax_year": null,
+  "entity": "target",
+  "quality": "native",
+  "synthetic": false,
+  "pdf_sha256": "472a2240807855cb687a100c8af6d57a417264cfeef190020b6e77b94dee15ad",
+  "page_count": 3,
+  "labeled_by": "pratik (AI-assisted draft, human-verified)",
+  "labeled_at": "2026-07-19T16:00:00Z",
+  "fields": [
+    {
+      "taxonomy_node": "is.revenue.total",
+      "period": "FY2024",
+      "value_cents": "71800233",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.cogs.total",
+      "period": "FY2024",
+      "value_cents": "1224918",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.gross_profit",
+      "period": "FY2024",
+      "value_cents": "70575315",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.salaries_wages",
+      "period": "FY2024",
+      "value_cents": "23219152",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.payroll_taxes",
+      "period": "FY2024",
+      "value_cents": "999794",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.rent",
+      "period": "FY2024",
+      "value_cents": "11010000",
+      "page": 2
+    },
+    {
+      "taxonomy_node": "is.opex.utilities",
+      "period": "FY2024",
+      "value_cents": "10892036",
+      "page": 2
+    },
+    {
+      "taxonomy_node": "is.opex.insurance",
+      "period": "FY2024",
+      "value_cents": "2168248",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.repairs_maintenance",
+      "period": "FY2024",
+      "value_cents": "5421870",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.supplies",
+      "period": "FY2024",
+      "value_cents": "608010",
+      "page": 2
+    },
+    {
+      "taxonomy_node": "is.opex.professional_fees",
+      "period": "FY2024",
+      "value_cents": "771398",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.marketing_advertising",
+      "period": "FY2024",
+      "value_cents": "237400",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.total",
+      "period": "FY2024",
+      "value_cents": "68566877",
+      "page": 2
+    },
+    {
+      "taxonomy_node": "is.net_income",
+      "period": "FY2024",
+      "value_cents": "2568806",
+      "page": 3
+    }
+  ]
+}

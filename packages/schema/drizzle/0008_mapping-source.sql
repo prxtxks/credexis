@@ -1,0 +1,1 @@
+ALTER TABLE "learned_mappings" ADD COLUMN "source" text DEFAULT 'llm' NOT NULL;

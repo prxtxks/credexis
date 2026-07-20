@@ -126,6 +126,7 @@ export const spreadRouter = router({
           .update({
             taxonomy_node_key: input.nodeKey,
             usage_count: (existing.usage_count as number) + 1,
+            source: "human",
             updated_at: new Date().toISOString(),
           })
           .eq("id", existing.id as string);
@@ -139,6 +140,7 @@ export const spreadRouter = router({
         taxonomy_node_key: input.nodeKey,
         usage_count: 1,
         confidence: 1,
+        source: "human",
       });
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       return { learned: labelNorm, nodeKey: input.nodeKey, updated: false };

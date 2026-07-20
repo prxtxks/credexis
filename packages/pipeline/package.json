@@ -25,6 +25,7 @@
     "typescript": "5.9.2"
   },
   "dependencies": {
+    "@credexis/engine": "workspace:*",
     "@credexis/extraction": "workspace:*",
     "@credexis/schema": "workspace:*",
     "@credexis/shared": "workspace:*",

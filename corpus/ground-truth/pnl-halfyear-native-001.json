@@ -1,0 +1,163 @@
+{
+  "id": "pnl-halfyear-native-001",
+  "form_family": "PNL",
+  "tax_year": null,
+  "entity": "target",
+  "quality": "native",
+  "synthetic": false,
+  "pdf_sha256": "89c3b5472808d2d3ee155df006c7c75886d76f484c153dedcbb3c240e7b3e547",
+  "page_count": 2,
+  "labeled_by": "pratik (AI-assisted draft, human-verified)",
+  "labeled_at": "2026-07-19T16:00:00Z",
+  "fields": [
+    {
+      "taxonomy_node": "is.revenue.total",
+      "period": "2025-01..2025-06",
+      "value_cents": "131928100",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.cogs.total",
+      "period": "2025-01..2025-06",
+      "value_cents": "117261700",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.gross_profit",
+      "period": "2025-01..2025-06",
+      "value_cents": "14666400",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.amortization",
+      "period": "2025-01..2025-06",
+      "value_cents": "175100",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.vehicle",
+      "period": "2025-01..2025-06",
+      "value_cents": "298200",
+      "page": 1,
+      "note": "Automobile Expense"
+    },
+    {
+      "taxonomy_node": "is.opex.bank_charges",
+      "period": "2025-01..2025-06",
+      "value_cents": "246500",
+      "page": 1,
+      "note": "Bank Service Charges"
+    },
+    {
+      "taxonomy_node": "is.opex.depreciation",
+      "period": "2025-01..2025-06",
+      "value_cents": "4268100",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.insurance",
+      "period": "2025-01..2025-06",
+      "value_cents": "514200",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.other.interest_expense",
+      "period": "2025-01..2025-06",
+      "value_cents": "1587300",
+      "page": 1,
+      "note": "Interest — printed INSIDE the Expense section / Total Expense on this statement"
+    },
+    {
+      "taxonomy_node": "is.opex.office_expense",
+      "period": "2025-01..2025-06",
+      "value_cents": "148200",
+      "page": 1,
+      "note": "Office Supplies — JUDGMENT CALL: office_expense vs is.opex.supplies"
+    },
+    {
+      "taxonomy_node": "is.opex.payroll_taxes",
+      "period": "2025-01..2025-06",
+      "value_cents": "251100",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.misc",
+      "period": "2025-01..2025-06",
+      "value_cents": "16500",
+      "page": 1,
+      "note": "Pest Control — no dedicated taxonomy node"
+    },
+    {
+      "taxonomy_node": "is.opex.professional_fees",
+      "period": "2025-01..2025-06",
+      "value_cents": "90000",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.rent",
+      "period": "2025-01..2025-06",
+      "value_cents": "849500",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.repairs_maintenance",
+      "period": "2025-01..2025-06",
+      "value_cents": "371400",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.salaries_wages",
+      "period": "2025-01..2025-06",
+      "value_cents": "3282000",
+      "page": 1,
+      "note": "Salary"
+    },
+    {
+      "taxonomy_node": "is.opex.telephone_internet",
+      "period": "2025-01..2025-06",
+      "value_cents": "236900",
+      "page": 1,
+      "note": "Telephone Expense"
+    },
+    {
+      "taxonomy_node": "is.opex.misc",
+      "period": "2025-01..2025-06",
+      "value_cents": "146500",
+      "page": 1,
+      "note": "Trash Removal — no dedicated taxonomy node"
+    },
+    {
+      "taxonomy_node": "is.opex.utilities",
+      "period": "2025-01..2025-06",
+      "value_cents": "643900",
+      "page": 1
+    },
+    {
+      "taxonomy_node": "is.opex.total",
+      "period": "2025-01..2025-06",
+      "value_cents": "13125300",
+      "page": 1,
+      "note": "Total Expense — NB includes Interest on this statement"
+    },
+    {
+      "taxonomy_node": "is.operating_income",
+      "period": "2025-01..2025-06",
+      "value_cents": "1541200",
+      "page": 1,
+      "note": "Net Ordinary Income"
+    },
+    {
+      "taxonomy_node": "is.other.other_income",
+      "period": "2025-01..2025-06",
+      "value_cents": "1325600",
+      "page": 1,
+      "note": "Other Income"
+    },
+    {
+      "taxonomy_node": "is.net_income",
+      "period": "2025-01..2025-06",
+      "value_cents": "2866800",
+      "page": 1
+    }
+  ]
+}

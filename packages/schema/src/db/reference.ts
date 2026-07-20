@@ -81,6 +81,8 @@ export const learnedMappings = pgTable(
       .notNull()
       .references(() => taxonomyNodes.key),
     usageCount: integer("usage_count").notNull().default(1),
+    /** Who taught it: human corrections are never downgraded by LLM writes. */
+    source: text("source").notNull().default("llm"),
     /** Mapping confidence 0..1 (a probability, not money). */
     confidence: real("confidence").notNull().default(1),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

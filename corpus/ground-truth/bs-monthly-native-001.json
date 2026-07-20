@@ -1,0 +1,68 @@
+{
+  "id": "bs-monthly-native-001",
+  "form_family": "BALANCE_SHEET",
+  "tax_year": null,
+  "entity": "target",
+  "quality": "native",
+  "synthetic": false,
+  "pdf_sha256": "48ce4a172e977fe6e6ca4b1f87f8957662dad097250bb120bef44106112cdf7a",
+  "page_count": 3,
+  "labeled_by": "pratik (AI-assisted draft, human-verified)",
+  "labeled_at": "2026-07-19T16:00:00Z",
+  "fields": [
+    {
+      "taxonomy_node": "bs.assets.current.total",
+      "period": "2025-05 (as-of 5/31/25)",
+      "value_cents": "11983457",
+      "page": 2
+    },
+    {
+      "taxonomy_node": "bs.assets.fixed.total",
+      "period": "2025-05 (as-of 5/31/25)",
+      "value_cents": "114437043",
+      "page": 2
+    },
+    {
+      "taxonomy_node": "bs.assets.total",
+      "period": "2025-05 (as-of 5/31/25)",
+      "value_cents": "145149668",
+      "page": 2
+    },
+    {
+      "taxonomy_node": "bs.liabilities.current.total",
+      "period": "2025-05 (as-of 5/31/25)",
+      "value_cents": "2172358",
+      "page": 2
+    },
+    {
+      "taxonomy_node": "bs.liabilities.longterm.total",
+      "period": "2025-05 (as-of 5/31/25)",
+      "value_cents": "120930476",
+      "page": 2
+    },
+    {
+      "taxonomy_node": "bs.liabilities.total",
+      "period": "2025-05 (as-of 5/31/25)",
+      "value_cents": "123102834",
+      "page": 2
+    },
+    {
+      "taxonomy_node": "bs.equity.total",
+      "period": "2025-05 (as-of 5/31/25)",
+      "value_cents": "22046834",
+      "page": 2
+    },
+    {
+      "taxonomy_node": "bs.total_liabilities_equity",
+      "period": "2025-05 (as-of 5/31/25)",
+      "value_cents": "145149668",
+      "page": 2
+    },
+    {
+      "taxonomy_node": "bs.assets.other.total",
+      "period": "2025-05 (as-of 5/31/25)",
+      "value_cents": "18729168",
+      "page": 2
+    }
+  ]
+}
