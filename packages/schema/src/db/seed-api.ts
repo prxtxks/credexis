@@ -11,6 +11,7 @@
  */
 
 import { TAXONOMY_V1 } from "../seed/taxonomy.js";
+import { LEARNED_MAPPINGS_SEED } from "../seed/learned-mappings.js";
 import {
   POLICY_PACK_2026_03,
   POLICY_PACK_EFFECTIVE_DATE,
@@ -70,6 +71,36 @@ select count(*)::int as n from public.taxonomy_nodes;`;
 
   const taxonomyResult = (await runSql(ref, token, taxonomySql)) as Array<{ n: number }>;
   console.log(`taxonomy: ${TAXONOMY_V1.length} nodes seeded (table now ${taxonomyResult[0]?.n})`);
+
+  // Learned mappings (global pool): corpus-verified label↔node pairs so
+  // the mapper's first encounter with known vocabulary costs zero LLM
+  // calls. Normalization MUST match normalizeLabel in the taxonomy
+  // mapper (lowercase, strip non-alphanumerics, collapse whitespace).
+  const normLabel = (l: string) =>
+    l
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  const mappingValues = LEARNED_MAPPINGS_SEED.map(
+    (m) => `(null, '${esc(normLabel(m.label))}', '${esc(m.node)}', 0.95, 'human', 1)`,
+  ).join(",\n    ");
+  await runSql(
+    ref,
+    token,
+    `
+    insert into public.learned_mappings
+      (tenant_id, label_norm, taxonomy_node_key, confidence, source, usage_count)
+    values
+    ${mappingValues}
+    on conflict (tenant_id, label_norm) where tenant_id is null
+    do update set taxonomy_node_key = excluded.taxonomy_node_key,
+                  confidence = excluded.confidence,
+                  source = 'human'
+    returning label_norm;
+  `,
+  );
+  console.log(`learned mappings: ${LEARNED_MAPPINGS_SEED.length} seeded (global pool)`);
 
   const rulesJson = esc(JSON.stringify(POLICY_PACK_2026_03));
   const packSql = `
