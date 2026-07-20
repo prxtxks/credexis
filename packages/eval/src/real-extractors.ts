@@ -126,8 +126,11 @@ function toExtractor(spec: RowSpec): EvalExtractor {
               id: `eval-ld-${gt.id}`,
               formFamily: gt.form_family,
               taxYear: gt.tax_year,
-              pageStart: 1,
-              pageEnd: gt.page_count,
+              // Bound the span by the labeled pages — the eval analogue of
+              // what the splitter does in production. This is verified
+              // knowledge of where the form IS, never of its values.
+              pageStart: Math.min(...gt.fields.map((f) => f.page)),
+              pageEnd: Math.max(...gt.fields.map((f) => f.page)),
               entityId: "eval-entity",
             },
           ],

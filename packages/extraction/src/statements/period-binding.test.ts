@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { bindPeriods, detectUnitScale, parsePeriodHeader } from "./period-binding.js";
+import {
+  bindPeriods,
+  detectUnitScale,
+  findPeriodInText,
+  parsePeriodHeader,
+} from "./period-binding.js";
 import type { StatementGrid } from "./grid.js";
 
 describe("parsePeriodHeader (M5.3) — the column shapes V1 could not represent", () => {
@@ -112,6 +117,20 @@ describe("bindPeriods — geometric column binding", () => {
       ]),
     ).toBe(1000);
     expect(detectUnitScale(plain, [])).toBe(1);
+  });
+});
+
+describe("merged title blocks (vendors concatenate title lines)", () => {
+  it("finds the period inside a merged company+title+period block", () => {
+    expect(
+      findPeriodInText(
+        "Greenbay Petroleum And Investment LLC Profit & Loss January through June 30,2025",
+      ),
+    ).toMatchObject({ label: "2025-01..2025-06" });
+    expect(
+      findPeriodInText("Maitripriya LLC Balance Sheet As of May 31, 2025 Accrual Basis"),
+    ).toMatchObject({ label: "As of 2025-05-31" });
+    expect(findPeriodInText("no dates here at all")).toBeNull();
   });
 });
 
