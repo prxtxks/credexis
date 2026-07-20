@@ -211,6 +211,27 @@ export interface PeriodBinding {
   scale: UnitScale;
 }
 
+/** Period-shaped substrings inside merged title text (search, not match). */
+const PERIOD_SUBSTRING_RES = [
+  // "January through June 30,2025", "Jan 1 - Sep 30, 2025"
+  /[a-z]+\.? ?(?:\d{1,2},? ?)?(?:[-\u2013]|through|thru|to) ?[a-z]+\.? ?(?:\d{1,2},? ?)?\d{4}/gi,
+  // "As of June 30, 2025", "December 31, 2024"
+  /(?:as of )?[a-z]+\.? \d{1,2},? \d{4}/gi,
+  // "TTM Jun 2025", "Trailing Twelve Months ended June 30, 2025"
+  /(?:ttm|trailing twelve months)(?: ended?)? [a-z]+\.? ?(?:\d{1,2},? )?\d{4}/gi,
+];
+
+export function findPeriodInText(text: string): CanonicalPeriod | null {
+  for (const re of PERIOD_SUBSTRING_RES) {
+    re.lastIndex = 0;
+    for (const m of text.matchAll(re)) {
+      const parsed = parsePeriodHeader(m[0]);
+      if (parsed) return parsed;
+    }
+  }
+  return null;
+}
+
 /** Scan the top rows for period headers; bind by column identity. */
 export function bindPeriods(grid: StatementGrid, pages: LayoutPage[] = []): PeriodBinding {
   const byColumn = new Map<number, CanonicalPeriod | null>();
@@ -241,7 +262,10 @@ export function bindPeriods(grid: StatementGrid, pages: LayoutPage[] = []): Peri
     if (!byColumn.get(col)) {
       for (const p of pages.filter((p) => p.page === grid.page || p.page === 1)) {
         for (const block of p.textBlocks) {
-          const period = parsePeriodHeader(block.text);
+          // Vendors merge title lines into one block ("Acme LLC Profit &
+          // Loss January through June 30,2025") — parse the whole text,
+          // then fall back to period-shaped substrings within it.
+          const period = parsePeriodHeader(block.text) ?? findPeriodInText(block.text);
           if (period) {
             byColumn.set(col, period);
             break;

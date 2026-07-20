@@ -170,7 +170,12 @@ export class AnthropicLabelClassifier implements LabelClassifier {
                   type: "object",
                   properties: {
                     label: { type: "string" },
-                    taxonomy_node: { type: ["string", "null"], enum: [...nodes, null] },
+                    // anyOf, not mixed type+enum: the API validates each
+                    // enum member against the declared type and rejects the
+                    // union form (found live, 2026-07-20).
+                    taxonomy_node: {
+                      anyOf: [{ type: "string", enum: nodes }, { type: "null" }],
+                    },
                     confidence: { type: "number" },
                   },
                   required: ["label", "taxonomy_node", "confidence"],
