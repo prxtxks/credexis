@@ -22,6 +22,7 @@ import {
   type GateFact,
 } from "@credexis/engine";
 import { TAXONOMY_V1 } from "@credexis/schema";
+import { registryGateSpecs } from "@credexis/extraction";
 import { bigintFromDb } from "../addbacks/logic";
 import { metricInsertRows, scenarioFromRow, type ScenarioRow } from "./logic";
 
@@ -153,11 +154,15 @@ export async function recomputeDeal(
     status: f.status as GateFact["status"],
     logicalDocumentId: (f.source_logical_document_id as string | null) ?? null,
   }));
+  // Registry relations/flows as G4 data (M4.1 → M6.1): with registry-only
+  // facts landing (AGI, taxable income), the derived-line arithmetic and
+  // cross-form flows are finally checkable deal-wide.
+  const { relations: registryRelations, flows: registryFlows } = registryGateSpecs();
   const gateRun = runGates(gateFacts, {
     ...DEFAULT_GATE_CONFIG,
     taxonomy: TAXONOMY_V1.map((n) => ({ key: n.key, parentKey: n.parentKey })),
-    registryRelations: [], // registry relation specs join with the tax spread
-    registryFlows: [],
+    registryRelations,
+    registryFlows,
   });
 
   const { error: resolveErr } = await supabase

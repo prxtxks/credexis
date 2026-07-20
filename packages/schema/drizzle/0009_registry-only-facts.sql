@@ -1,0 +1,2 @@
+ALTER TABLE "facts" ALTER COLUMN "taxonomy_node_key" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "facts" ADD CONSTRAINT "facts_taxonomy_or_registry_check" CHECK ("facts"."taxonomy_node_key" IS NOT NULL OR "facts"."registry_field_id" IS NOT NULL);

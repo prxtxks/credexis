@@ -95,6 +95,18 @@ describe("money columns (Iron Law #2)", () => {
       expect(byName.get(lineage), `facts.${lineage} missing`).toBeDefined();
     }
   });
+
+  it("facts key into taxonomy OR registry — registry-only facts allowed (ADR-0002 follow-up)", () => {
+    const factsCfg = configs.find((c) => c.name === "facts")!;
+    const byName = new Map(factsCfg.columns.map((col) => [col.name, col]));
+    // Derived tax lines (AGI, taxable income) carry no taxonomy placement.
+    expect(byName.get("taxonomy_node_key")?.notNull).toBe(false);
+    expect(byName.get("registry_field_id")?.notNull).toBe(false);
+    // …but a fact with NEITHER key is an unaddressable orphan: the CHECK
+    // (taxonomy_node_key IS NOT NULL OR registry_field_id IS NOT NULL) must exist.
+    const check = factsCfg.checks.find((k) => k.name === "facts_taxonomy_or_registry_check");
+    expect(check, "facts_taxonomy_or_registry_check missing").toBeDefined();
+  });
 });
 
 describe("policy is data (Iron Law #8)", () => {

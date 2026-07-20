@@ -149,6 +149,49 @@ describe("runExtractStage — tax forms", () => {
     expect(db.runs.find((r) => r.stage === "extract_path1")!.status).toBe("failed");
   });
 
+  it("derived registry lines without taxonomy placement land as registry-only facts", async () => {
+    // f1040.line11 (AGI) deliberately has no taxonomyNodeKey in the registry
+    // (ADR-0002: derived lines never aggregate). It must still become a fact —
+    // keyed by registry_field_id alone — for G4/G5 and the Tax Spread.
+    const agree = [
+      cand("f1040.line9", "100,000."),
+      cand("f1040.line10", "5,000."),
+      cand("f1040.line11", "95,000."),
+    ];
+    const db = new FakeDb();
+    const deps = baseDeps({
+      db,
+      path1ForFamily: () => adapterReturning(agree),
+      path2: adapterReturning(agree),
+    });
+    const result = await runExtractStage(deps, {
+      ...INPUT,
+      logicalDocuments: [
+        {
+          id: "ld-1040",
+          formFamily: "1040",
+          taxYear: 2023,
+          pageStart: 1,
+          pageEnd: 2,
+          entityId: null,
+        },
+      ],
+    });
+
+    expect(result.factsInserted).toBe(3); // AGI is NOT silently dropped
+    const agi = db.facts.find((f) => f.registry_field_id === "f1040.line11");
+    expect(agi).toMatchObject({
+      taxonomy_node_key: null,
+      value_cents: "9500000",
+      method: "consensus",
+      status: "accepted",
+    });
+    expect(agi!.source_bbox).not.toBeNull(); // lineage intact (Iron Law #5)
+    // Mapped lines keep their taxonomy placement alongside the registry id.
+    const total = db.facts.find((f) => f.registry_field_id === "f1040.line9");
+    expect(total!.taxonomy_node_key).toBe("pcf.income.total");
+  });
+
   it("multi-entity deal without assignment skips (never guesses the entity)", async () => {
     const db = new FakeDb();
     db.entities = [

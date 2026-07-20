@@ -291,6 +291,58 @@ describe("G6 — temporal sanity (flag only, never blocking)", () => {
   });
 });
 
+describe("registry-only facts — null taxonomy (ADR-0002 follow-up)", () => {
+  it("stay invisible to G1 subtotal math even when values would perturb a tie", () => {
+    const issues = runG1(
+      [
+        fact({ taxonomyNodeKey: "is.opex.rent", valueCents: 36_000_00n }),
+        fact({ taxonomyNodeKey: "is.opex.salaries_wages", valueCents: 300_000_00n }),
+        fact({ taxonomyNodeKey: "is.opex.total", valueCents: 336_000_00n }),
+        // AGI has no taxonomy placement; if byNode admitted it, nothing
+        // changes here — this pins the skip so a refactor can't regress it.
+        fact({ registryFieldId: "f1040.line11", valueCents: 95_000_00n }),
+      ],
+      TAXONOMY,
+    );
+    expect(issues).toHaveLength(0);
+  });
+
+  it("stay invisible to G6 temporal series", () => {
+    const issues = runG6(
+      [
+        fact({ registryFieldId: "f1040.line11", periodLabel: "FY2022", valueCents: 10_000_00n }),
+        fact({ registryFieldId: "f1040.line11", periodLabel: "FY2023", valueCents: 900_000_00n }),
+      ],
+      config(),
+    );
+    expect(issues).toHaveLength(0);
+  });
+
+  it("drive G4 relations by registry id alone (11 = 9 − 10 on derived AGI)", () => {
+    const issues = runG4(
+      [
+        fact({ registryFieldId: "f1040.line9", valueCents: 100_000_00n }),
+        fact({ registryFieldId: "f1040.line10", valueCents: 5_000_00n }),
+        fact({ registryFieldId: "f1040.line11", valueCents: 96_000_00n }), // off by $1,000
+      ],
+      config({
+        registryRelations: [
+          {
+            id: "1040.agi",
+            type: "difference",
+            result: "f1040.line11",
+            operands: ["f1040.line9", "f1040.line10"],
+            toleranceCents: 100n,
+            description: "11 = 9 − 10",
+          },
+        ],
+      }),
+    );
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatchObject({ gate: "G4", blocking: true, deltaCents: 1_000_00n });
+  });
+});
+
 describe("runGates — aggregation + blocking semantics (Iron Law #6)", () => {
   it("collects issues from every gate and blocks only G1–G5 implicated facts", () => {
     const { issues, blockedFactIds } = runGates(

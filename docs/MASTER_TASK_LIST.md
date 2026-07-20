@@ -88,6 +88,7 @@ Companion to `ARCHITECTURE.md` (the spec) and `POSTMORTEM_V1.md` (the traps). Ex
 - **M4.5 Fact writer:** consensus output → `facts` with full lineage; idempotent re-runs supersede prior suggested facts, never touch accepted/overridden ones (test this hard).
 - **M4.6 Thin-slice UI:** minimal deal page listing extracted facts per form with confidence chips and page-image crop per fact. Ugly is fine — this is the first end-to-end demo.
 - **M4.7 Eval milestone:** run corpus through M4 pipeline; record baseline; target ≥97% field precision on native PDFs, ≥90% scanned, auto-accept coverage reported. Tune prompts/registry (not ground truth!) to improve.
+- **M4.8 Registry-only facts (ADR-0002 follow-up):** derived tax lines with no taxonomy placement (AGI, taxable income) must insert as facts keyed by `registry_field_id` alone instead of being silently dropped after extraction. Acceptance: `facts.taxonomy_node_key` nullable with a CHECK that `registry_field_id` is non-null when taxonomy is null; extract stage inserts registry-only facts with full lineage; G1 skips them while G4/G5 key on registry ids (registry relations/flows wired into the deal-wide gate run); workspace Tax Spread tab renders registry-keyed rows from these facts.
 
 **Exit gate M4:** a real 1120-S uploads → splits → dual-extracts → consensus facts with lineage render in thin-slice UI; eval baseline committed. **This is the first investor-demoable moment.**
 

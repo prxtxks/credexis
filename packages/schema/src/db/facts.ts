@@ -11,6 +11,7 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  check,
   index,
   integer,
   jsonb,
@@ -56,10 +57,13 @@ export const facts = pgTable(
     periodId: uuid("period_id")
       .notNull()
       .references(() => periods.id),
-    /** Where the value lands in the canonical chart of accounts. */
-    taxonomyNodeKey: text("taxonomy_node_key")
-      .notNull()
-      .references(() => taxonomyNodes.key),
+    /**
+     * Where the value lands in the canonical chart of accounts. Null for
+     * registry-only facts: derived tax-form lines (AGI, taxable income)
+     * deliberately carry no taxonomy placement — they exist for G4/G5 and
+     * the Tax Spread, never for statement aggregation (ADR-0002 follow-up).
+     */
+    taxonomyNodeKey: text("taxonomy_node_key").references(() => taxonomyNodes.key),
     /**
      * Which registry line produced it (tax forms; null for statements).
      * Lineage addition to Blueprint §5's tuple: G4 cross-form relations and
@@ -95,6 +99,12 @@ export const facts = pgTable(
     index("facts_deal_idx").on(t.dealId),
     index("facts_entity_period_idx").on(t.entityId, t.periodId),
     index("facts_taxonomy_idx").on(t.taxonomyNodeKey),
+    // Every fact keys into SOMETHING renderable: taxonomy node or registry
+    // line. A row with neither would be an unaddressable orphan.
+    check(
+      "facts_taxonomy_or_registry_check",
+      sql`${t.taxonomyNodeKey} IS NOT NULL OR ${t.registryFieldId} IS NOT NULL`,
+    ),
   ],
 );
 

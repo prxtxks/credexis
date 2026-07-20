@@ -143,16 +143,21 @@ function toExtractor(spec: RowSpec): EvalExtractor {
         },
       );
 
-      const fields: ExtractedField[] = result.facts.map((f) => ({
-        ...(f.registry_field_id !== null ? { registry_field_id: f.registry_field_id } : {}),
-        ...(f.registry_field_id === null ? { taxonomy_node: f.taxonomy_node_key } : {}),
-        period: canonPeriod(f.periodLabel),
-        value_cents: BigInt(f.value_cents),
-        outcome:
-          spec.forceAutoAccept || f.status === "accepted"
-            ? ("auto_accept" as const)
-            : ("review" as const),
-      }));
+      const fields: ExtractedField[] = result.facts.map((f) => {
+        const field: ExtractedField = {
+          period: canonPeriod(f.periodLabel),
+          value_cents: BigInt(f.value_cents),
+          outcome:
+            spec.forceAutoAccept || f.status === "accepted"
+              ? ("auto_accept" as const)
+              : ("review" as const),
+        };
+        // Every fact keys into registry OR taxonomy (the facts CHECK mirrors
+        // this); registry id wins — registry-only facts have no taxonomy.
+        if (f.registry_field_id !== null) field.registry_field_id = f.registry_field_id;
+        else if (f.taxonomy_node_key !== null) field.taxonomy_node = f.taxonomy_node_key;
+        return field;
+      });
       return { fields, cost_micro_usd: result.costMicroUsd };
     },
   };

@@ -64,6 +64,13 @@
       "when": 1784511177114,
       "tag": "0008_mapping-source",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1784572721366,
+      "tag": "0009_registry-only-facts",
+      "breakpoints": true
     }
   ]
 }
