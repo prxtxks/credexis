@@ -114,13 +114,12 @@ export const ingestDocument = task({
             const extract = await runExtractStage(
               {
                 db: supabaseExtractDb(client),
-                // Blueprint routing: Azure prebuilt-tax for the 1040 family,
-                // Reducto for business returns + statement layout. Bake-off
-                // (M3.4) may reroute; the seam is this function.
-                path1ForFamily: (family) =>
-                  family.startsWith("1040") || family === "W2"
-                    ? (azure ?? reducto)
-                    : (reducto ?? azure),
+                // ADR-0002 (bake-off, 2026-07-20): Reducto is Path 1 for
+                // ALL families — Azure prebuilt-tax misread real CPA
+                // bundles (hallucinated 1099s) and rate-limits on the free
+                // tier. Azure remains the fallback only when Reducto is
+                // unconfigured; re-evaluate on a paid tier.
+                path1ForFamily: () => reducto ?? azure,
                 path2: vision,
                 statementLayout: reducto ?? azure,
                 labelClassifier: anthropicKey

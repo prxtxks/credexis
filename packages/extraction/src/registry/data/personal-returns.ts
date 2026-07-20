@@ -38,7 +38,9 @@ export const F1040: FormDefinition = {
         taxonomyNodeKey: "pcf.income.other",
       }),
       money("f1040.line9", "9", "Total income", { taxonomyNodeKey: "pcf.income.total" }),
-      money("f1040.line10", "10", "Adjustments to income from Schedule 1, line 26"),
+      money("f1040.line10", "10", "Adjustments to income from Schedule 1, line 26", {
+        taxonomyNodeKey: "pcf.outflow.other",
+      }),
       money("f1040.line11", "11", "Adjusted gross income", {
         aliases: ["AGI"],
       }),

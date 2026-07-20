@@ -206,8 +206,10 @@ export function buildRealExtractors(env: VendorEnv): Record<string, EvalExtracto
     rows["consensus"] = toExtractor({
       name: "consensus-system",
       supports: () => true,
-      // Production routing: Azure for the 1040 family when configured.
-      path1ForFamily: (f) => (A1040.has(f) && azure ? azure : reducto),
+      // ADR-0002: Reducto is Path 1 for ALL families — Azure prebuilt-tax
+      // failed on real CPA bundles and its free tier rate-limits; it stays
+      // a measured solo row until re-evaluated on a paid tier.
+      path1ForFamily: () => reducto,
       path2: claude,
       statementLayout: reducto,
       labelClassifier,

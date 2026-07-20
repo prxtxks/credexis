@@ -35,7 +35,7 @@ export const F1120S: FormDefinition = {
       money("f1120s.line5", "5", "Other income (loss)", {
         taxonomyNodeKey: "is.other.other_income",
       }),
-      money("f1120s.line6", "6", "Total income (loss)"),
+      money("f1120s.line6", "6", "Total income (loss)", { taxonomyNodeKey: "is.operating_income" }),
       money("f1120s.line7", "7", "Compensation of officers", {
         aliases: ["Officer compensation"],
         taxonomyNodeKey: "is.opex.officer_comp",
@@ -59,7 +59,7 @@ export const F1120S: FormDefinition = {
         aliases: ["Depreciation (attach Form 4562)"],
         taxonomyNodeKey: "is.opex.depreciation",
       }),
-      money("f1120s.line15", "15", "Depletion"),
+      money("f1120s.line15", "15", "Depletion", { taxonomyNodeKey: "is.opex.misc" }),
       money("f1120s.line16", "16", "Advertising", {
         taxonomyNodeKey: "is.opex.marketing_advertising",
       }),
@@ -162,15 +162,17 @@ export const F1120: FormDefinition = {
         taxonomyNodeKey: "is.other.interest_income",
       }),
       money("f1120.line6", "6", "Gross rents", { taxonomyNodeKey: "is.revenue.rental_income" }),
-      money("f1120.line7", "7", "Gross royalties"),
-      money("f1120.line8", "8", "Capital gain net income"),
+      money("f1120.line7", "7", "Gross royalties", { taxonomyNodeKey: "is.other.other_income" }),
+      money("f1120.line8", "8", "Capital gain net income", {
+        taxonomyNodeKey: "is.other.gain_loss_asset_sales",
+      }),
       money("f1120.line9", "9", "Net gain (loss) from Form 4797", {
         taxonomyNodeKey: "is.other.gain_loss_asset_sales",
       }),
       money("f1120.line10", "10", "Other income", {
         taxonomyNodeKey: "is.other.other_income",
       }),
-      money("f1120.line11", "11", "Total income"),
+      money("f1120.line11", "11", "Total income", { taxonomyNodeKey: "is.operating_income" }),
       money("f1120.line12", "12", "Compensation of officers", {
         taxonomyNodeKey: "is.opex.officer_comp",
       }),
@@ -194,7 +196,7 @@ export const F1120: FormDefinition = {
       money("f1120.line20", "20", "Depreciation from Form 4562", {
         taxonomyNodeKey: "is.opex.depreciation",
       }),
-      money("f1120.line21", "21", "Depletion"),
+      money("f1120.line21", "21", "Depletion", { taxonomyNodeKey: "is.opex.misc" }),
       money("f1120.line22", "22", "Advertising", {
         taxonomyNodeKey: "is.opex.marketing_advertising",
       }),
@@ -209,7 +211,7 @@ export const F1120: FormDefinition = {
       money("f1120.line28", "28", "Taxable income before NOL deduction", {
         taxonomyNodeKey: "is.pretax_income",
       }),
-      money("f1120.line30", "30", "Taxable income"),
+      money("f1120.line30", "30", "Taxable income", { taxonomyNodeKey: "is.pretax_income" }),
       money("f1120.line31", "31", "Total tax", { taxonomyNodeKey: "is.income_tax" }),
     ],
     relations: [
@@ -256,8 +258,12 @@ export const F1065: FormDefinition = {
       }),
       money("f1065.line2", "2", "Cost of goods sold", { taxonomyNodeKey: "is.cogs.total" }),
       money("f1065.line3", "3", "Gross profit", { taxonomyNodeKey: "is.gross_profit" }),
-      money("f1065.line4", "4", "Ordinary income (loss) from other partnerships"),
-      money("f1065.line5", "5", "Net farm profit (loss)"),
+      money("f1065.line4", "4", "Ordinary income (loss) from other partnerships", {
+        taxonomyNodeKey: "is.other.other_income",
+      }),
+      money("f1065.line5", "5", "Net farm profit (loss)", {
+        taxonomyNodeKey: "is.other.other_income",
+      }),
       money("f1065.line6", "6", "Net gain (loss) from Form 4797", {
         taxonomyNodeKey: "is.other.gain_loss_asset_sales",
       }),

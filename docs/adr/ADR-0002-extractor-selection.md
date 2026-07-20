@@ -77,6 +77,27 @@ degrades to learned-mappings-only instead of losing the document, and
 the credit top-up is [PRATIK]'s. Statement + post-slicing tax numbers
 re-run once credits exist.
 
+### Rounds 4–5 (post-fix, Reducto Path-1 everywhere, sliced spans)
+
+| Metric                 | Round 1         | Round 5                                   |
+| ---------------------- | --------------- | ----------------------------------------- |
+| Consensus docs covered | 3 (1120-S only) | 8 of 9                                    |
+| Tax precision          | 100%            | **100%**                                  |
+| 1120-S recall          | 59.4%           | **63.8%**                                 |
+| Statement extraction   | zero            | live (16/20 correct on the half-year P&L) |
+| Cost per full row      | $1.60           | **$0.39** (4× cheaper via slicing)        |
+| Silent wrong           | 0               | **0**                                     |
+
+Field-level diagnosis on sliced pages: Reducto alone found **every**
+labeled 1040/1120-S value with zero errors — the residual recall gap is
+now the fact model, not the engines: derived lines (AGI, taxable income)
+deliberately carry no taxonomy link and are dropped after extraction
+(follow-up task: registry-only facts). The P&L precision number (37%) is
+dominated by one column-per-month statement scored against FY-total
+labels — a period-granularity representation question; all its wrongs
+routed to review (nothing silent). Multi-column balance sheets remain
+review-owned by design.
+
 ## Consequences
 
 - The chosen primary becomes `path1ForFamily`'s default in the pipeline
