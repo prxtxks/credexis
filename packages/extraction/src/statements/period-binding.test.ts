@@ -120,6 +120,47 @@ describe("bindPeriods — geometric column binding", () => {
   });
 });
 
+describe("real-world title hazards (annual P&L + Maitripriya findings)", () => {
+  it("parses a range whose separator was lost to a line break", () => {
+    expect(parsePeriodHeader("January December 2024")).toMatchObject({ label: "FY2024" });
+    expect(findPeriodInText("Profit and Loss\nJanuary December 2024")).toMatchObject({
+      label: "FY2024",
+    });
+  });
+
+  it("NEVER binds a print-date footer as the period", () => {
+    expect(
+      findPeriodInText("Accrual Basis Thursday, February 6, 2025 02:13 PM GMT-05:00"),
+    ).toBeNull();
+  });
+
+  it("binds the numeric column when the other column is label-only", () => {
+    const cells = (col: number, text: string) => [col, { text, bbox: null }] as const;
+    const grid: StatementGrid = {
+      page: 2,
+      bbox: { x: 0, y: 0, w: 1, h: 1 },
+      columnIds: [1, 2],
+      rows: [
+        { rowIndex: 0, label: "Current Assets", labelX: 0, cells: new Map([cells(1, "Equity")]) },
+        { rowIndex: 1, label: "Petty Cash", labelX: 0, cells: new Map([cells(2, "$ 500.00")]) },
+        { rowIndex: 2, label: "Checking", labelX: 0, cells: new Map([cells(2, "97,185.57")]) },
+      ],
+    };
+    const pages = [
+      {
+        page: 2,
+        textBlocks: [
+          { text: "Balance Sheet As of May 31, 2025", bbox: { x: 0.3, y: 0.03, w: 0.4, h: 0.02 } },
+        ],
+        tables: [],
+      },
+    ];
+    const binding = bindPeriods(grid, pages as never);
+    expect(binding.byColumn.get(2)).toMatchObject({ label: "As of 2025-05-31" });
+    expect(binding.byColumn.get(1)).toBeNull(); // label column stays unbound
+  });
+});
+
 describe("merged title blocks (vendors concatenate title lines)", () => {
   it("finds the period inside a merged company+title+period block", () => {
     expect(

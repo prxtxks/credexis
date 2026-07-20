@@ -43,7 +43,13 @@ const STATEMENTS = new Set(["PNL", "BALANCE_SHEET", "DEBT_SCHEDULE"]);
  * normalization only, never a value change (Iron Law #9 untouched).
  */
 export function canonPeriod(label: string): string {
-  return label.replace(/\s*\(.*\)\s*$/, "").trim();
+  const stripped = label.replace(/\s*\(.*\)\s*$/, "").trim();
+  // Point-in-time labels compare by month: the chain emits
+  // "As of 2025-05-31", hand labels often say "2025-05" — same instant,
+  // different spelling. Both sides canonicalize identically.
+  const asOf = /^As of (\d{4})-(\d{2})-\d{2}$/.exec(stripped);
+  if (asOf) return `${asOf[1]}-${asOf[2]}`;
+  return stripped;
 }
 
 interface CaptureResult {

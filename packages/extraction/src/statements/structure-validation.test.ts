@@ -167,3 +167,34 @@ describe("M5 EXIT GATE — CPA balance sheet (planted A ≠ L + E)", () => {
     expect(result.issues.filter((i) => i.gate === "G2")).toHaveLength(0);
   });
 });
+
+describe("total rows emit facts (bake-off finding, 2026-07-20)", () => {
+  it("a mapped, bound subtotal/total row becomes a fact draft", async () => {
+    const g = grid([
+      ["", "FY2024"],
+      ["Rent", "12,000.00"],
+      ["Total Expenses", "12,000.00"],
+    ]);
+    const store = await preloadedStore();
+    await store.upsert(null, {
+      labelNorm: "total expenses",
+      taxonomyNodeKey: "is.opex.total",
+      confidence: 0.95,
+      source: "human",
+      usageCount: 5,
+    });
+    const typed = typeRows(g);
+    const labels = g.rows.map((r) => r.label).filter((l) => l !== "");
+    const mapped = await mapLabels(labels, "PNL", "t1", store, null);
+    const result = validateStructure(
+      typed,
+      bindPeriods(g),
+      new Map(mapped.map((m) => [m.label, m])),
+      { statement: "PNL", page: g.page },
+    );
+    const totalFact = result.facts.find((f) => f.taxonomyNodeKey === "is.opex.total");
+    expect(totalFact).toBeDefined();
+    expect(totalFact!.valueCents).toBe(1200000n);
+    expect(totalFact!.sourceLabel).toBe("Total Expenses");
+  });
+});
