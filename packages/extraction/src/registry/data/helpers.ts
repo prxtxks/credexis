@@ -18,6 +18,7 @@ export function money(
     pageHint: opts.pageHint ?? 1,
     sign: opts.sign ?? 1,
     hasCentsBox: opts.hasCentsBox ?? true,
+    hint: opts.hint ?? null,
     taxonomyNodeKey: opts.taxonomyNodeKey ?? null,
   };
 }

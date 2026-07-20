@@ -105,6 +105,7 @@ export function toFieldRequests(entry: RegistryEntry): FieldRequest[] {
     label: f.label,
     aliases: f.aliases,
     pageHint: f.pageHint,
+    ...(f.hint ? { hint: f.hint } : {}),
     dtype: f.dtype,
     hasCentsBox: f.hasCentsBox,
   }));

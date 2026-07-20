@@ -153,7 +153,8 @@ export class AnthropicVisionAdapter implements ExtractorAdapter {
         const aliases = f.aliases?.length ? ` (also appears as: ${f.aliases.join("; ")})` : "";
         const hint = f.pageHint ? ` [usually page ${f.pageHint}]` : "";
         const cents = f.hasCentsBox ? " [has separate cents box]" : "";
-        return `- ${f.fieldId}: "${f.label}"${aliases}${hint} (${f.dtype})${cents}`;
+        const note = f.hint ? ` NOTE: ${f.hint}` : "";
+        return `- ${f.fieldId}: "${f.label}"${aliases}${hint} (${f.dtype})${cents}${note}`;
       })
       .join("\n");
 

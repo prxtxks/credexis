@@ -134,6 +134,31 @@ describe("real-world title hazards (annual P&L + Maitripriya findings)", () => {
     ).toBeNull();
   });
 
+  it("parses same-month day ranges (Travelodge scorecard skip, 2026-07-20)", () => {
+    // QuickBooks custom-range reports print "April 1-30, 2025" — a day
+    // range within one month. Full-corpus scorecard skipped the doc: no
+    // pattern covered it, so the single-column grid never got a period.
+    expect(parsePeriodHeader("April 1-30, 2025")).toMatchObject({ label: "2025-04" });
+    // Partial month stays honest — exact dates, never rounded to a month.
+    expect(parsePeriodHeader("April 1-15, 2025")).toMatchObject({
+      label: "2025-04-01..2025-04-15",
+    });
+    // The real Travelodge title block, verbatim from Reducto.
+    expect(findPeriodInText("Niyazi Hotels & Resorts Inc.\nApril 1-30, 2025")).toMatchObject({
+      label: "2025-04",
+    });
+  });
+
+  it('finds a bare single-month title ("April 2025")', () => {
+    expect(findPeriodInText("Travelodge by Wyndham\nProfit and Loss\nApril 2025")).toMatchObject({
+      label: "2025-04",
+    });
+    // A range in the same text still wins over its embedded month-year.
+    expect(findPeriodInText("Profit and Loss\nJanuary December 2024")).toMatchObject({
+      label: "FY2024",
+    });
+  });
+
   it("binds the numeric column when the other column is label-only", () => {
     const cells = (col: number, text: string) => [col, { text, bbox: null }] as const;
     const grid: StatementGrid = {

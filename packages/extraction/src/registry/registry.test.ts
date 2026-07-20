@@ -177,3 +177,18 @@ describe("1120-S 2023 renumbering (real-document finding, 2026-07-19)", () => {
     expect(byId.get("f1120s.line21")?.lineNumber).toBe("22");
   });
 });
+
+describe("K-1 box-17 disambiguation (real-corpus finding, 2026-07-20)", () => {
+  it("box 17 code AC has its own registry-only field", () => {
+    const entry = getRegistryEntry("K1_1120S", 2024)!;
+    const ac = entry.fields.find((f) => f.fieldId === "k1s.box17ac");
+    expect(ac).toBeDefined();
+    expect(ac!.taxonomyNodeKey).toBeNull(); // size-standard info, never cash flow
+  });
+
+  it("box 11 carries a location hint that reaches the FieldRequest", () => {
+    const entry = getRegistryEntry("K1_1120S", 2024)!;
+    const req = toFieldRequests(entry).find((r) => r.fieldId === "k1s.box11");
+    expect(req?.hint).toMatch(/box 17/i); // warns about the adjacent AC amount
+  });
+});

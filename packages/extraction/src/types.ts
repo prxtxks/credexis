@@ -49,6 +49,8 @@ export interface FieldRequest {
   aliases?: string[];
   /** 1-based page hint from the registry (advisory only). */
   pageHint?: number;
+  /** Registry location guidance relayed to the vendor (never a value). */
+  hint?: string;
   dtype: "money" | "integer" | "percent" | "text" | "date";
   /** Money fields on IRS forms may have a separate cents box. */
   hasCentsBox?: boolean;

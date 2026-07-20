@@ -139,10 +139,25 @@ export const K1_1120S: FormDefinition = {
       money("k1s.box5a", "5a", "Ordinary dividends", {
         taxonomyNodeKey: "pcf.income.interest_dividends",
       }),
-      money("k1s.box11", "11", "Section 179 deduction"),
+      money("k1s.box11", "11", "Section 179 deduction", {
+        // Real-corpus finding (2026-07-20): box 17 code AC's amount prints
+        // in the same visual band; without a box-17 field the vendor
+        // stuffed it here. Box 11 must be the amount in box 11 itself.
+        aliases: ["Section 179 expense deduction"],
+        hint:
+          "Only an amount printed INSIDE box 11. Box 17 'Other information' " +
+          "prints code-lettered amounts (V, AC, ...) in the adjacent column on " +
+          "the same row band — those belong to box 17, never box 11. " +
+          "If box 11 itself is blank, return empty.",
+      }),
       money("k1s.box16d", "16 (code D)", "Distributions", {
         aliases: ["Items affecting shareholder basis — D"],
         taxonomyNodeKey: "pcf.income.k1_distributions",
+      }),
+      // Registry-only (no taxonomy): §448(c) gross receipts — useful for
+      // SBA size-standard checks, never a cash-flow input.
+      money("k1s.box17ac", "17 (code AC)", "Gross receipts for section 448(c)", {
+        aliases: ["Other information — AC", "Gross receipts for section 448(c)"],
       }),
     ],
     relations: [],

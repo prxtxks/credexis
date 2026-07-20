@@ -227,11 +227,12 @@ export class ReductoAdapter implements ExtractorAdapter {
     const properties: Record<string, unknown> = {};
     for (const f of fields) {
       const aliases = f.aliases?.length ? ` (also labeled: ${f.aliases.join("; ")})` : "";
+      const hint = f.hint ? ` NOTE: ${f.hint}` : "";
       properties[keyFor(f.fieldId)] = {
         type: "string",
         description:
           `Line ${f.label}${aliases}. Return the EXACT raw text as printed ` +
-          `(keep commas/parentheses/symbols). Empty string if absent or illegible.`,
+          `(keep commas/parentheses/symbols). Empty string if absent or illegible.${hint}`,
       };
     }
 
