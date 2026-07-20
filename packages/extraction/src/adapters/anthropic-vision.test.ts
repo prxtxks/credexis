@@ -111,7 +111,77 @@ describe("AnthropicVisionAdapter (recorded responses — no live calls)", () => 
     expect((body["output_config"] as Record<string, unknown>)["format"]).toMatchObject({
       type: "json_schema",
     });
-    expect(String(body["system"])).toContain("NEVER");
+    // System is now a block ARRAY: frozen instructions + the cacheable
+    // field-definition block (M10.5 cost lever).
+    const system = body["system"] as { text: string; cache_control?: unknown }[];
+    expect(system[0]!.text).toContain("NEVER");
+    expect(system[1]!.text).toContain("f1120s.line21");
+    expect(system[1]!.cache_control).toEqual({ type: "ephemeral" });
+  });
+
+  it("routes through the Message Batches API in batch mode, at half cost", async () => {
+    const calls: string[] = [];
+    const batchFetch: typeof fetch = async (url, init) => {
+      const u = String(url);
+      calls.push(`${init?.method ?? "GET"} ${u.split("/v1/")[1] ?? u}`);
+      if (u.endsWith("/v1/messages/batches")) {
+        return new Response(
+          JSON.stringify({
+            id: "msgbatch_test",
+            type: "message_batch",
+            processing_status: "ended",
+            request_counts: { processing: 0, succeeded: 1, errored: 0, canceled: 0, expired: 0 },
+            ended_at: "2026-07-20T00:00:00Z",
+            created_at: "2026-07-20T00:00:00Z",
+            expires_at: "2026-07-21T00:00:00Z",
+            cancel_initiated_at: null,
+            results_url: "https://api.anthropic.com/v1/messages/batches/msgbatch_test/results",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      if (u.endsWith("/batches/msgbatch_test")) {
+        // SDK's .results() re-retrieves the batch for its results_url.
+        return new Response(
+          JSON.stringify({
+            id: "msgbatch_test",
+            type: "message_batch",
+            processing_status: "ended",
+            request_counts: { processing: 0, succeeded: 1, errored: 0, canceled: 0, expired: 0 },
+            ended_at: "2026-07-20T00:00:00Z",
+            created_at: "2026-07-20T00:00:00Z",
+            expires_at: "2026-07-21T00:00:00Z",
+            cancel_initiated_at: null,
+            results_url: "https://api.anthropic.com/v1/messages/batches/msgbatch_test/results",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      if (u.endsWith("/results")) {
+        return new Response(
+          JSON.stringify({
+            custom_id: "r0",
+            result: { type: "succeeded", message: RECORDED_RESPONSE },
+          }) + "\n",
+          { status: 200, headers: { "Content-Type": "application/x-jsonl" } },
+        );
+      }
+      throw new Error(`unexpected url ${u}`);
+    };
+    const adapter = new AnthropicVisionAdapter({
+      apiKey: "test-key",
+      fetch: batchFetch,
+      batch: { pollIntervalMs: 1 },
+    });
+    const sync = new AnthropicVisionAdapter({ apiKey: "test-key", fetch: recordedFetch() });
+    const [batched, synced] = [
+      await adapter.extractFields(DOC, FIELDS),
+      await sync.extractFields(DOC, FIELDS),
+    ];
+    expect(calls[0]).toContain("POST messages/batches");
+    expect(batched.candidates).toEqual(synced.candidates);
+    // Same usage, half the accounted cost (50% batch discount).
+    expect(batched.run.costMicroUsd * 2n).toBe(synced.run.costMicroUsd);
   });
 
   it("refuses to parse layout (that is the layout vendor's job)", async () => {

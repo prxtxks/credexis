@@ -13,6 +13,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { createMessageMaybeBatch, type BatchOptions } from "../adapters/anthropic-batch.js";
 import { z } from "zod";
 import { TAXONOMY_V1 } from "@credexis/schema";
 
@@ -135,12 +136,59 @@ const llmResponseSchema = z.object({
   ),
 });
 
+/**
+ * Mapping guidance baked into the cached prefix: curated from the domain
+ * mapping doc and real-corpus findings (hotels, gas stations). Doubles as
+ * the ballast that lifts the cacheable prefix past the model minimum.
+ */
+const MAPPING_GUIDANCE = `Common label patterns (pattern → node):
+- Room Revenue / Room Rental / Occupancy revenue → is.revenue.rental_income
+- Franchise Fee / Royalty Fees / Brand fees → is.opex.royalties_franchise
+- OTA Fees / Travel Agent Fees / Booking commissions → is.opex.commissions_paid
+- Merchant account fees / Credit card fees / Card processing → is.opex.merchant_fees
+- Payroll Expenses / Salaries / Wages / Staff pay → is.opex.salaries_wages
+- Officer salary / Owner compensation / Member draws (as comp) → is.opex.officer_comp
+- Payroll taxes / Employer taxes / FICA → is.opex.payroll_taxes
+- Interest paid / Interest expense / Loan interest → is.other.interest_expense
+- Bank fees / Bank service charges / NSF fees → is.opex.bank_charges
+- Heating & cooling / Electric / Gas / Water & sewer → is.opex.utilities
+- Phone / Internet & TV / Cell service → is.opex.telephone_internet
+- Trash removal / Pest control / Snow removal → is.opex.misc
+- Business licenses / Permits / Regulatory fees → is.opex.licenses_permits
+- Legal & Accounting / CPA fees / Attorney fees → is.opex.professional_fees
+- Dues & subscriptions / Memberships → is.opex.dues_subscriptions
+- Supplies & materials / Operating supplies → is.opex.supplies
+- Office supplies / Office expense → is.opex.office_expense
+- Shipping & postage / Freight out → is.opex.postage_shipping
+- Software & apps / POS fees / Technology → is.opex.software
+- Vehicle gas & fuel / Auto expense → is.opex.fuel or is.opex.vehicle
+- Checking / Savings / Petty cash / Cash on hand → bs.assets.current.cash
+- Accounts receivable / Trade receivables → bs.assets.current.accounts_receivable
+- Inventories / Stock on hand → bs.assets.current.inventory
+- Building / Land / Equipment / Furniture / Improvements → bs.assets.fixed.* items
+- Accumulated depreciation (negative) → contra within bs.assets.fixed
+- Goodwill / Closing costs / Loan costs → bs.assets.other.*
+- Sales tax payable / Accrued expenses → bs.liabilities.current.*
+- Loan / Mortgage / SBA note (long term) → bs.liabilities.longterm.*
+Rules:
+- Totals map to the section .total node, never to a line item.
+- A label naming a person or company alone is not mappable → null.
+- Sub-account labels ("Insurance:Business") map by their leaf meaning.`;
+
 export class AnthropicLabelClassifier implements LabelClassifier {
   private client: Anthropic;
   readonly model: string;
+  private batch: BatchOptions | null;
 
-  constructor(cfg: { apiKey: string; model?: string; fetch?: typeof globalThis.fetch }) {
+  constructor(cfg: {
+    apiKey: string;
+    model?: string;
+    fetch?: typeof globalThis.fetch;
+    /** Message Batches API (50% off) — eval/bake-off callers only. */
+    batch?: BatchOptions | null;
+  }) {
     this.model = cfg.model ?? "claude-haiku-4-5";
+    this.batch = cfg.batch ?? null;
     this.client = new Anthropic({ apiKey: cfg.apiKey, ...(cfg.fetch ? { fetch: cfg.fetch } : {}) });
   }
 
@@ -150,51 +198,77 @@ export class AnthropicLabelClassifier implements LabelClassifier {
   ): Promise<LabelClassification[]> {
     const prefix = statement === "PNL" ? "is." : "bs.";
     const nodes = TAXONOMY_V1.filter((n) => n.key.startsWith(prefix)).map((n) => n.key);
+    // The cached block carries the FULL chart of accounts (both statement
+    // kinds, keys AND labels): one shared prefix for every call regardless
+    // of statement, comfortably above the model minimum cacheable length
+    // (Haiku: 2048 tokens). The schema enum still restricts answers to
+    // the current statement.
+    const nodeCatalog = TAXONOMY_V1.filter(
+      (n) => n.key.startsWith("is.") || n.key.startsWith("bs."),
+    )
+      .map((n) => `${n.key} — ${n.label}`)
+      .join("\n");
 
-    const response = await this.client.messages.create({
-      model: this.model,
-      max_tokens: 8000,
-      system:
-        "You map financial statement line-item LABELS to a canonical chart of accounts. " +
-        "You only ever see labels — never amounts. Return null when no node fits; " +
-        "guessing is worse than null.",
-      output_config: {
-        format: {
-          type: "json_schema",
-          schema: {
-            type: "object",
-            properties: {
-              mappings: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    label: { type: "string" },
-                    // anyOf, not mixed type+enum: the API validates each
-                    // enum member against the declared type and rejects the
-                    // union form (found live, 2026-07-20).
-                    taxonomy_node: {
-                      anyOf: [{ type: "string", enum: nodes }, { type: "null" }],
+    // The taxonomy list is identical for every call of a statement kind —
+    // a cacheable prefix (~200 nodes); labels vary per call in the user turn.
+    const { message: response } = await createMessageMaybeBatch(
+      this.client,
+      {
+        model: this.model,
+        max_tokens: 8000,
+        system: [
+          {
+            type: "text",
+            text:
+              "You map financial statement line-item LABELS to a canonical chart of accounts. " +
+              "You only ever see labels — never amounts. Return null when no node fits; " +
+              "guessing is worse than null.",
+          },
+          {
+            type: "text",
+            text: `Chart of accounts (key — meaning):\n${nodeCatalog}\n\n${MAPPING_GUIDANCE}`,
+            cache_control: { type: "ephemeral" },
+          },
+        ],
+        output_config: {
+          format: {
+            type: "json_schema",
+            schema: {
+              type: "object",
+              properties: {
+                mappings: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      label: { type: "string" },
+                      // anyOf, not mixed type+enum: the API validates each
+                      // enum member against the declared type and rejects the
+                      // union form (found live, 2026-07-20).
+                      taxonomy_node: {
+                        anyOf: [{ type: "string", enum: nodes }, { type: "null" }],
+                      },
+                      confidence: { type: "number" },
                     },
-                    confidence: { type: "number" },
+                    required: ["label", "taxonomy_node", "confidence"],
+                    additionalProperties: false,
                   },
-                  required: ["label", "taxonomy_node", "confidence"],
-                  additionalProperties: false,
                 },
               },
+              required: ["mappings"],
+              additionalProperties: false,
             },
-            required: ["mappings"],
-            additionalProperties: false,
           },
         },
+        messages: [
+          {
+            role: "user",
+            content: `Statement kind: ${statement}. Map each label to one node key valid for this statement (or null):\n${labels.map((l) => `- ${l}`).join("\n")}`,
+          },
+        ],
       },
-      messages: [
-        {
-          role: "user",
-          content: `Map each label to one node key (or null):\n${labels.map((l) => `- ${l}`).join("\n")}`,
-        },
-      ],
-    });
+      this.batch,
+    );
 
     if (response.stop_reason === "refusal") throw new Error("label-classifier: refused");
     const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === "text");
