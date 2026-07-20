@@ -1,0 +1,161 @@
+{
+  "id": "pnl-monthly-native-001",
+  "form_family": "PNL",
+  "tax_year": null,
+  "entity": "target",
+  "quality": "native",
+  "synthetic": false,
+  "pdf_sha256": "5cd32d3e3df5beb0126b2d9fffc10d2cfd2072355e7b0a0f72398d9e89090eb9",
+  "page_count": 2,
+  "labeled_by": "pratik + claude (AI draft, human number-verified 2026-07-20)",
+  "labeled_at": "2026-07-20T17:00:00Z",
+  "fields": [
+    {
+      "taxonomy_node": "is.revenue.rental_income",
+      "period": "2025-04",
+      "value_cents": "1982522",
+      "page": 1,
+      "note": "Room Revenue (hotel)"
+    },
+    {
+      "taxonomy_node": "is.revenue.total",
+      "period": "2025-04",
+      "value_cents": "1982522",
+      "page": 1,
+      "note": "Total for Income"
+    },
+    {
+      "taxonomy_node": "is.gross_profit",
+      "period": "2025-04",
+      "value_cents": "1982522",
+      "page": 1,
+      "note": "Gross Profit (no COGS)"
+    },
+    {
+      "taxonomy_node": "is.opex.licenses_permits",
+      "period": "2025-04",
+      "value_cents": "5100",
+      "page": 1,
+      "note": "Business licenses"
+    },
+    {
+      "taxonomy_node": "is.opex.bank_charges",
+      "period": "2025-04",
+      "value_cents": "2500",
+      "page": 1,
+      "note": "Bank fees & service charges (Total for General business expenses)"
+    },
+    {
+      "taxonomy_node": "is.opex.insurance",
+      "period": "2025-04",
+      "value_cents": "784419",
+      "page": 1,
+      "note": "Total for Insurance (4,039.63 header + 3,804.56 Business insurance)"
+    },
+    {
+      "taxonomy_node": "is.other.interest_expense",
+      "period": "2025-04",
+      "value_cents": "267935",
+      "page": 1,
+      "note": "Interest paid — printed INSIDE the Expenses section"
+    },
+    {
+      "taxonomy_node": "is.opex.royalties_franchise",
+      "period": "2025-04",
+      "value_cents": "385807",
+      "page": 1,
+      "note": "Franchise Fee (under Office expenses)"
+    },
+    {
+      "taxonomy_node": "is.opex.merchant_fees",
+      "period": "2025-04",
+      "value_cents": "47342",
+      "page": 1,
+      "note": "Merchant account fees"
+    },
+    {
+      "taxonomy_node": "is.opex.commissions_paid",
+      "period": "2025-04",
+      "value_cents": "17852",
+      "page": 1,
+      "note": "OTA Fees — JUDGMENT CALL: commissions"
+    },
+    {
+      "taxonomy_node": "is.opex.postage_shipping",
+      "period": "2025-04",
+      "value_cents": "2478",
+      "page": 1,
+      "note": "Shipping & postage"
+    },
+    {
+      "taxonomy_node": "is.opex.software",
+      "period": "2025-04",
+      "value_cents": "4699",
+      "page": 1,
+      "note": "Software & apps"
+    },
+    {
+      "taxonomy_node": "is.opex.salaries_wages",
+      "period": "2025-04",
+      "value_cents": "614610",
+      "page": 1,
+      "note": "Payroll expenses"
+    },
+    {
+      "taxonomy_node": "is.opex.repairs_maintenance",
+      "period": "2025-04",
+      "value_cents": "11151",
+      "page": 1,
+      "note": "Repairs & maintenance"
+    },
+    {
+      "taxonomy_node": "is.opex.supplies",
+      "period": "2025-04",
+      "value_cents": "261887",
+      "page": 1,
+      "note": "Total for Supplies (103.31 header − 4.97 refunds + 2,520.53 materials)"
+    },
+    {
+      "taxonomy_node": "is.opex.payroll_taxes",
+      "period": "2025-04",
+      "value_cents": "76585",
+      "page": 1,
+      "note": "Payroll taxes (Total for Taxes paid)"
+    },
+    {
+      "taxonomy_node": "is.opex.utilities",
+      "period": "2025-04",
+      "value_cents": "432477",
+      "page": 1,
+      "note": "Total for Utilities (heating 3,216.23 + internet/TV 461.92 + phone 646.62)"
+    },
+    {
+      "taxonomy_node": "is.opex.total",
+      "period": "2025-04",
+      "value_cents": "2914842",
+      "page": 1,
+      "note": "Total for Expenses — includes the Interest line"
+    },
+    {
+      "taxonomy_node": "is.operating_income",
+      "period": "2025-04",
+      "value_cents": "-932320",
+      "page": 1,
+      "note": "Net Operating Income"
+    },
+    {
+      "taxonomy_node": "is.opex.fuel",
+      "period": "2025-04",
+      "value_cents": "8056",
+      "page": 2,
+      "note": "Vehicle gas & fuel — printed under Other Expenses"
+    },
+    {
+      "taxonomy_node": "is.net_income",
+      "period": "2025-04",
+      "value_cents": "-940376",
+      "page": 2,
+      "note": "Net Income"
+    }
+  ]
+}

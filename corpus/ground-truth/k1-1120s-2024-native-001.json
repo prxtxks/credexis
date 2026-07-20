@@ -15,7 +15,14 @@
       "period": "FY2024",
       "value_cents": "-2181200",
       "page": 7,
-      "note": "Ordinary business income (loss) — other registry boxes (2, 4, 5a, 11, 16d) blank on this K-1"
+      "note": "Ordinary business income (loss) — boxes 2, 4, 5a, 11, 16d blank on this K-1"
+    },
+    {
+      "registry_field_id": "k1s.box17ac",
+      "period": "FY2024",
+      "value_cents": "70678900",
+      "page": 7,
+      "note": "Box 17 code AC — gross receipts for section 448(c) (3-yr average; not parent line 1a). Visually verified 2026-07-20; first extraction wrongly filed this amount under box 11."
     }
   ]
 }

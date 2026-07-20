@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-20T19:55:00.482Z",
+  "updated_at": "2026-07-20T21:34:41.531Z",
   "documents": [
     {
       "id": "1040-2024-native-001",
@@ -77,6 +77,20 @@
       "ground_truth_path": "ground-truth/pnl-halfyear-native-001.json",
       "pdf_sha256": "89c3b5472808d2d3ee155df006c7c75886d76f484c153dedcbb3c240e7b3e547",
       "pdf_bytes": 143380,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "pnl-monthly-native-001",
+      "ground_truth_path": "ground-truth/pnl-monthly-native-001.json",
+      "pdf_sha256": "5cd32d3e3df5beb0126b2d9fffc10d2cfd2072355e7b0a0f72398d9e89090eb9",
+      "pdf_bytes": 36071,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "pnl-t12-native-001",
+      "ground_truth_path": "ground-truth/pnl-t12-native-001.json",
+      "pdf_sha256": "3c4c2ce287806409909b12ab35bb6e7e7a6e1232008381df72eeb22e0bf272dc",
+      "pdf_bytes": 60844,
       "pdf_bucket_key": null
     },
     {
