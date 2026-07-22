@@ -22,6 +22,7 @@ import {
   AnthropicVisionAdapter,
   AzureDocumentIntelligenceAdapter,
   InMemoryMappingsStore,
+  normalizeLabel,
   ReductoAdapter,
   type ExtractorAdapter,
 } from "@credexis/extraction";
@@ -31,6 +32,28 @@ import {
   type ExtractionRunInsert,
   type FactInsert,
 } from "@credexis/pipeline";
+import { LEARNED_MAPPINGS_SEED } from "@credexis/schema";
+
+/**
+ * Per-doc mappings store preloaded with the SHIPPED global seed. The seed
+ * is product code (human-verified, versioned in git) — production always
+ * has it, so the eval measures the system that actually ships. What stays
+ * cold per doc: LLM write-backs — no accumulated vocabulary leaks from one
+ * eval doc into the next, and no eval answer ever feeds the seed.
+ */
+async function seededStore(): Promise<InMemoryMappingsStore> {
+  const store = new InMemoryMappingsStore();
+  for (const m of LEARNED_MAPPINGS_SEED) {
+    await store.upsert(null, {
+      labelNorm: normalizeLabel(m.label),
+      taxonomyNodeKey: m.node,
+      confidence: 0.95,
+      source: "human",
+      usageCount: 1,
+    });
+  }
+  return store;
+}
 import type { EvalDocument, EvalExtractor, ExtractedField, ExtractionResult } from "./types.js";
 
 const A1040 = new Set(["1040", "1040_SCH_1", "1040_SCH_C", "1040_SCH_E", "1040_SCH_F", "W2"]);
@@ -119,7 +142,7 @@ function toExtractor(spec: RowSpec): EvalExtractor {
           path2: spec.path2,
           statementLayout: spec.statementLayout,
           labelClassifier: spec.labelClassifier,
-          mappingsStore: new InMemoryMappingsStore(), // cold start per doc — no leakage
+          mappingsStore: await seededStore(), // shipped seed + per-doc cold LLM write-backs
         },
         {
           tenantId: "eval-tenant",

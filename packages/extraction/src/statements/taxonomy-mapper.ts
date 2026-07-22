@@ -65,12 +65,25 @@ export class InMemoryMappingsStore implements LearnedMappingsStore {
 
 /* ── normalization + fuzzy matching ────────────────────────────────── */
 
-/** Label normalization: the identity used for learning and lookup. */
+/**
+ * Label normalization: the identity used for learning and lookup.
+ * KEEP IN SYNC with the inline copy in packages/schema seed-api.ts.
+ *
+ * Account-code stripping (annual P&L finding, 2026-07-22): QuickBooks
+ * charts print "60400 Bank Service Charges" / "301.1 Cash Revenue" /
+ * "Total 63300 Insurance Expense". The code is presentation, not
+ * meaning — strip LEADING 3-5 digit tokens (and their dotted
+ * sub-account digits) so the label matches its code-free vocabulary.
+ * Mid-label numbers ("Section 179 Deduction") and digit-letter tokens
+ * ("401k Match") are never touched.
+ */
 export function normalizeLabel(label: string): string {
   return label
     .toLowerCase()
     .replace(/[^a-z0-9 ]/g, "")
     .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^(total (?:for )?)?\d{3,5}(?: \d{1,4})* /, "$1")
     .trim();
 }
 

@@ -60,7 +60,11 @@ export function validateStructure(
   opts: { statement: "PNL" | "BALANCE_SHEET"; page: number },
 ): StructureValidationResult {
   const issues: StructureIssue[] = [];
-  const facts: StatementFactDraft[] = [];
+  // Drafts carry their row type until the double-count pass below decides
+  // which survive as facts.
+  const pending: Array<
+    StatementFactDraft & { rowType: "item" | "subtotal" | "total"; col: number; rawCents: bigint }
+  > = [];
   const unmappedLabels = new Set<string>();
   const headerRows = new Set(binding.headerRowIndexes);
 
@@ -104,13 +108,16 @@ export function validateStructure(
           record(mapping.taxonomyNodeKey, col, v);
           const period = binding.byColumn.get(col);
           if (period) {
-            facts.push({
+            pending.push({
               taxonomyNodeKey: mapping.taxonomyNodeKey,
               periodLabel: period.label,
               valueCents: mulCentsByInt(v, BigInt(binding.scale)),
               page: opts.page,
               sourceLabel: t.row.label,
               mappingMethod: mapping.method,
+              rowType: "item",
+              col,
+              rawCents: v,
             });
           }
         }
@@ -129,13 +136,16 @@ export function validateStructure(
             // total fact to EXIST — and underwriters read totals first.
             const period = binding.byColumn.get(col);
             if (period) {
-              facts.push({
+              pending.push({
                 taxonomyNodeKey: mapping.taxonomyNodeKey,
                 periodLabel: period.label,
                 valueCents: mulCentsByInt(v, BigInt(binding.scale)),
                 page: opts.page,
                 sourceLabel: t.row.label,
                 mappingMethod: mapping.method,
+                rowType: t.type,
+                col,
+                rawCents: v,
               });
             }
           }
@@ -166,6 +176,64 @@ export function validateStructure(
       itemBlock.clear();
       itemsInBlock = 0;
     }
+  }
+
+  // ── Hierarchical double-count suppression (annual P&L, 2026-07-22) ──
+  // QuickBooks sections put detail rows AND their section total on the
+  // SAME taxonomy node (no finer node exists for Electric/Water). Per
+  // (node, period): a total/subtotal row beats item rows; identical-value
+  // totals collapse to one; different-value totals are ambiguity — no
+  // fact, G1 issue (never guess). Item-only groups keep aggregating
+  // (two independent misc accounts are genuinely additive).
+  const byKey = new Map<string, typeof pending>();
+  for (const d of pending) {
+    const k = `${d.taxonomyNodeKey}|${d.periodLabel}`;
+    const g = byKey.get(k);
+    if (g) g.push(d);
+    else byKey.set(k, [d]);
+  }
+  const facts: StatementFactDraft[] = [];
+  nodeValue.clear();
+  const keep = (d: (typeof pending)[number]) => {
+    const { rowType: _t, col, rawCents, ...draft } = d;
+    facts.push(draft);
+    record(draft.taxonomyNodeKey, col, rawCents);
+  };
+  for (const group of byKey.values()) {
+    const totals = group.filter((d) => d.rowType !== "item");
+    if (totals.length === 0) {
+      for (const d of group) keep(d);
+      continue;
+    }
+    const distinct = new Set(totals.map((d) => d.valueCents.toString()));
+    if (distinct.size > 1) {
+      const first = totals[0]!;
+      issues.push({
+        gate: "G1",
+        severity: "error",
+        columnId: first.col,
+        periodLabel: first.periodLabel,
+        rowLabel: first.sourceLabel,
+        message:
+          `conflicting total rows for ${first.taxonomyNodeKey}: ` +
+          totals.map((d) => `"${d.sourceLabel}" (${d.valueCents}¢)`).join(" vs "),
+        deltaCents: abs(BigInt([...distinct][0]!) - BigInt([...distinct][1]!)),
+      });
+      continue; // ambiguity → review owns it, no fact
+    }
+    // Direction test: a covering total must be ≥ the items it claims to
+    // cover. A total SMALLER than its same-node items is a misfiled
+    // mapping (e.g. a section total landing on an unrelated item's node)
+    // — the items win and the total routes to review.
+    const items = group.filter((d) => d.rowType === "item");
+    const sumItems = items.reduce((s, d) => s + d.valueCents, 0n);
+    const total = totals[0]!;
+    if (items.length > 0 && sumItems > total.valueCents + G1_TOLERANCE) {
+      for (const d of items) keep(d);
+      unmappedLabels.add(total.sourceLabel);
+      continue;
+    }
+    keep(total);
   }
 
   // ── Semantic total check: Net Income = Total Income − Total Expenses ─

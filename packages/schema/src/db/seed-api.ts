@@ -75,12 +75,15 @@ select count(*)::int as n from public.taxonomy_nodes;`;
   // Learned mappings (global pool): corpus-verified label↔node pairs so
   // the mapper's first encounter with known vocabulary costs zero LLM
   // calls. Normalization MUST match normalizeLabel in the taxonomy
-  // mapper (lowercase, strip non-alphanumerics, collapse whitespace).
+  // mapper (lowercase, strip non-alphanumerics, collapse whitespace,
+  // strip leading QuickBooks account codes).
   const normLabel = (l: string) =>
     l
       .toLowerCase()
       .replace(/[^a-z0-9 ]/g, "")
       .replace(/\s+/g, " ")
+      .trim()
+      .replace(/^(total (?:for )?)?\d{3,5}(?: \d{1,4})* /, "$1")
       .trim();
   const mappingValues = LEARNED_MAPPINGS_SEED.map(
     (m) => `(null, '${esc(normLabel(m.label))}', '${esc(m.node)}', 0.95, 'human', 1)`,

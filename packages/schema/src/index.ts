@@ -12,3 +12,4 @@ export * from "./corpus/ground-truth.js";
 export * as db from "./db/index.js";
 export * from "./seed/taxonomy.js";
 export * from "./seed/policy-pack.js";
+export * from "./seed/learned-mappings.js";
