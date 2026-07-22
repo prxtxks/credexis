@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import { TrpcProvider } from "@/lib/trpc/client";
 import { THEME_BOOT_SCRIPT } from "@/components/theme-toggle";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,8 +19,11 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         {/* Applies the stored theme before first paint (M8.1). */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
-      <body>
-        <TrpcProvider>{children}</TrpcProvider>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}>
+        <TrpcProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </TrpcProvider>
       </body>
     </html>
   );
