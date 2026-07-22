@@ -122,6 +122,16 @@ describe("normalization + fuzzy bar", () => {
   it("normalizes case, punctuation, whitespace", () => {
     expect(normalizeLabel("  Officer's   Compensation!! ")).toBe("officers compensation");
   });
+  it("strips QuickBooks account-code prefixes (annual P&L finding, 2026-07-22)", () => {
+    expect(normalizeLabel("60400 Bank Service Charges")).toBe("bank service charges");
+    expect(normalizeLabel("301.1 Cash Revenue")).toBe("cash revenue");
+    expect(normalizeLabel("60100 · Payroll Expenses")).toBe("payroll expenses");
+    expect(normalizeLabel("Total 63300 Insurance Expense")).toBe("total insurance expense");
+    // Codes are LEADING 3-5 digit tokens only — never strip mid-label
+    // numbers or digit-letter tokens.
+    expect(normalizeLabel("Section 179 Deduction")).toBe("section 179 deduction");
+    expect(normalizeLabel("401k Match")).toBe("401k match");
+  });
   it("the ≥95 bar: near-identical passes, sibling labels do not", () => {
     expect(similarity("officers compensation", "officer compensation")).toBeGreaterThanOrEqual(
       0.95,

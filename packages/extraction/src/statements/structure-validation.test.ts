@@ -168,6 +168,137 @@ describe("M5 EXIT GATE — CPA balance sheet (planted A ≠ L + E)", () => {
   });
 });
 
+describe("hierarchical double-count suppression (annual P&L finding, 2026-07-22)", () => {
+  // QuickBooks sections: detail rows AND their section total can map to
+  // the SAME taxonomy node (no finer node exists for Electric/Water).
+  // Emitting both double-counts the node. Rules:
+  //   1. a total/subtotal-typed row beats item-typed rows for its node
+  //   2. identical-value total rows collapse to one fact
+  //   3. different-value total rows for one node = ambiguity → no fact, G1 issue
+  //   4. item-only aggregation (two misc accounts) stays untouched
+  async function utilitiesStore() {
+    const store = await preloadedStore();
+    for (const [labelNorm, node] of [
+      ["electric expense", "is.opex.utilities"],
+      ["water expense", "is.opex.utilities"],
+      ["total utilities", "is.opex.utilities"],
+      ["misc expense a", "is.opex.misc"],
+      ["misc expense b", "is.opex.misc"],
+      ["total payroll taxes", "is.opex.payroll_taxes"],
+      ["total payroll expenses", "is.opex.payroll_taxes"],
+      ["lodging sales", "is.revenue.total"],
+      ["total lodging sales", "is.revenue.total"],
+    ] as const) {
+      await store.upsert(null, {
+        labelNorm,
+        taxonomyNodeKey: node,
+        confidence: 0.95,
+        source: "human",
+        usageCount: 5,
+      });
+    }
+    return store;
+  }
+
+  async function chain(g: StatementGrid) {
+    const typed = typeRows(g);
+    const labels = g.rows.map((r) => r.label).filter((l) => l !== "");
+    const mapped = await mapLabels(labels, "PNL", "t1", await utilitiesStore(), null);
+    return validateStructure(typed, bindPeriods(g), new Map(mapped.map((m) => [m.label, m])), {
+      statement: "PNL",
+      page: g.page,
+    });
+  }
+
+  it("a section total beats its same-node detail rows", async () => {
+    const g = grid([
+      ["", "FY2024"],
+      ["Electric Expense", "100.00"],
+      ["Water Expense", "50.00"],
+      ["Total Utilities", "150.00"],
+    ]);
+    const result = await chain(g);
+    const util = result.facts.filter((f) => f.taxonomyNodeKey === "is.opex.utilities");
+    expect(util).toHaveLength(1);
+    expect(util[0]!.valueCents).toBe(15000n);
+    expect(util[0]!.sourceLabel).toBe("Total Utilities");
+  });
+
+  it("identical-value total rows collapse to one fact", async () => {
+    const g = grid([
+      ["", "FY2024"],
+      ["Lodging Sales", "700.00"],
+      ["Total Lodging Sales", "700.00"],
+    ]);
+    const result = await chain(g);
+    const rev = result.facts.filter((f) => f.taxonomyNodeKey === "is.revenue.total");
+    expect(rev).toHaveLength(1);
+    expect(rev[0]!.valueCents).toBe(70000n);
+  });
+
+  it("conflicting total rows for one node → NO fact + G1 issue", async () => {
+    const g = grid([
+      ["", "FY2024"],
+      ["Total Payroll Taxes", "99.00"],
+      ["Total Payroll Expenses", "125.00"],
+    ]);
+    const result = await chain(g);
+    expect(result.facts.filter((f) => f.taxonomyNodeKey === "is.opex.payroll_taxes")).toHaveLength(
+      0,
+    );
+    expect(result.issues.some((i) => i.gate === "G1" && /conflicting total/i.test(i.message))).toBe(
+      true,
+    );
+  });
+
+  it("a total SMALLER than its same-node items is the misfit — items win", async () => {
+    // LLM misfiled a section total ("Total Payroll Expenses" 125.00) onto
+    // the same node as an unrelated, much larger item (232.00 of wages).
+    // A real covering total can't be smaller than what it covers: keep
+    // the items, route the total's label to review.
+    const store = await utilitiesStore();
+    await store.upsert(null, {
+      labelNorm: "wages",
+      taxonomyNodeKey: "is.opex.payroll_taxes",
+      confidence: 0.95,
+      source: "human",
+      usageCount: 5,
+    });
+    const g = grid([
+      ["", "FY2024"],
+      ["Wages", "232.00"],
+      ["Total Payroll Expenses", "125.00"],
+    ]);
+    const typed = typeRows(g);
+    const labels = g.rows.map((r) => r.label).filter((l) => l !== "");
+    const mapped = await mapLabels(labels, "PNL", "t1", store, null);
+    const result = validateStructure(
+      typed,
+      bindPeriods(g),
+      new Map(mapped.map((m) => [m.label, m])),
+      {
+        statement: "PNL",
+        page: g.page,
+      },
+    );
+    const facts = result.facts.filter((f) => f.taxonomyNodeKey === "is.opex.payroll_taxes");
+    expect(facts).toHaveLength(1);
+    expect(facts[0]!.valueCents).toBe(23200n);
+    expect(facts[0]!.sourceLabel).toBe("Wages");
+    expect(result.unmappedLabels).toContain("Total Payroll Expenses");
+  });
+
+  it("item-only same-node aggregation is untouched (two misc accounts)", async () => {
+    const g = grid([
+      ["", "FY2024"],
+      ["Misc Expense A", "10.00"],
+      ["Misc Expense B", "20.00"],
+    ]);
+    const result = await chain(g);
+    expect(result.facts.filter((f) => f.taxonomyNodeKey === "is.opex.misc")).toHaveLength(2);
+  });
+});
+
 describe("total rows emit facts (bake-off finding, 2026-07-20)", () => {
   it("a mapped, bound subtotal/total row becomes a fact draft", async () => {
     const g = grid([

@@ -37,6 +37,7 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "AMORTIZATION EXPENSE", node: "is.opex.amortization" },
   { label: "Depreciation", node: "is.opex.depreciation" },
   { label: "Automobile Expense", node: "is.opex.vehicle" },
+  { label: "Vehicles Repairs & Maint", node: "is.opex.vehicle" },
   { label: "Vehicle gas & fuel", node: "is.opex.fuel" },
   { label: "Bank Service Charges", node: "is.opex.bank_charges" },
   { label: "BANK CHARGES", node: "is.opex.bank_charges" },
@@ -83,12 +84,60 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "OTA Fees", node: "is.opex.commissions_paid" },
   { label: "Pest Control", node: "is.opex.misc" },
   { label: "Trash Removal", node: "is.opex.misc" },
+  { label: "Employee Relations", node: "is.opex.misc" },
   { label: "Shipping & postage", node: "is.opex.postage_shipping" },
   { label: "Software & apps", node: "is.opex.software" },
   { label: "Total Expense", node: "is.opex.total" },
   { label: "Total Expenses", node: "is.opex.total" },
   { label: "Total for Expenses", node: "is.opex.total" },
   { label: "Total Operating Expenses", node: "is.opex.total" },
+
+  // ── Annual P&L full vocabulary (verified against the printed pages,
+  // 2026-07-22): unknown labels left to LLM variance kept polluting core
+  // nodes ("Total Rooms"→revenue). Every entry below is page-verifiable.
+  { label: "Lodging Sales", node: "is.revenue.rental_income" },
+  { label: "Cash Revenue", node: "is.revenue.rental_income" },
+  { label: "Credit Card Revenue", node: "is.revenue.rental_income" },
+  { label: "Total Lodging Sales", node: "is.revenue.rental_income" },
+  { label: "Commision Fees", node: "is.opex.commissions_paid" }, // sic — as printed
+  { label: "Contract labor", node: "is.opex.contract_labor" },
+  { label: "Management Fee", node: "is.opex.management_fees" },
+  { label: "Meals and Entertainment", node: "is.opex.meals" },
+  { label: "Janitorial Expense", node: "is.opex.janitorial" },
+  { label: "Business Taxes", node: "is.opex.other_taxes" },
+  { label: "In-Keepers Tax", node: "is.opex.other_taxes" },
+  { label: "Sales Tax", node: "is.opex.other_taxes" },
+  { label: "Total Tax Expense", node: "is.opex.other_taxes" },
+  { label: "Royalties", node: "is.opex.royalties_franchise" },
+  { label: "Total Rooms", node: "is.opex.misc" }, // rooms-dept costs section
+  { label: "Small Tools and Equipment", node: "is.opex.misc" },
+  { label: "Breakfast Supplies", node: "is.opex.supplies" },
+  { label: "Cleaning Supplies", node: "is.opex.supplies" },
+  { label: "Laundry and Lodging Supplies", node: "is.opex.supplies" },
+  { label: "Accounting & Consulting", node: "is.opex.professional_fees" },
+  { label: "Payroll Taxes - FICA", node: "is.opex.payroll_taxes" },
+  { label: "Payroll Taxes - Unemployment", node: "is.opex.payroll_taxes" },
+  { label: "Payroll Taxes - Employer", node: "is.opex.payroll_taxes" },
+  // Mixed employer-cost bucket (fees + taxes): payroll_taxes is the
+  // closest node; where it collides with "Total Payroll Taxes" the
+  // conflicting-totals rule refuses to guess and routes to review.
+  { label: "Total 66000 Payroll Expenses", node: "is.opex.payroll_taxes" },
+  { label: "Other Income - Credit Card Rewards", node: "is.other.other_income" },
+  { label: "Total Other Expenses", node: "is.other.other_expense" },
+  { label: "NET OTHER INCOME", node: "is.other.total" },
+
+  // ── Annual P&L (QuickBooks numbered chart, verified vs GT 2026-07-22).
+  // Stored as printed — normalizeLabel strips the account codes. ──────
+  { label: "Total Cost of Goods Sold", node: "is.cogs.total" },
+  { label: "Wages", node: "is.opex.salaries_wages" },
+  { label: "Total Payroll Taxes", node: "is.opex.payroll_taxes" },
+  { label: "Rent Expense", node: "is.opex.rent" },
+  { label: "Total 68600 Utilities", node: "is.opex.utilities" },
+  { label: "Total 63300 Insurance Expense", node: "is.opex.insurance" },
+  { label: "Total 67200 Repairs and Maintenance", node: "is.opex.repairs_maintenance" },
+  { label: "Total Operating Supplies", node: "is.opex.supplies" },
+  { label: "Total 66700 Professional Fees", node: "is.opex.professional_fees" },
+  { label: "60000 Advertising and Promotion", node: "is.opex.marketing_advertising" },
 
   // ── Below the operating line ────────────────────────────────────────
   { label: "Interest", node: "is.other.interest_expense" },
