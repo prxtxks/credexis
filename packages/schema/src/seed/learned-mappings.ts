@@ -162,7 +162,16 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "Inventories", node: "bs.assets.current.inventory" },
   { label: "Total Current Assets", node: "bs.assets.current.total" },
   { label: "Total Fixed Assets", node: "bs.assets.fixed.total" },
-  { label: "Total Non Current Assets", node: "bs.assets.fixed.total" },
+  // CPA compiled statements (Maitripriya, page-verified 2026-07-22):
+  // fixed assets close with "Net Property and Equipment"; "Non Current
+  // Assets" is the intangibles section (goodwill − amortization). The
+  // earlier fixed.total mapping for it was a vocabulary error — it made
+  // the conflicting-totals rule kill fixed.total on the doc that DEFINED
+  // these labels. Where another chart uses "Total Non Current Assets"
+  // as fixed+other combined, the conflict/direction rules route it to
+  // review rather than silently polluting either node.
+  { label: "Net Property and Equipment", node: "bs.assets.fixed.total" },
+  { label: "Total Non Current Assets", node: "bs.assets.other.total" },
   { label: "Accumulated Depreciation", node: "bs.assets.fixed.accumulated_depreciation" },
   { label: "Goodwill", node: "bs.assets.other.goodwill" },
   { label: "Total Other Assets", node: "bs.assets.other.total" },
