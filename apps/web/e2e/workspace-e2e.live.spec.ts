@@ -33,6 +33,11 @@ const CLEANUP = `
   delete from public.addbacks where deal_id = '${T.dealId}';
   delete from public.facts where deal_id = '${T.dealId}';
   delete from public.loan_scenarios where deal_id = '${T.dealId}';
+  delete from public.extraction_runs where deal_id = '${T.dealId}';
+  -- pages before logical_documents (FK) — the extraction stage writes
+  -- them for uploaded docs; missing here left the DB dirty and broke
+  -- the NEXT run's seed (tenants_pkey duplicate, 2026-07-22).
+  delete from public.pages where tenant_id = '${T.tenantId}';
   delete from public.logical_documents where document_id in
     (select id from public.documents where deal_id = '${T.dealId}');
   delete from public.documents where deal_id = '${T.dealId}';
