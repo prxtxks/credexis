@@ -1,119 +1,535 @@
-/*
- * Credexis visual identity (M8.1, Blueprint §8.1) — the V1 palette the
- * founder chose, ported into a Tailwind v4 theme. Token values come from
- * Blueprint §8.1's verbatim quotes of V1 globals.css (the V1 file itself
- * never entered this repo); [PRATIK] diffs against his original at the M8
- * walkthrough. Two surgical fixes over V1, per spec: scrollbars scoped
- * inside grid panes, and consistent focus rings for keyboard flow.
- *
- * DSCR traffic-light COLORS live here; the THRESHOLDS that pick which
- * color applies come from the policy pack at render time (Iron Law #8).
- */
-
 @import "tailwindcss";
+@import "tw-animate-css";
 
+/* ============================================================
+   Credexis — Global Design System (V1 port, M8.1 / UI-1)
+   Emerald/Teal palette · Glassmorphism · Dark mode ready
+   Ported verbatim from V1 (UnderlyticsAI) globals.css with the two
+   V2 fixes kept: scrollbars scoped to .scroll-pane (V1 hid them
+   globally) and consistent :focus-visible rings. AG Grid styling
+   moved to the v36 Theming API (src/lib/ag-grid-theme.ts) — only
+   the .credexis-grid helper classes remain here.
+   DSCR traffic-light COLORS live here; the THRESHOLDS that pick a
+   color come from the policy pack at render time (Iron Law #8).
+   ============================================================ */
+
+/* ── Tailwind Custom Variant ── */
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-  /* ── Emerald primary (V1 verbatim) ─────────────────────────────────── */
-  --color-primary: oklch(0.52 0.17 162);
-  --color-primary-dark: oklch(0.7 0.18 162);
-  --color-primary-foreground: oklch(0.985 0.005 166);
+/* ── Theme Tokens ── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans:
+    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
 
-  /* ── Teal-tinted neutrals (hue 166) ────────────────────────────────── */
-  --color-surface: oklch(0.985 0.005 166);
-  --color-surface-muted: oklch(0.96 0.008 166);
+  /* ── Credexis extras (same convention as the shadcn tokens) ── */
+  --color-computed: var(--computed);
+  --color-dscr-good: var(--dscr-good);
+  --color-dscr-warn: var(--dscr-warn);
+  --color-dscr-bad: var(--dscr-bad);
+  --color-severity-critical: var(--severity-critical);
+  --color-severity-error: var(--severity-error);
+  --color-severity-warning: var(--severity-warning);
+  --color-severity-info: var(--severity-info);
+
+  /* ── Compat aliases for not-yet-migrated pages — remove in UI Phase 5 ── */
+  --color-surface: var(--background);
+  --color-surface-muted: var(--muted);
+  --color-ink: var(--foreground);
+  --color-ink-muted: var(--muted-foreground);
+  --color-line: var(--border);
+  --color-primary-dark: oklch(0.7 0.18 162);
   --color-surface-dark: oklch(0.17 0.012 166);
   --color-surface-dark-muted: oklch(0.22 0.014 166);
-  --color-ink: oklch(0.24 0.02 166);
-  --color-ink-muted: oklch(0.48 0.02 166);
   --color-ink-dark: oklch(0.93 0.01 166);
   --color-ink-dark-muted: oklch(0.68 0.015 166);
-  --color-line: oklch(0.9 0.01 166);
   --color-line-dark: oklch(0.32 0.015 166);
 
-  /* ── Computed-row accent + SBA badge (V1 violet) ───────────────────── */
-  --color-computed: #8b5cf6;
+  /* Custom animation tokens */
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-fade-in-up: fade-in-up 0.5s ease-out;
+  --animate-slide-in-right: slide-in-right 0.3s ease-out;
+  --animate-slide-out-right: slide-out-right 0.2s ease-in;
+  --animate-shimmer: shimmer 2s linear infinite;
+  --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
+  --animate-gradient-x: gradient-x 6s ease infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-border-spin: border-spin 4s linear infinite;
+}
 
-  /* ── DSCR traffic light (thresholds arrive from the policy pack) ───── */
-  --color-dscr-good: oklch(0.52 0.17 162);
-  --color-dscr-warn: oklch(0.75 0.15 85);
-  --color-dscr-bad: oklch(0.55 0.2 25);
-
-  /* ── Severity scale (issues panel) ─────────────────────────────────── */
-  --color-severity-critical: #dc2626;
-  --color-severity-error: #ea580c;
-  --color-severity-warning: #d97706;
-  --color-severity-info: oklch(0.55 0.05 240);
-
+/* ── Light Theme (Emerald/Teal) ── */
+:root {
   --radius: 0.625rem;
-
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Core */
+  --background: oklch(0.985 0.002 166);
+  --foreground: oklch(0.17 0.02 166);
+  /* Cards */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.17 0.02 166);
+  /* Popovers */
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.17 0.02 166);
+  /* Primary — Emerald */
+  --primary: oklch(0.52 0.17 162);
+  --primary-foreground: oklch(0.99 0 0);
+  /* Secondary */
+  --secondary: oklch(0.96 0.015 166);
+  --secondary-foreground: oklch(0.25 0.04 166);
+  /* Muted */
+  --muted: oklch(0.96 0.01 166);
+  --muted-foreground: oklch(0.5 0.02 166);
+  /* Accent */
+  --accent: oklch(0.95 0.03 166);
+  --accent-foreground: oklch(0.25 0.04 166);
+  /* Destructive */
+  --destructive: oklch(0.577 0.245 27.325);
+  /* Borders & Inputs */
+  --border: oklch(0.93 0.005 166);
+  --input: oklch(0.91 0.01 166);
+  --ring: oklch(0.6 0.17 162);
+  /* Chart palette */
+  --chart-1: oklch(0.55 0.18 162);
+  --chart-2: oklch(0.65 0.15 175);
+  --chart-3: oklch(0.45 0.12 190);
+  --chart-4: oklch(0.7 0.14 152);
+  --chart-5: oklch(0.75 0.1 140);
+  /* Sidebar */
+  --sidebar: oklch(0.98 0.005 166);
+  --sidebar-foreground: oklch(0.17 0.02 166);
+  --sidebar-primary: oklch(0.52 0.17 162);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.95 0.03 166);
+  --sidebar-accent-foreground: oklch(0.25 0.04 166);
+  --sidebar-border: oklch(0.91 0.01 166);
+  --sidebar-ring: oklch(0.6 0.17 162);
+  /* Credexis extras */
+  --computed: #8b5cf6;
+  --dscr-good: oklch(0.52 0.17 162);
+  --dscr-warn: oklch(0.75 0.15 85);
+  --dscr-bad: oklch(0.55 0.2 25);
+  --severity-critical: #dc2626;
+  --severity-error: #ea580c;
+  --severity-warning: #d97706;
+  --severity-info: oklch(0.55 0.05 240);
 }
 
-/* ── Base ────────────────────────────────────────────────────────────── */
-
-* {
-  box-sizing: border-box;
+/* ── Dark Theme (Emerald/Teal) ── */
+.dark {
+  --background: oklch(0.13 0.01 166);
+  --foreground: oklch(0.94 0.005 166);
+  /* Cards */
+  --card: oklch(0.17 0.012 166);
+  --card-foreground: oklch(0.94 0.005 166);
+  /* Popovers */
+  --popover: oklch(0.17 0.012 166);
+  --popover-foreground: oklch(0.94 0.005 166);
+  /* Primary — Bright Emerald */
+  --primary: oklch(0.7 0.18 162);
+  --primary-foreground: oklch(0.13 0.02 166);
+  /* Secondary */
+  --secondary: oklch(0.22 0.02 166);
+  --secondary-foreground: oklch(0.9 0.01 166);
+  /* Muted */
+  --muted: oklch(0.22 0.015 166);
+  --muted-foreground: oklch(0.6 0.02 166);
+  /* Accent */
+  --accent: oklch(0.22 0.02 166);
+  --accent-foreground: oklch(0.9 0.01 166);
+  /* Destructive */
+  --destructive: oklch(0.704 0.191 22.216);
+  /* Borders & Inputs */
+  --border: oklch(0.28 0.015 166);
+  --input: oklch(0.25 0.015 166);
+  --ring: oklch(0.65 0.17 162);
+  /* Chart palette */
+  --chart-1: oklch(0.65 0.2 162);
+  --chart-2: oklch(0.7 0.15 175);
+  --chart-3: oklch(0.55 0.12 190);
+  --chart-4: oklch(0.75 0.14 152);
+  --chart-5: oklch(0.8 0.1 140);
+  /* Sidebar */
+  --sidebar: oklch(0.15 0.012 166);
+  --sidebar-foreground: oklch(0.94 0.005 166);
+  --sidebar-primary: oklch(0.7 0.18 162);
+  --sidebar-primary-foreground: oklch(0.13 0.02 166);
+  --sidebar-accent: oklch(0.22 0.02 166);
+  --sidebar-accent-foreground: oklch(0.9 0.01 166);
+  --sidebar-border: oklch(0.28 0.015 166);
+  --sidebar-ring: oklch(0.65 0.17 162);
+  /* Credexis extras (brighter for dark surfaces) */
+  --severity-info: oklch(0.7 0.05 240);
 }
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  font-family: var(--font-sans);
-  background: var(--color-surface);
-  color: var(--color-ink);
+/* ── Base Layer ── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
-.dark body {
-  background: var(--color-surface-dark);
-  color: var(--color-ink-dark);
+/* ── Keyframe Animations ── */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-/* ── V1 utilities, preserved ─────────────────────────────────────────── */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
+@keyframes slide-in-right {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes gradient-x {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes border-spin {
+  0% {
+    --border-angle: 0deg;
+  }
+  100% {
+    --border-angle: 360deg;
+  }
+}
+
+/* Grid loader — 9-dot sequential snake */
+@keyframes grid-loader {
+  0%,
+  100% {
+    transform: scale(0.55);
+    opacity: 0.2;
+  }
+  40% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+}
+
+.grid-loader {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 42px;
+  height: 42px;
+}
+
+.grid-loader span {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--primary);
+  animation: grid-loader 1.6s ease-in-out infinite both;
+}
+
+/* Diagonal cascade: top-left → bottom-right */
+.grid-loader span:nth-child(1) {
+  animation-delay: 0s;
+}
+.grid-loader span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.grid-loader span:nth-child(4) {
+  animation-delay: 0.12s;
+}
+.grid-loader span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+.grid-loader span:nth-child(5) {
+  animation-delay: 0.24s;
+}
+.grid-loader span:nth-child(7) {
+  animation-delay: 0.24s;
+}
+.grid-loader span:nth-child(6) {
+  animation-delay: 0.36s;
+}
+.grid-loader span:nth-child(8) {
+  animation-delay: 0.36s;
+}
+.grid-loader span:nth-child(9) {
+  animation-delay: 0.48s;
+}
+
+/* ── Utility Classes ── */
+
+/* Glassmorphism card */
 .glass-card {
-  border-radius: var(--radius);
-  border: 1px solid var(--color-line);
-  background: color-mix(in oklab, var(--color-surface) 82%, transparent);
-  backdrop-filter: blur(12px);
-}
-.dark .glass-card {
-  border-color: var(--color-line-dark);
-  background: color-mix(in oklab, var(--color-surface-dark-muted) 82%, transparent);
+  background: oklch(1 0 0 / 60%);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid oklch(0.9 0.005 166);
 }
 
+.dark .glass-card {
+  background: oklch(0.17 0.012 166 / 50%);
+  border: 1px solid oklch(1 0 0 / 10%);
+}
+
+/* Gradient mesh background */
 .gradient-mesh {
   background:
-    radial-gradient(
-      at 20% 0%,
-      color-mix(in oklab, var(--color-primary) 14%, transparent),
-      transparent 55%
-    ),
-    radial-gradient(
-      at 85% 15%,
-      color-mix(in oklab, var(--color-computed) 10%, transparent),
-      transparent 50%
-    ),
-    var(--color-surface);
-}
-.dark .gradient-mesh {
-  background:
-    radial-gradient(
-      at 20% 0%,
-      color-mix(in oklab, var(--color-primary-dark) 16%, transparent),
-      transparent 55%
-    ),
-    radial-gradient(
-      at 85% 15%,
-      color-mix(in oklab, var(--color-computed) 12%, transparent),
-      transparent 50%
-    ),
-    var(--color-surface-dark);
+    radial-gradient(ellipse at 20% 50%, oklch(0.85 0.12 162 / 15%) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, oklch(0.8 0.1 180 / 12%) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, oklch(0.85 0.08 145 / 10%) 0%, transparent 50%);
 }
 
+.dark .gradient-mesh {
+  background:
+    radial-gradient(ellipse at 20% 50%, oklch(0.35 0.1 162 / 20%) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, oklch(0.3 0.08 180 / 15%) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, oklch(0.35 0.06 145 / 12%) 0%, transparent 50%);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(
+    135deg,
+    oklch(0.55 0.2 162),
+    oklch(0.6 0.15 180),
+    oklch(0.5 0.18 152)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dark .gradient-text {
+  background: linear-gradient(
+    135deg,
+    oklch(0.75 0.2 162),
+    oklch(0.8 0.15 180),
+    oklch(0.7 0.18 152)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Gradient button */
+.gradient-btn {
+  background: linear-gradient(135deg, oklch(0.55 0.18 162), oklch(0.5 0.15 175));
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.gradient-btn:hover {
+  background: linear-gradient(135deg, oklch(0.5 0.18 162), oklch(0.45 0.15 175));
+  box-shadow: 0 4px 20px oklch(0.55 0.18 162 / 30%);
+  transform: translateY(-1px);
+}
+
+.dark .gradient-btn {
+  background: linear-gradient(135deg, oklch(0.65 0.2 162), oklch(0.6 0.17 175));
+}
+
+.dark .gradient-btn:hover {
+  background: linear-gradient(135deg, oklch(0.6 0.2 162), oklch(0.55 0.17 175));
+  box-shadow: 0 4px 20px oklch(0.65 0.2 162 / 25%);
+}
+
+/* Glow effects */
+.glow-sm {
+  box-shadow: 0 0 15px oklch(0.6 0.17 162 / 15%);
+}
+
+.dark .glow-sm {
+  box-shadow: 0 0 15px oklch(0.65 0.17 162 / 12%);
+}
+
+.glow-md {
+  box-shadow: 0 0 30px oklch(0.6 0.17 162 / 20%);
+}
+
+.dark .glow-md {
+  box-shadow: 0 0 30px oklch(0.65 0.17 162 / 15%);
+}
+
+/* Shimmer effect for skeletons */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(0.95 0.005 166) 25%,
+    oklch(0.92 0.01 166) 50%,
+    oklch(0.95 0.005 166) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+.dark .shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(0.22 0.01 166) 25%,
+    oklch(0.26 0.015 166) 50%,
+    oklch(0.22 0.01 166) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* Frosted glass toolbar */
+.frosted-toolbar {
+  background: oklch(1 0 0 / 80%);
+  backdrop-filter: blur(12px) saturate(150%);
+  border-bottom: 1px solid oklch(0.91 0.01 166);
+}
+
+.dark .frosted-toolbar {
+  background: oklch(0.15 0.01 166 / 80%);
+  border-bottom: 1px solid oklch(0.28 0.015 166);
+}
+
+/* Animated border gradient */
+.border-gradient {
+  position: relative;
+  border-radius: var(--radius);
+}
+
+.border-gradient::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    oklch(0.6 0.17 162),
+    oklch(0.55 0.14 180),
+    oklch(0.5 0.16 155)
+  );
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.border-gradient:hover::before {
+  opacity: 1;
+}
+
+/* Side panel transition */
+.side-panel-enter {
+  animation: slide-in-right 0.25s ease-out forwards;
+}
+
+/* Dot grid pattern for backgrounds */
+.dot-pattern {
+  background-image: radial-gradient(oklch(0.5 0.02 166 / 8%) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.dark .dot-pattern {
+  background-image: radial-gradient(oklch(0.6 0.02 166 / 6%) 1px, transparent 1px);
+}
+
+/* SBA computed-row badge (V2 addition, V1 violet) */
 .sba-badge {
   display: inline-block;
   padding: 1px 6px;
@@ -122,7 +538,21 @@ body {
   font-weight: 700;
   letter-spacing: 0.04em;
   color: white;
-  background: var(--color-computed);
+  background: var(--computed);
+}
+
+/* ── AG Grid helpers (v36 Theming API carries the theme; these are the
+      DOM-class extras it can't express) ── */
+.credexis-grid .col-divider-header {
+  border-right: 1px solid var(--border) !important;
+}
+
+.credexis-grid .ag-header-cell-resize {
+  opacity: 0;
+}
+
+.credexis-grid .computed-row-accent {
+  border-left: 3px solid var(--computed) !important;
 }
 
 /* ── Fix 1 (V1 bug): scrollbars visible only inside scroll panes ─────── */
@@ -130,7 +560,7 @@ body {
 .scroll-pane {
   overflow: auto;
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in oklab, var(--color-ink-muted) 40%, transparent) transparent;
+  scrollbar-color: color-mix(in oklab, var(--muted-foreground) 40%, transparent) transparent;
 }
 .scroll-pane::-webkit-scrollbar {
   width: 8px;
@@ -138,16 +568,13 @@ body {
 }
 .scroll-pane::-webkit-scrollbar-thumb {
   border-radius: 4px;
-  background: color-mix(in oklab, var(--color-ink-muted) 40%, transparent);
+  background: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
 }
 
 /* ── Fix 2 (V1 bug): consistent focus rings for keyboard flow ────────── */
 
 :where(button, a, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
   border-radius: 4px;
-}
-.dark :where(button, a, input, select, textarea, [tabindex]):focus-visible {
-  outline-color: var(--color-primary-dark);
 }
