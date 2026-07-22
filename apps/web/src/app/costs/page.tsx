@@ -10,79 +10,100 @@
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { formatMicroUsd } from "@/lib/money-display";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { AppHeader } from "@/components/app-header";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function CostsPage() {
   const costs = trpc.pipeline.costs.useQuery(undefined, { refetchInterval: 30_000 });
 
   return (
-    <main className="gradient-mesh min-h-screen p-6">
-      <header className="mb-6 flex items-center gap-3">
-        <h1 className="text-lg font-semibold">Extraction costs</h1>
-        <Link href="/" className="text-sm text-primary underline dark:text-primary-dark">
-          ← deals
-        </Link>
-        <div className="ml-auto">
-          <ThemeToggle />
-        </div>
-      </header>
+    <div className="gradient-mesh min-h-screen">
+      <AppHeader backHref="/" backLabel="Back to deals" breadcrumb="Extraction costs" />
 
-      {costs.isLoading ? (
-        <p className="text-sm">Loading…</p>
-      ) : (
-        <div className="glass-card overflow-x-auto p-4">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-line text-left dark:border-line-dark">
-                <th className="p-2">Deal</th>
-                <th className="p-2 text-right">Runs</th>
-                <th className="p-2 text-right">Failed</th>
-                <th className="p-2 text-right">Pages</th>
-                <th className="p-2 text-right">Total cost</th>
-                <th className="p-2">By stage</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(costs.data ?? []).map((d) => (
-                <tr key={d.dealId} className="border-b border-line/50 dark:border-line-dark/50">
-                  <td className="p-2">
-                    <Link
-                      href={`/deals/${d.dealId}/workspace`}
-                      className="text-primary underline dark:text-primary-dark"
-                    >
-                      {d.dealName}
-                    </Link>
-                  </td>
-                  <td className="p-2 text-right tabular-nums">{d.runs}</td>
-                  <td
-                    className={`p-2 text-right tabular-nums ${d.failedRuns > 0 ? "font-semibold text-severity-critical" : ""}`}
-                  >
-                    {d.failedRuns}
-                  </td>
-                  <td className="p-2 text-right tabular-nums">{d.pages}</td>
-                  <td
-                    className={`p-2 text-right tabular-nums ${d.overEnvelope ? "font-semibold text-severity-critical" : ""}`}
-                    title={d.overEnvelope ? "Over the $10 per-deal envelope (Blueprint §12)" : ""}
-                  >
-                    {formatMicroUsd(d.totalMicroUsd)}
-                    {d.overEnvelope ? " ⚠" : ""}
-                  </td>
-                  <td className="p-2 text-xs text-ink-muted dark:text-ink-dark-muted">
-                    {d.byStage.map((s) => `${s.stage} ${formatMicroUsd(s.microUsd)}`).join(" · ")}
-                  </td>
-                </tr>
-              ))}
-              {(costs.data ?? []).length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-4 text-ink-muted dark:text-ink-dark-muted">
-                    No extraction runs yet — costs appear once the pipeline processes documents.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-5">
+          <h1 className="text-xl font-bold tracking-tight">Extraction costs</h1>
+          <p className="text-sm text-muted-foreground">
+            Per-deal spend across pipeline stages — envelope $10/deal.
+          </p>
         </div>
-      )}
-    </main>
+
+        {costs.isLoading ? (
+          <div className="flex justify-center py-16">
+            <div className="grid-loader">
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+          </div>
+        ) : (
+          <div className="glass-card overflow-x-auto rounded-xl p-2">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Deal</TableHead>
+                  <TableHead className="text-right">Runs</TableHead>
+                  <TableHead className="text-right">Failed</TableHead>
+                  <TableHead className="text-right">Pages</TableHead>
+                  <TableHead className="text-right">Total cost</TableHead>
+                  <TableHead>By stage</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(costs.data ?? []).map((d) => (
+                  <TableRow key={d.dealId}>
+                    <TableCell>
+                      <Link
+                        href={`/deals/${d.dealId}/workspace`}
+                        className="font-medium text-primary underline underline-offset-2"
+                      >
+                        {d.dealName}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums">{d.runs}</TableCell>
+                    <TableCell
+                      className={`text-right font-mono tabular-nums ${d.failedRuns > 0 ? "font-semibold text-severity-critical" : ""}`}
+                    >
+                      {d.failedRuns}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums">{d.pages}</TableCell>
+                    <TableCell
+                      className={`text-right font-mono tabular-nums ${d.overEnvelope ? "font-semibold text-severity-critical" : ""}`}
+                      title={d.overEnvelope ? "Over the $10 per-deal envelope (Blueprint §12)" : ""}
+                    >
+                      {formatMicroUsd(d.totalMicroUsd)}
+                      {d.overEnvelope ? " ⚠" : ""}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {d.byStage.map((s) => `${s.stage} ${formatMicroUsd(s.microUsd)}`).join(" · ")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {(costs.data ?? []).length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="p-4 text-muted-foreground">
+                      No extraction runs yet — costs appear once the pipeline processes documents.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
