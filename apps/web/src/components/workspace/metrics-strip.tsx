@@ -8,19 +8,20 @@
  * Policy compliance chips join in M8.6.
  */
 
+import { RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { formatCents, formatRatio } from "@/lib/money-display";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export { formatRatio };
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="flex flex-col px-4 py-1.5 min-w-28">
-      <span className="text-[10px] uppercase tracking-wide text-ink-muted dark:text-ink-dark-muted">
-        {label}
-      </span>
+      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
       <span
-        className={`text-sm font-semibold tabular-nums ${accent ? "text-primary dark:text-primary-dark" : ""}`}
+        className={`font-mono text-sm font-semibold tabular-nums ${accent ? "text-primary" : ""}`}
       >
         {value}
       </span>
@@ -33,20 +34,20 @@ function PolicyChips({ dealId, scenarioId }: { dealId: string; scenarioId: strin
   const p = policy.data;
   if (!p) return null;
   if (!p.available) {
-    return <span className="text-[10px] text-ink-muted dark:text-ink-dark-muted">{p.reason}</span>;
+    return <span className="text-[10px] text-muted-foreground">{p.reason}</span>;
   }
   return (
     <div className="flex items-center gap-1" aria-label="policy compliance">
       {!p.certifiable && (
-        <span className="rounded bg-computed px-1.5 py-0.5 text-[10px] font-semibold text-white">
+        <Badge className="rounded-full border-0 bg-computed px-2 text-[10px] font-semibold text-white">
           DRAFT PACK — advisory only
-        </span>
+        </Badge>
       )}
       {p.rules.map((r) => (
-        <span
+        <Badge
           key={r.ruleId}
           title={`${r.label} (${r.metric})`}
-          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold text-white ${
+          className={`rounded-full border-0 px-2 text-[10px] font-semibold text-white ${
             r.status === "pass"
               ? "bg-dscr-good"
               : r.status === "fail"
@@ -55,7 +56,7 @@ function PolicyChips({ dealId, scenarioId }: { dealId: string; scenarioId: strin
           }`}
         >
           {r.ruleId}
-        </span>
+        </Badge>
       ))}
     </div>
   );
@@ -107,7 +108,7 @@ export function MetricsStrip({
   return (
     <footer
       aria-label="metrics strip"
-      className="flex items-center gap-2 border-t border-line dark:border-line-dark bg-surface-muted dark:bg-surface-dark-muted"
+      className="frosted-toolbar flex items-center gap-2 !border-b-0 border-t"
     >
       <Stat label={`CFADS ${period ?? ""}`} value={centsOf("cfads")} />
       <Stat label="Debt service" value={centsOf("annual_debt_service")} />
@@ -116,16 +117,19 @@ export function MetricsStrip({
       <Stat label="Global CF" value={centsOf("global_cash_flow")} />
       <PolicyChips dealId={dealId} scenarioId={scenarioId} />
       <div className="ml-auto flex items-center gap-2 pr-4">
-        <button
+        <Button
           aria-label="Recompute"
           title="Re-run the engine over current facts"
           onClick={() => recompute.mutate({ dealId })}
           disabled={recompute.isPending}
-          className="rounded border border-line px-1.5 py-0.5 text-[10px] dark:border-line-dark"
+          variant="outline"
+          size="xs"
+          className="h-6 rounded-full text-[10px]"
         >
-          ↻ {recompute.isPending ? "…" : "recompute"}
-        </button>
-        <span className="text-[10px] text-ink-muted dark:text-ink-dark-muted">
+          <RefreshCw className={`mr-1 h-3 w-3 ${recompute.isPending ? "animate-spin" : ""}`} />
+          {recompute.isPending ? "…" : "recompute"}
+        </Button>
+        <span className="text-[10px] text-muted-foreground">
           {engineVersion ?? "no engine run yet"}
         </span>
       </div>

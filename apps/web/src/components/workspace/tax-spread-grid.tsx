@@ -14,6 +14,7 @@ import { AllCommunityModule, ModuleRegistry, type ColDef } from "ag-grid-communi
 import { trpc } from "@/lib/trpc/client";
 import { formatCents } from "@/lib/money-display";
 import type { CellSelection } from "./spread-grid";
+import { credexisGridTheme, GRID_HEADER_HEIGHT, GRID_ROW_HEIGHT } from "@/lib/ag-grid-theme";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -77,7 +78,7 @@ export function TaxSpreadGrid({
         pinned: "left",
         width: 64,
         valueGetter: (p) => p.data?.lineNumber ?? "",
-        cellClass: "text-ink-muted",
+        cellClass: "text-muted-foreground font-mono",
       },
       {
         field: "label",
@@ -87,14 +88,21 @@ export function TaxSpreadGrid({
         cellRenderer: (p: { data?: TaxGridRow; value?: string }) => {
           const d = p.data;
           if (!d) return p.value;
-          const chip = d.registryOnly
-            ? ' <span class="rounded bg-surface-muted px-1 text-[10px] text-ink-muted dark:bg-surface-dark-muted dark:text-ink-dark-muted">derived</span>'
-            : "";
           return (
             <span
-              className={d.isForm ? "font-semibold" : ""}
-              dangerouslySetInnerHTML={{ __html: `${p.value ?? ""}${chip}` }}
-            />
+              className={
+                d.isForm
+                  ? "inline-flex items-center gap-1.5 font-semibold"
+                  : "inline-flex items-center gap-1.5"
+              }
+            >
+              {p.value ?? ""}
+              {d.registryOnly ? (
+                <span className="rounded bg-muted px-1 text-[10px] text-muted-foreground">
+                  derived
+                </span>
+              ) : null}
+            </span>
           );
         },
       },
@@ -111,8 +119,8 @@ export function TaxSpreadGrid({
           },
           cellClass: (params) => {
             const cell = params.data?.cells[p];
-            if (cell?.status === "suggested") return "text-severity-warning tabular-nums";
-            return "tabular-nums";
+            if (cell?.status === "suggested") return "text-severity-warning font-mono tabular-nums";
+            return "font-mono tabular-nums";
           },
           tooltipValueGetter: (params) => {
             const cell = params.data?.cells[p];
@@ -126,26 +134,43 @@ export function TaxSpreadGrid({
     return { rowData: rows, columnDefs: cols };
   }, [spread.data]);
 
-  if (spread.isLoading) return <p className="p-4 text-sm">Loading tax spread…</p>;
+  if (spread.isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="grid-loader">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+    );
+  }
   if (spread.error) {
     return <p className="p-4 text-sm text-severity-critical">{spread.error.message}</p>;
   }
   if (rowData.length === 0) {
     return (
-      <div className="glass-card flex h-full items-center justify-center text-sm text-ink-muted dark:text-ink-dark-muted">
+      <div className="glass-card flex h-full items-center justify-center rounded-xl text-sm text-muted-foreground">
         No tax-form facts yet — upload a return and run the pipeline.
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="credexis-grid h-full w-full">
       <AgGridReact<TaxGridRow>
         rowData={rowData}
         columnDefs={columnDefs}
         getRowId={(p) => p.data.key}
-        headerHeight={30}
-        rowHeight={28}
+        theme={credexisGridTheme}
+        headerHeight={GRID_HEADER_HEIGHT}
+        rowHeight={GRID_ROW_HEIGHT}
         tooltipShowDelay={300}
         onCellClicked={(e) => {
           const d = e.data;

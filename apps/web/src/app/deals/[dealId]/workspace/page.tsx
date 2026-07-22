@@ -5,13 +5,14 @@
  * left rail (deal nav, collapsible) · center spread (tabs) · right
  * inspector — over a persistent metrics strip. Panel state lives in the
  * URL (?rail=0&panel=0&tab=bs) so layouts are shareable and survive
- * reload. Content: the spread grid lands in M8.3, the source viewer in
- * M8.4, issues in M8.5, scenarios in M8.6 — the shell mounts their slots.
+ * reload. V1 chrome (ui-3): frosted toolbar, segmented pill tabs, glass
+ * panels over the gradient mesh.
  */
 
 import { Suspense, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight, FileStack, ListChecks } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { MetricsStrip } from "@/components/workspace/metrics-strip";
 import { SpreadGrid, type CellSelection } from "@/components/workspace/spread-grid";
@@ -19,7 +20,8 @@ import { TaxSpreadGrid } from "@/components/workspace/tax-spread-grid";
 import { SourceViewer } from "@/components/workspace/source-viewer";
 import { IssuesPanel } from "@/components/workspace/issues-panel";
 import { ScenarioInspector } from "@/components/workspace/scenario-inspector";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { WorkspaceToolbar, type InspectorTab } from "@/components/workspace/workspace-toolbar";
+import { cn } from "@/lib/utils";
 
 const TABS = [
   { key: "is", label: "Income Statement" },
@@ -30,7 +32,7 @@ const TABS = [
 ] as const;
 
 const STATUS_CHIP: Record<string, string> = {
-  uploaded: "bg-ink-muted",
+  uploaded: "bg-muted-foreground",
   processing: "bg-severity-warning",
   processed: "bg-primary",
   failed: "bg-severity-critical",
@@ -39,7 +41,7 @@ const STATUS_CHIP: Record<string, string> = {
 function RailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mb-4">
-      <h2 className="px-3 text-[10px] font-semibold uppercase tracking-wider text-ink-muted dark:text-ink-dark-muted">
+      <h2 className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {title}
       </h2>
       <div className="mt-1">{children}</div>
@@ -59,7 +61,7 @@ function WorkspaceInner() {
   const tab = search.get("tab") ?? "is";
   const entityParam = search.get("entity");
   const [selection, setSelection] = useState<CellSelection | null>(null);
-  const [inspectorTab, setInspectorTab] = useState<"source" | "issues" | "scenario">("source");
+  const [inspectorTab, setInspectorTab] = useState<InspectorTab>("source");
   const scenarioId = search.get("scenario");
 
   const utils = trpc.useUtils();
@@ -85,67 +87,46 @@ function WorkspaceInner() {
   }
 
   return (
-    <div className="flex h-screen flex-col">
-      {/* ── Top bar ─────────────────────────────────────────────────── */}
-      <header className="flex items-center gap-3 border-b border-line px-4 py-2 dark:border-line-dark">
-        <button
-          aria-label={railOpen ? "Collapse rail" : "Expand rail"}
-          onClick={() => setParam("rail", railOpen ? "0" : null)}
-          className="rounded-md border border-line px-2 py-1 text-sm dark:border-line-dark"
-        >
-          ☰
-        </button>
-        <h1 className="text-sm font-semibold">{deal.data?.name ?? "…"}</h1>
-        <span className="rounded-md bg-surface-muted px-2 py-0.5 text-xs text-ink-muted dark:bg-surface-dark-muted dark:text-ink-dark-muted">
-          {deal.data?.type.replaceAll("_", " ") ?? ""}
-        </span>
-        <div className="ml-auto flex items-center gap-2">
-          <a
-            href={`/api/deals/${dealId}/export${scenarioId ? `?scenario=${scenarioId}` : ""}`}
-            className="rounded-md border border-line px-2 py-1 text-sm dark:border-line-dark"
-            title="Download banker workbook (.xlsx)"
-          >
-            ⬇ XLSX
-          </a>
-          <button
-            aria-label={panelOpen ? "Collapse inspector" : "Expand inspector"}
-            onClick={() => setParam("panel", panelOpen ? "0" : null)}
-            className="rounded-md border border-line px-2 py-1 text-sm dark:border-line-dark"
-          >
-            ⧉
-          </button>
-          <ThemeToggle />
-        </div>
-      </header>
+    <div className="gradient-mesh flex h-screen flex-col">
+      <WorkspaceToolbar
+        dealName={deal.data?.name ?? "…"}
+        dealType={deal.data?.type ?? ""}
+        exportHref={`/api/deals/${dealId}/export${scenarioId ? `?scenario=${scenarioId}` : ""}`}
+        railOpen={railOpen}
+        panelOpen={panelOpen}
+        inspectorTab={inspectorTab}
+        issuesCount={issues.data?.length ?? 0}
+        onToggleRail={() => setParam("rail", railOpen ? "0" : null)}
+        onTogglePanel={() => setParam("panel", panelOpen ? "0" : null)}
+        onInspectorTab={(t) => {
+          setInspectorTab(t);
+          if (!panelOpen) setParam("panel", null);
+        }}
+      />
 
       {/* ── Three zones ─────────────────────────────────────────────── */}
       <div className="flex min-h-0 flex-1">
         {railOpen && (
           <nav
             aria-label="deal navigation"
-            className="scroll-pane w-[280px] shrink-0 border-r border-line py-3 max-md:hidden dark:border-line-dark"
+            className="scroll-pane w-[280px] shrink-0 border-r border-border bg-card/40 py-3 backdrop-blur-sm max-md:hidden"
           >
             <RailSection title="Entities">
               {(entities.data ?? []).map((e) => (
                 <button
                   key={e.id}
                   onClick={() => setParam("entity", e.id === entities.data?.[0]?.id ? null : e.id)}
-                  className={`block w-full px-3 py-1 text-left text-sm ${
-                    e.id === entityId
-                      ? "bg-surface-muted font-semibold dark:bg-surface-dark-muted"
-                      : ""
-                  }`}
+                  className={cn(
+                    "block w-full px-3 py-1.5 text-left text-sm transition-colors hover:bg-accent/50",
+                    e.id === entityId && "bg-accent font-semibold",
+                  )}
                 >
                   {e.name}
-                  <span className="ml-2 text-xs text-ink-muted dark:text-ink-dark-muted">
-                    {e.kind}
-                  </span>
+                  <span className="ml-2 text-xs text-muted-foreground">{e.kind}</span>
                 </button>
               ))}
               {(entities.data ?? []).length === 0 && (
-                <p className="px-3 text-xs text-ink-muted dark:text-ink-dark-muted">
-                  No entities yet.
-                </p>
+                <p className="px-3 text-xs text-muted-foreground">No entities yet.</p>
               )}
             </RailSection>
 
@@ -153,7 +134,7 @@ function WorkspaceInner() {
               {(docs.data ?? []).slice(0, 8).map((d) => (
                 <div key={d.id} className="flex items-center gap-2 px-3 py-1 text-sm">
                   <span
-                    className={`h-2 w-2 shrink-0 rounded-full ${STATUS_CHIP[d.status] ?? "bg-ink-muted"}`}
+                    className={`h-2 w-2 shrink-0 rounded-full ${STATUS_CHIP[d.status] ?? "bg-muted-foreground"}`}
                     title={d.status}
                   />
                   <span className="truncate">{d.fileName}</span>
@@ -161,9 +142,11 @@ function WorkspaceInner() {
               ))}
               <Link
                 href={`/deals/${dealId}/documents`}
-                className="block px-3 py-1 text-xs text-primary dark:text-primary-dark"
+                className="flex items-center gap-1 px-3 py-1 text-xs text-primary hover:underline"
               >
-                All documents →
+                <FileStack className="h-3 w-3" />
+                All documents
+                <ArrowRight className="h-3 w-3" />
               </Link>
             </RailSection>
 
@@ -176,12 +159,10 @@ function WorkspaceInner() {
                       <div key={e.id} className="flex items-center gap-2 px-3 py-1 text-xs">
                         <span className="truncate">{e.name}</span>
                         {consent ? (
-                          <span className="ml-auto text-ink-muted dark:text-ink-dark-muted">
-                            {consent.status}
-                          </span>
+                          <span className="ml-auto text-muted-foreground">{consent.status}</span>
                         ) : (
                           <button
-                            className="ml-auto text-primary underline dark:text-primary-dark"
+                            className="ml-auto text-primary underline underline-offset-2"
                             onClick={() => requestConsent.mutate({ dealId, entityId: e.id })}
                           >
                             request 8821
@@ -196,7 +177,7 @@ function WorkspaceInner() {
                     </p>
                   )}
                   <button
-                    className="px-3 py-1 text-[11px] text-ink-muted underline dark:text-ink-dark-muted"
+                    className="px-3 py-1 text-[11px] text-muted-foreground underline underline-offset-2"
                     onClick={() => setTranscripts.mutate({ dealId, enabled: false })}
                   >
                     disable for this deal
@@ -204,7 +185,7 @@ function WorkspaceInner() {
                 </>
               ) : (
                 <button
-                  className="px-3 py-1 text-xs text-primary underline dark:text-primary-dark"
+                  className="px-3 py-1 text-xs text-primary underline underline-offset-2"
                   onClick={() => setTranscripts.mutate({ dealId, enabled: true })}
                 >
                   Enable IRS transcript verification
@@ -215,14 +196,16 @@ function WorkspaceInner() {
             <RailSection title="Review">
               <Link
                 href={`/deals/${dealId}/review`}
-                className="block px-3 py-1 text-sm text-primary dark:text-primary-dark"
+                className="flex items-center gap-1.5 px-3 py-1 text-sm text-primary hover:underline"
               >
+                <ListChecks className="h-3.5 w-3.5" />
                 Review queue{progress.data ? ` (${progress.data.total - progress.data.done})` : ""}
               </Link>
               <Link
                 href={`/deals/${dealId}/assignment`}
-                className="block px-3 py-1 text-sm text-primary dark:text-primary-dark"
+                className="flex items-center gap-1.5 px-3 py-1 text-sm text-primary hover:underline"
               >
+                <FileStack className="h-3.5 w-3.5" />
                 Document assignment
               </Link>
             </RailSection>
@@ -231,27 +214,27 @@ function WorkspaceInner() {
 
         {/* Center — spread tabs */}
         <main className="flex min-w-0 flex-1 flex-col">
-          <div
-            role="tablist"
-            className="flex gap-1 border-b border-line px-2 dark:border-line-dark"
-          >
-            {TABS.map((t) => (
-              <button
-                key={t.key}
-                role="tab"
-                aria-selected={tab === t.key}
-                onClick={() => setParam("tab", t.key === "is" ? null : t.key)}
-                className={`px-3 py-2 text-sm ${
-                  tab === t.key
-                    ? "border-b-2 border-primary font-semibold text-primary dark:border-primary-dark dark:text-primary-dark"
-                    : "text-ink-muted dark:text-ink-dark-muted"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
+          <div role="tablist" className="flex items-center gap-1 px-3 py-2">
+            <div className="flex items-center gap-0.5 rounded-full bg-muted/60 p-0.5">
+              {TABS.map((t) => (
+                <button
+                  key={t.key}
+                  role="tab"
+                  aria-selected={tab === t.key}
+                  onClick={() => setParam("tab", t.key === "is" ? null : t.key)}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                    tab === t.key
+                      ? "bg-card text-primary shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="scroll-pane flex-1 p-2">
+          <div className="scroll-pane flex-1 px-3 pb-3">
             {(tab === "is" || tab === "bs" || tab === "gcf") && entityId ? (
               <SpreadGrid
                 dealId={dealId}
@@ -272,11 +255,11 @@ function WorkspaceInner() {
                 }}
               />
             ) : tab === "proforma" ? (
-              <div className="glass-card flex h-full items-center justify-center text-sm text-ink-muted dark:text-ink-dark-muted">
+              <div className="glass-card flex h-full items-center justify-center rounded-xl text-sm text-muted-foreground">
                 Pro-forma — post-acquisition projection view (scenario-driven, M8.6+).
               </div>
             ) : (
-              <div className="glass-card flex h-full items-center justify-center text-sm text-ink-muted dark:text-ink-dark-muted">
+              <div className="glass-card flex h-full items-center justify-center rounded-xl text-sm text-muted-foreground">
                 Add an entity to this deal to open its spread.
               </div>
             )}
@@ -287,28 +270,8 @@ function WorkspaceInner() {
         {panelOpen && (
           <aside
             aria-label="inspector"
-            className="scroll-pane w-[360px] shrink-0 border-l border-line p-4 max-lg:hidden dark:border-line-dark"
+            className="side-panel-enter scroll-pane w-[360px] shrink-0 border-l border-border bg-card/40 p-4 backdrop-blur-sm max-lg:hidden"
           >
-            <div className="mb-2 flex gap-1 text-xs">
-              <button
-                onClick={() => setInspectorTab("source")}
-                className={`rounded px-2 py-1 ${inspectorTab === "source" ? "bg-surface-muted font-semibold dark:bg-surface-dark-muted" : ""}`}
-              >
-                Source
-              </button>
-              <button
-                onClick={() => setInspectorTab("issues")}
-                className={`rounded px-2 py-1 ${inspectorTab === "issues" ? "bg-surface-muted font-semibold dark:bg-surface-dark-muted" : ""}`}
-              >
-                Issues{issues.data && issues.data.length > 0 ? ` (${issues.data.length})` : ""}
-              </button>
-              <button
-                onClick={() => setInspectorTab("scenario")}
-                className={`rounded px-2 py-1 ${inspectorTab === "scenario" ? "bg-surface-muted font-semibold dark:bg-surface-dark-muted" : ""}`}
-              >
-                Scenario
-              </button>
-            </div>
             {inspectorTab === "scenario" ? (
               <ScenarioInspector
                 dealId={dealId}
@@ -333,7 +296,7 @@ function WorkspaceInner() {
                 }}
               />
             ) : (
-              <div className="glass-card flex h-full items-center justify-center p-4 text-center text-sm text-ink-muted dark:text-ink-dark-muted">
+              <div className="glass-card flex h-full items-center justify-center rounded-xl p-4 text-center text-sm text-muted-foreground">
                 Select a cell for its source · loan scenario inputs land in M8.6.
               </div>
             )}

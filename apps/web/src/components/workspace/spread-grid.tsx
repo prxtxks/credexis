@@ -18,11 +18,22 @@ import {
   type CellDoubleClickedEvent,
   type ColDef,
 } from "ag-grid-community";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { formatCents } from "@/lib/money-display";
 import { formatRatio } from "./metrics-strip";
+import { credexisGridTheme, GRID_HEADER_HEIGHT, GRID_ROW_HEIGHT } from "@/lib/ag-grid-theme";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+/** Confidence dot (V1 ValueCellRenderer): thresholds are display bands
+ *  only — comparisons, never arithmetic (Iron Law #3). */
+function confidenceDotClass(confidence: number | null | undefined): string | null {
+  if (confidence === null || confidence === undefined) return null;
+  if (confidence >= 0.85) return "bg-primary";
+  if (confidence >= 0.7) return "bg-severity-warning";
+  return "bg-severity-critical";
+}
 
 /** Engine metrics that render as computed rows per tab. */
 const COMPUTED_ROWS: Record<string, { metric: string; label: string }[]> = {
@@ -162,17 +173,29 @@ export function SpreadGrid({
         pinned: "left",
         width: 280,
         editable: (p) => !p.data?.computed,
+        cellClass: (p) => (p.data?.computed ? "computed-row-accent" : ""),
         cellRenderer: (p: { data?: GridRow; value?: string }) => {
           const d = p.data;
           if (!d) return p.value;
-          const chevron = d.hasChildren ? (collapsed.has(d.key) ? "▸ " : "▾ ") : "";
-          const badge = d.computed ? ' <span class="sba-badge">SBA</span>' : "";
           return (
             <span
               style={{ paddingLeft: d.depth * 14 }}
-              className={d.computed ? "font-semibold text-computed" : ""}
-              dangerouslySetInnerHTML={{ __html: `${chevron}${p.value ?? ""}${badge}` }}
-            />
+              className={
+                d.computed
+                  ? "inline-flex items-center gap-1.5 font-semibold text-computed"
+                  : "inline-flex items-center gap-1"
+              }
+            >
+              {d.hasChildren ? (
+                collapsed.has(d.key) ? (
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                )
+              ) : null}
+              {p.value ?? ""}
+              {d.computed ? <span className="sba-badge">SBA</span> : null}
+            </span>
           );
         },
       },
@@ -189,9 +212,21 @@ export function SpreadGrid({
           },
           cellClass: (params) => {
             const cell = params.data?.cells[p];
-            if (params.data?.computed) return "text-computed font-semibold tabular-nums";
-            if (cell?.status === "suggested") return "text-severity-warning tabular-nums";
-            return "tabular-nums";
+            if (params.data?.computed) return "text-computed font-semibold font-mono tabular-nums";
+            if (cell?.status === "suggested") return "text-severity-warning font-mono tabular-nums";
+            return "font-mono tabular-nums";
+          },
+          cellRenderer: (params: { data?: GridRow; value?: string }) => {
+            const cell = params.data?.cells[p];
+            const dot = confidenceDotClass(cell?.confidence);
+            return (
+              <span className="inline-flex items-center gap-1.5">
+                {params.value}
+                {dot && !params.data?.computed ? (
+                  <span className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+                ) : null}
+              </span>
+            );
           },
           tooltipValueGetter: (params) => {
             const cell = params.data?.cells[p];
@@ -205,19 +240,44 @@ export function SpreadGrid({
     return { rowData: rows, columnDefs: cols };
   }, [spread.data, collapsed, statement]);
 
-  if (spread.isLoading) return <p className="p-4 text-sm">Loading spread…</p>;
+  if (spread.isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="grid-loader">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+    );
+  }
   if (spread.error) {
     return <p className="p-4 text-sm text-severity-critical">{spread.error.message}</p>;
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="credexis-grid h-full w-full">
       <AgGridReact<GridRow>
         rowData={rowData}
         columnDefs={columnDefs}
         getRowId={(p) => p.data.key}
-        headerHeight={30}
-        rowHeight={28}
+        theme={credexisGridTheme}
+        headerHeight={GRID_HEADER_HEIGHT}
+        rowHeight={GRID_ROW_HEIGHT}
+        getRowStyle={(p) =>
+          p.data?.computed
+            ? {
+                borderTop: "2px solid var(--computed)",
+                background: "color-mix(in oklab, var(--computed) 8%, transparent)",
+              }
+            : undefined
+        }
         tooltipShowDelay={300}
         onCellClicked={(e) => {
           const d = e.data;
