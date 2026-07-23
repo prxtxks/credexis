@@ -1,40 +1,53 @@
 import Link from "next/link";
-import { BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Credexis wordmark in the V1 lockup: gradient square + BarChart3 mark +
- * Geist semibold name. One component so the brand treatment is decided
- * exactly once (per founder: name reads "Credexis", V1 styling, no
- * mid-word gradient accent).
+ * Credexis brand lockup — the real mark from www.credexis.co
+ * (public/logo-credexis.svg, native brand green #00b06a) + the "Credexis"
+ * wordmark in Geist bold. One component so the brand is decided once and
+ * matches the marketing site everywhere it appears.
+ *
+ * `onColor` renders the mark white (brightness-0 invert) and the wordmark
+ * white, for use on a colored/dark surface (e.g. the login brand panel) —
+ * exactly how the site shows it on its dark-green nav.
  */
 export function Logo({
   size = "md",
   tagline,
   href = "/",
+  onColor = false,
 }: {
   size?: "sm" | "md" | undefined;
   tagline?: string | undefined;
   href?: string | null | undefined;
+  onColor?: boolean | undefined;
 }) {
   const mark = (
     <>
-      <div
-        className={cn(
-          "flex items-center justify-center rounded-lg gradient-btn",
-          size === "sm" ? "w-7 h-7" : "w-8 h-8",
-        )}
-      >
-        <BarChart3 className={cn("text-white", size === "sm" ? "w-3.5 h-3.5" : "w-4 h-4")} />
-      </div>
+      <img
+        src="/logo-credexis.svg"
+        alt="Credexis"
+        className={cn(size === "sm" ? "h-6 w-6" : "h-7 w-7", onColor && "brightness-0 invert")}
+      />
       <div>
         <span
-          className={cn("font-semibold tracking-tight", size === "sm" ? "text-base" : "text-lg")}
+          className={cn(
+            "font-bold tracking-tight",
+            size === "sm" ? "text-lg" : "text-xl",
+            onColor && "text-white",
+          )}
         >
           Credexis
         </span>
         {tagline ? (
-          <span className="text-xs text-muted-foreground ml-2 hidden sm:inline">{tagline}</span>
+          <span
+            className={cn(
+              "ml-2 hidden text-xs sm:inline",
+              onColor ? "text-white/70" : "text-muted-foreground",
+            )}
+          >
+            {tagline}
+          </span>
         ) : null}
       </div>
     </>
