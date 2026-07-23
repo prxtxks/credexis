@@ -7,6 +7,13 @@
  * (Iron Law #3) — values arrive as integer-cent strings and are formatted
  * with string operations only.
  *
+ * V1 (UnderlyticsAI) restyle: frosted AppHeader with a workspace back link
+ * and deal-name breadcrumb, a glass-card fact card (severity Badge, mono
+ * field-key pill, large tabular-nums value), shadcn Buttons that keep the
+ * underline-first-letter shortcut markup, and a glass lineage aside. All
+ * behavior — tRPC queries/mutations, keyboard handling, parse logic — is
+ * unchanged; only the presentation moved to the shared design system.
+ *
  * The source-crop panel shows lineage (page, bbox, method, confidence)
  * today; the actual PDF crop image renders once the pipeline (M3.1) writes
  * page images — the bbox data it needs is already here.
@@ -16,11 +23,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { formatCents, parseDollarsInput } from "@/lib/money-display";
+import { AppHeader } from "@/components/app-header";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
-const SEVERITY_COLORS: Record<string, string> = {
-  critical: "#dc2626",
-  error: "#ea580c",
-  warning: "#d97706",
+const SEVERITY_CLASS: Record<string, string> = {
+  critical: "bg-severity-critical text-white",
+  error: "bg-severity-critical text-white",
+  warning: "bg-severity-warning text-white",
 };
 
 export default function ReviewPage() {
@@ -28,6 +43,7 @@ export default function ReviewPage() {
   const dealId = params.dealId;
 
   const utils = trpc.useUtils();
+  const deal = trpc.deals.get.useQuery({ dealId });
   const queue = trpc.review.queue.useQuery({ dealId });
   const progress = trpc.review.progress.useQuery({ dealId });
 
@@ -49,6 +65,7 @@ export default function ReviewPage() {
 
   const onDone = (message: string) => {
     setFlash(message);
+    toast.success(message);
     setTimeout(() => setFlash(null), 1500);
     refresh();
   };
@@ -98,145 +115,217 @@ export default function ReviewPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [current, busy, correcting, items.length, accept, reject, submitCorrection]);
 
-  if (queue.isLoading) return <main style={{ padding: 32 }}>Loading review queue…</main>;
+  const header = (
+    <AppHeader
+      backHref={`/deals/${dealId}/workspace`}
+      backLabel="Back to workspace"
+      breadcrumb={deal.data?.name ?? "Review queue"}
+      badges={["Review"]}
+    />
+  );
+
+  if (queue.isLoading) {
+    return (
+      <div className="gradient-mesh min-h-screen">
+        {header}
+        <main className="mx-auto flex max-w-4xl flex-col items-center gap-4 px-4 py-24 sm:px-6 lg:px-8">
+          <div className="grid-loader">
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+          <p className="text-sm text-muted-foreground">Loading review queue…</p>
+        </main>
+      </div>
+    );
+  }
+
   if (queue.error) {
-    return <main style={{ padding: 32 }}>Could not load the queue: {queue.error.message}</main>;
+    return (
+      <div className="gradient-mesh min-h-screen">
+        {header}
+        <main className="mx-auto max-w-4xl px-4 py-24 sm:px-6 lg:px-8">
+          <div className="glass-card flex items-start gap-3 rounded-xl p-6 text-sm">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-severity-critical" />
+            <div>
+              <p className="font-medium text-foreground">Could not load the queue</p>
+              <p className="mt-1 text-muted-foreground">{queue.error.message}</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   const p = progress.data;
 
   return (
-    <main style={{ maxWidth: 860, margin: "0 auto", padding: 24, fontFamily: "system-ui" }}>
-      <header style={{ marginBottom: 16 }}>
-        <h1 style={{ fontSize: 20, margin: 0 }}>Review queue</h1>
-        {p && (
-          <div aria-label="progress" style={{ marginTop: 8 }}>
-            <div style={{ fontSize: 13, color: "#555" }}>{p.label}</div>
-            <div style={{ background: "#e5e7eb", height: 6, borderRadius: 3, marginTop: 4 }}>
-              <div
-                style={{
-                  width: p.total === 0 ? "0%" : `${Math.round((p.done / p.total) * 100)}%`,
-                  background: "#059669",
-                  height: 6,
-                  borderRadius: 3,
-                }}
-              />
+    <div className="gradient-mesh min-h-screen">
+      {header}
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <header className="mb-6">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Review queue</h1>
+          {p && (
+            <div aria-label="progress" className="mt-3">
+              <div className="text-[13px] text-muted-foreground">{p.label}</div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{
+                    width: p.total === 0 ? "0%" : `${Math.round((p.done / p.total) * 100)}%`,
+                  }}
+                />
+              </div>
             </div>
+          )}
+        </header>
+
+        {flash && (
+          <div
+            role="status"
+            className="mb-4 rounded-lg border border-primary/20 bg-primary/10 px-4 py-2.5 text-sm text-foreground"
+          >
+            {flash}
           </div>
         )}
-      </header>
 
-      {flash && (
-        <div role="status" style={{ padding: 8, background: "#ecfdf5", marginBottom: 12 }}>
-          {flash}
-        </div>
-      )}
-
-      {!current ? (
-        <section style={{ padding: 32, textAlign: "center", color: "#555" }}>
-          <h2>Queue clear 🎉</h2>
-          <p>No suggested facts await review for this deal.</p>
-        </section>
-      ) : (
-        <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              {current.topSeverity && (
-                <span
-                  style={{
-                    background: SEVERITY_COLORS[current.topSeverity] ?? "#6b7280",
-                    color: "white",
-                    borderRadius: 4,
-                    padding: "2px 8px",
-                    fontSize: 12,
-                  }}
-                >
-                  {current.topSeverity}
-                </span>
-              )}
-              <code style={{ fontSize: 13 }}>
-                {current.registryFieldId ?? current.taxonomyNodeKey}
-              </code>
+        {!current ? (
+          <section className="glass-card flex flex-col items-center gap-3 rounded-2xl px-8 py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <CheckCircle2 className="h-6 w-6" />
             </div>
+            <h2 className="text-lg font-semibold text-foreground">Queue clear 🎉</h2>
+            <p className="text-sm text-muted-foreground">
+              No suggested facts await review for this deal.
+            </p>
+          </section>
+        ) : (
+          <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="glass-card glow-sm rounded-2xl p-6">
+              <div className="flex flex-wrap items-center gap-2">
+                {current.topSeverity && (
+                  <Badge
+                    className={cn(
+                      "rounded-full border-0 font-normal capitalize",
+                      SEVERITY_CLASS[current.topSeverity] ?? "bg-muted text-foreground",
+                    )}
+                  >
+                    {current.topSeverity}
+                  </Badge>
+                )}
+                <code className="rounded-full bg-muted px-2.5 py-1 font-mono text-[13px] text-muted-foreground">
+                  {current.registryFieldId ?? current.taxonomyNodeKey}
+                </code>
+              </div>
 
-            <div style={{ fontSize: 32, margin: "16px 0", fontVariantNumeric: "tabular-nums" }}>
-              {formatCents(current.valueCents)}
-            </div>
+              <div className="my-6 font-mono text-4xl font-semibold tabular-nums tracking-tight text-foreground">
+                {formatCents(current.valueCents)}
+              </div>
 
-            {correcting ? (
-              <div>
-                <label htmlFor="correction" style={{ fontSize: 13 }}>
-                  Corrected value
-                </label>
-                <input
-                  id="correction"
-                  ref={inputRef}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder="36,500.00"
-                  style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-                />
-                <div style={{ fontSize: 12, color: "#555", marginTop: 4 }}>
-                  Enter to save · Esc to cancel
+              {correcting ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="correction" className="text-xs font-medium text-muted-foreground">
+                    Corrected value
+                  </Label>
+                  <Input
+                    id="correction"
+                    ref={inputRef}
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    placeholder="36,500.00"
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground">Enter to save · Esc to cancel</p>
                 </div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => accept.mutate({ factId: current.id })} disabled={busy}>
-                  <u>a</u>ccept
-                </button>
-                <button onClick={() => setCorrecting(true)} disabled={busy}>
-                  <u>c</u>orrect
-                </button>
-                <button onClick={() => reject.mutate({ factId: current.id })} disabled={busy}>
-                  <u>r</u>eject
-                </button>
-                <button
-                  onClick={() => setCursor((i) => (i + 1) % Math.max(items.length, 1))}
-                  disabled={busy}
-                >
-                  <u>s</u>kip
-                </button>
-              </div>
-            )}
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {/* The label is wrapped in a single <span> so the button
+                      (inline-flex) has ONE flex-item child — otherwise
+                      Chromium's accessible-name joins the <u> and the text
+                      as separate flex items with a space ("a ccept"), which
+                      breaks the exact-name e2e contract. */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => accept.mutate({ factId: current.id })}
+                    disabled={busy}
+                  >
+                    <span>
+                      <u>a</u>ccept
+                    </span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => setCorrecting(true)}
+                    disabled={busy}
+                  >
+                    <span>
+                      <u>c</u>orrect
+                    </span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => reject.mutate({ factId: current.id })}
+                    disabled={busy}
+                  >
+                    <span>
+                      <u>r</u>eject
+                    </span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => setCursor((i) => (i + 1) % Math.max(items.length, 1))}
+                    disabled={busy}
+                  >
+                    <span>
+                      <u>s</u>kip
+                    </span>
+                  </Button>
+                </div>
+              )}
 
-            <div style={{ fontSize: 12, color: "#555", marginTop: 16 }}>
-              item {Math.min(cursor + 1, items.length)} of {items.length}
+              <div className="mt-6 text-xs text-muted-foreground">
+                item {Math.min(cursor + 1, items.length)} of {items.length}
+              </div>
             </div>
-          </div>
 
-          <aside style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
-            <h2 style={{ fontSize: 14, marginTop: 0 }}>Source</h2>
-            <dl style={{ fontSize: 13, lineHeight: 1.8 }}>
-              <dt style={{ fontWeight: 600 }}>Method</dt>
-              <dd style={{ margin: 0 }}>{current.method}</dd>
-              <dt style={{ fontWeight: 600 }}>Confidence</dt>
-              <dd style={{ margin: 0 }}>{current.confidence ?? "—"}</dd>
-              <dt style={{ fontWeight: 600 }}>Page</dt>
-              <dd style={{ margin: 0 }}>{current.sourcePage ?? "—"}</dd>
-              <dt style={{ fontWeight: 600 }}>Bounding box</dt>
-              <dd style={{ margin: 0 }}>
-                {current.sourceBbox
-                  ? `x ${current.sourceBbox.x.toFixed(3)} · y ${current.sourceBbox.y.toFixed(3)}`
-                  : "—"}
-              </dd>
-            </dl>
-            <div
-              style={{
-                border: "1px dashed #d1d5db",
-                borderRadius: 6,
-                padding: 24,
-                textAlign: "center",
-                color: "#9ca3af",
-                fontSize: 12,
-              }}
-            >
-              source crop renders here once the pipeline (M3.1) writes page images — bbox lineage
-              above is live
-            </div>
-          </aside>
-        </section>
-      )}
-    </main>
+            <aside className="glass-card rounded-2xl p-6">
+              <h2 className="text-sm font-semibold text-foreground">Source</h2>
+              <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-[13px]">
+                <dt className="font-medium text-muted-foreground">Method</dt>
+                <dd className="m-0 text-foreground">{current.method}</dd>
+                <dt className="font-medium text-muted-foreground">Confidence</dt>
+                <dd className="m-0 text-foreground">{current.confidence ?? "—"}</dd>
+                <dt className="font-medium text-muted-foreground">Page</dt>
+                <dd className="m-0 text-foreground">{current.sourcePage ?? "—"}</dd>
+                <dt className="font-medium text-muted-foreground">Bounding box</dt>
+                <dd className="m-0 font-mono text-foreground">
+                  {current.sourceBbox
+                    ? `x ${current.sourceBbox.x.toFixed(3)} · y ${current.sourceBbox.y.toFixed(3)}`
+                    : "—"}
+                </dd>
+              </dl>
+              <div className="mt-4 rounded-xl border border-dashed border-border px-6 py-8 text-center text-xs text-muted-foreground">
+                source crop renders here once the pipeline (M3.1) writes page images — bbox lineage
+                above is live
+              </div>
+            </aside>
+          </section>
+        )}
+      </main>
+    </div>
   );
 }
