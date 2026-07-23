@@ -32,11 +32,7 @@ export function IssuesPanel({
   }
   const rows = issues.data ?? [];
   if (rows.length === 0) {
-    return (
-      <p className="p-2 text-sm text-ink-muted dark:text-ink-dark-muted">
-        No open gate violations 🎉
-      </p>
-    );
+    return <p className="p-2 text-sm text-muted-foreground">No open gate violations 🎉</p>;
   }
 
   return (
@@ -55,10 +51,10 @@ export function IssuesPanel({
                 <li key={i.id}>
                   <button
                     onClick={() => i.factIds[0] && onOpenFact(i.factIds[0])}
-                    className="w-full rounded border border-line p-2 text-left text-xs leading-snug hover:bg-surface-muted dark:border-line-dark dark:hover:bg-surface-dark-muted"
+                    className="w-full rounded border border-border p-2 text-left text-xs leading-snug hover:bg-muted dark:hover:bg-muted"
                   >
                     <span className="font-mono font-semibold">{i.gate}</span> · {i.message}
-                    <span className="mt-0.5 block text-ink-muted dark:text-ink-dark-muted">
+                    <span className="mt-0.5 block text-muted-foreground">
                       {i.factIds.length} implicated {i.factIds.length === 1 ? "cell" : "cells"}
                     </span>
                   </button>

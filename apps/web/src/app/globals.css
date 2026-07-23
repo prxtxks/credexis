@@ -70,19 +70,6 @@
   --color-severity-warning: var(--severity-warning);
   --color-severity-info: var(--severity-info);
 
-  /* ── Compat aliases for not-yet-migrated pages — remove in UI Phase 5 ── */
-  --color-surface: var(--background);
-  --color-surface-muted: var(--muted);
-  --color-ink: var(--foreground);
-  --color-ink-muted: var(--muted-foreground);
-  --color-line: var(--border);
-  --color-primary-dark: oklch(0.7 0.18 162);
-  --color-surface-dark: oklch(0.17 0.012 166);
-  --color-surface-dark-muted: oklch(0.22 0.014 166);
-  --color-ink-dark: oklch(0.93 0.01 166);
-  --color-ink-dark-muted: oklch(0.68 0.015 166);
-  --color-line-dark: oklch(0.32 0.015 166);
-
   /* Custom animation tokens */
   --animate-fade-in: fade-in 0.5s ease-out;
   --animate-fade-in-up: fade-in-up 0.5s ease-out;

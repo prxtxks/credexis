@@ -9,6 +9,7 @@
  */
 
 import { RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { formatCents, formatRatio } from "@/lib/money-display";
 import { Badge } from "@/components/ui/badge";
@@ -74,7 +75,11 @@ export function MetricsStrip({
   const utils = trpc.useUtils();
   const metrics = trpc.metrics.forDeal.useQuery({ dealId, scenarioId });
   const recompute = trpc.metrics.recompute.useMutation({
-    onSuccess: () => void utils.invalidate(),
+    onSuccess: () => {
+      void utils.invalidate();
+      toast.success("Metrics recomputed");
+    },
+    onError: (e) => toast.error(e.message),
   });
 
   const rows = metrics.data ?? [];

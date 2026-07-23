@@ -73,11 +73,11 @@ function PdfPage({
   }
   return (
     <div className="relative inline-block">
-      <canvas ref={canvasRef} className="rounded border border-line dark:border-line-dark" />
+      <canvas ref={canvasRef} className="rounded border border-border" />
       {bbox && size && (
         <div
           aria-label="source bounding box"
-          className="pointer-events-none absolute border-2 border-primary bg-primary/15 dark:border-primary-dark"
+          className="pointer-events-none absolute border-2 border-primary bg-primary/15"
           style={{
             left: bbox.x * size.w,
             top: bbox.y * size.h,
@@ -126,10 +126,10 @@ export function SourceViewer({
         <code className="text-xs">{d.registryFieldId ?? d.taxonomyNodeKey}</code>
         <div className="mt-1 text-2xl font-semibold tabular-nums">{formatCents(d.valueCents)}</div>
         {d.method === "override" && d.originalValueCents !== null && (
-          <div className="text-xs text-ink-muted dark:text-ink-dark-muted">
+          <div className="text-xs text-muted-foreground">
             was {formatCents(d.originalValueCents)}{" "}
             <button
-              className="text-primary underline dark:text-primary-dark"
+              className="text-primary underline"
               onClick={() => revert.mutate({ overrideFactId: d.factId })}
               disabled={revert.isPending}
             >
@@ -142,7 +142,7 @@ export function SourceViewer({
       {d.document?.signedUrl ? (
         <PdfPage url={d.document.signedUrl} page={d.document.pdfPage} bbox={d.bbox} />
       ) : (
-        <div className="rounded border border-dashed border-line p-4 text-xs text-ink-muted dark:border-line-dark dark:text-ink-dark-muted">
+        <div className="rounded border border-dashed border-border p-4 text-xs text-muted-foreground">
           No source render — {d.method === "human" ? "human-entered value" : "no PDF lineage"}.
         </div>
       )}
@@ -164,7 +164,7 @@ export function SourceViewer({
         <dd>{d.status}</dd>
       </dl>
 
-      <div className="border-t border-line pt-2 dark:border-line-dark">
+      <div className="border-t border-border pt-2">
         <label htmlFor="override" className="text-xs font-semibold">
           Override value
         </label>
@@ -174,13 +174,13 @@ export function SourceViewer({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="36,500.00"
-            className="w-full rounded border border-line px-2 py-1 dark:border-line-dark dark:bg-surface-dark-muted"
+            className="w-full rounded border border-border px-2 py-1"
             onKeyDown={(e) => e.key === "Enter" && submitOverride()}
           />
           <button
             onClick={submitOverride}
             disabled={override.isPending}
-            className="rounded bg-primary px-3 py-1 text-primary-foreground dark:bg-primary-dark"
+            className="rounded bg-primary px-3 py-1 text-primary-foreground"
           >
             Save
           </button>
@@ -190,7 +190,7 @@ export function SourceViewer({
         )}
       </div>
 
-      <div className="border-t border-line pt-2 dark:border-line-dark">
+      <div className="border-t border-border pt-2">
         <label htmlFor="addback-category" className="text-xs font-semibold">
           Add back this line
         </label>
@@ -199,7 +199,7 @@ export function SourceViewer({
             id="addback-category"
             value={addbackCategory}
             onChange={(e) => setAddbackCategory(e.target.value)}
-            className="w-full rounded border border-line px-2 py-1 dark:border-line-dark dark:bg-surface-dark-muted"
+            className="w-full rounded border border-border px-2 py-1"
           >
             {ADDBACK_CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -217,7 +217,7 @@ export function SourceViewer({
               })
             }
             disabled={createAddback.isPending}
-            className="rounded border border-line px-3 py-1 dark:border-line-dark"
+            className="rounded border border-border px-3 py-1"
           >
             Add back
           </button>
