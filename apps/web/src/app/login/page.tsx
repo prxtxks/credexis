@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
-import { BarChart3, FileSearch, Layers, Shield, Sparkles, Zap } from "lucide-react";
+import { FileSearch, Layers, Shield, Sparkles, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,10 +66,8 @@ function LoginForm() {
 
         <div className="relative z-10 flex flex-col justify-between w-full p-12">
           <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-semibold text-xl text-white tracking-tight">Credexis</span>
+            <img src="/logo-credexis.svg" alt="Credexis" className="h-8 w-8 brightness-0 invert" />
+            <span className="font-bold text-xl text-white tracking-tight">Credexis</span>
           </div>
 
           <div className="max-w-md">
@@ -121,10 +119,8 @@ function LoginForm() {
             transition={{ duration: 0.4 }}
             className="flex items-center justify-center gap-2.5 mb-8 lg:hidden"
           >
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl gradient-btn">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-semibold text-xl tracking-tight">Credexis</span>
+            <img src="/logo-credexis.svg" alt="Credexis" className="h-9 w-9" />
+            <span className="font-bold text-xl tracking-tight">Credexis</span>
           </motion.div>
 
           <motion.div
