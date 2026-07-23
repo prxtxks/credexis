@@ -9,6 +9,7 @@
  */
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { formatCents, parseDollarsInput } from "@/lib/money-display";
 
@@ -66,9 +67,17 @@ export function ScenarioInspector({
     onSuccess: (r) => {
       onSelectScenario(r.scenarioId);
       invalidate();
+      toast.success("Scenario created");
     },
+    onError: (e) => toast.error(e.message),
   });
-  const update = trpc.metrics.scenarios.update.useMutation({ onSuccess: invalidate });
+  const update = trpc.metrics.scenarios.update.useMutation({
+    onSuccess: () => {
+      invalidate();
+      toast.success("Scenario saved");
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   function submit() {
     if (!draft) return;
@@ -112,18 +121,18 @@ export function ScenarioInspector({
         {(scenarios.data ?? []).map((s) => (
           <div
             key={s.id}
-            className={`flex items-center justify-between rounded border border-line p-2 dark:border-line-dark ${
-              s.id === selectedScenarioId ? "bg-surface-muted dark:bg-surface-dark-muted" : ""
+            className={`flex items-center justify-between rounded border border-border p-2  ${
+              s.id === selectedScenarioId ? "bg-muted" : ""
             }`}
           >
             <button className="text-left" onClick={() => onSelectScenario(s.id)}>
               <span className="font-semibold">{s.name}</span>
-              <span className="ml-2 text-xs text-ink-muted dark:text-ink-dark-muted">
+              <span className="ml-2 text-xs text-muted-foreground">
                 {formatCents(s.amountCents)} · {s.termMonths}mo
               </span>
             </button>
             <button
-              className="text-xs text-primary underline dark:text-primary-dark"
+              className="text-xs text-primary underline"
               onClick={() => {
                 setEditingId(s.id);
                 const st = (s.structure ?? {}) as Record<string, unknown>;
@@ -157,7 +166,7 @@ export function ScenarioInspector({
         {!draft && (
           <button
             onClick={() => setDraft(EMPTY)}
-            className="w-full rounded border border-dashed border-line p-2 text-xs text-ink-muted dark:border-line-dark dark:text-ink-dark-muted"
+            className="w-full rounded border border-dashed border-border p-2 text-xs text-muted-foreground"
           >
             + New scenario
           </button>
@@ -165,13 +174,13 @@ export function ScenarioInspector({
       </div>
 
       {draft && (
-        <div className="space-y-2 border-t border-line pt-2 dark:border-line-dark">
+        <div className="space-y-2 border-t border-border pt-2">
           <label className="block text-xs font-semibold">
             Name
             <input
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              className="mt-0.5 w-full rounded border border-line px-2 py-1 font-normal dark:border-line-dark dark:bg-surface-dark-muted"
+              className="mt-0.5 w-full rounded border border-border px-2 py-1 font-normal"
             />
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -181,7 +190,7 @@ export function ScenarioInspector({
                 value={draft.amount}
                 onChange={(e) => setDraft({ ...draft, amount: e.target.value })}
                 placeholder="350,000.00"
-                className="mt-0.5 w-full rounded border border-line px-2 py-1 font-normal dark:border-line-dark dark:bg-surface-dark-muted"
+                className="mt-0.5 w-full rounded border border-border px-2 py-1 font-normal"
               />
             </label>
             <label className="block text-xs font-semibold">
@@ -190,7 +199,7 @@ export function ScenarioInspector({
                 value={draft.termMonths}
                 onChange={(e) => setDraft({ ...draft, termMonths: e.target.value })}
                 inputMode="numeric"
-                className="mt-0.5 w-full rounded border border-line px-2 py-1 font-normal dark:border-line-dark dark:bg-surface-dark-muted"
+                className="mt-0.5 w-full rounded border border-border px-2 py-1 font-normal"
               />
             </label>
           </div>
@@ -202,7 +211,7 @@ export function ScenarioInspector({
                 onChange={(e) =>
                   setDraft({ ...draft, rateType: e.target.value as Draft["rateType"] })
                 }
-                className="mt-0.5 w-full rounded border border-line px-2 py-1 font-normal dark:border-line-dark dark:bg-surface-dark-muted"
+                className="mt-0.5 w-full rounded border border-border px-2 py-1 font-normal"
               >
                 <option value="prime_spread">Prime + spread</option>
                 <option value="fixed">Fixed</option>
@@ -216,7 +225,7 @@ export function ScenarioInspector({
                   onChange={(e) => setDraft({ ...draft, bps: e.target.value })}
                   inputMode="numeric"
                   placeholder="1050"
-                  className="mt-0.5 w-full rounded border border-line px-2 py-1 font-normal dark:border-line-dark dark:bg-surface-dark-muted"
+                  className="mt-0.5 w-full rounded border border-border px-2 py-1 font-normal"
                 />
               </label>
             ) : (
@@ -227,7 +236,7 @@ export function ScenarioInspector({
                     value={draft.spreadBps}
                     onChange={(e) => setDraft({ ...draft, spreadBps: e.target.value })}
                     inputMode="numeric"
-                    className="mt-0.5 w-full rounded border border-line px-2 py-1 font-normal dark:border-line-dark dark:bg-surface-dark-muted"
+                    className="mt-0.5 w-full rounded border border-border px-2 py-1 font-normal"
                   />
                 </label>
                 <label className="block text-xs font-semibold">
@@ -236,7 +245,7 @@ export function ScenarioInspector({
                     value={draft.primeBps}
                     onChange={(e) => setDraft({ ...draft, primeBps: e.target.value })}
                     inputMode="numeric"
-                    className="mt-0.5 w-full rounded border border-line px-2 py-1 font-normal dark:border-line-dark dark:bg-surface-dark-muted"
+                    className="mt-0.5 w-full rounded border border-border px-2 py-1 font-normal"
                   />
                 </label>
               </>
@@ -270,7 +279,7 @@ export function ScenarioInspector({
               <input
                 value={draft.equityInjection}
                 onChange={(e) => setDraft({ ...draft, equityInjection: e.target.value })}
-                className="mt-0.5 w-full rounded border border-line px-2 py-1 font-normal dark:border-line-dark dark:bg-surface-dark-muted"
+                className="mt-0.5 w-full rounded border border-border px-2 py-1 font-normal"
               />
             </label>
             <label className="block text-xs font-semibold">
@@ -278,7 +287,7 @@ export function ScenarioInspector({
               <input
                 value={draft.totalProjectCost}
                 onChange={(e) => setDraft({ ...draft, totalProjectCost: e.target.value })}
-                className="mt-0.5 w-full rounded border border-line px-2 py-1 font-normal dark:border-line-dark dark:bg-surface-dark-muted"
+                className="mt-0.5 w-full rounded border border-border px-2 py-1 font-normal"
               />
             </label>
           </div>
@@ -287,14 +296,14 @@ export function ScenarioInspector({
             <input
               value={draft.replacementSalary}
               onChange={(e) => setDraft({ ...draft, replacementSalary: e.target.value })}
-              className="mt-0.5 w-full rounded border border-line px-2 py-1 font-normal dark:border-line-dark dark:bg-surface-dark-muted"
+              className="mt-0.5 w-full rounded border border-border px-2 py-1 font-normal"
             />
           </label>
           <div className="flex gap-2">
             <button
               onClick={submit}
               disabled={create.isPending || update.isPending}
-              className="rounded bg-primary px-3 py-1 text-primary-foreground dark:bg-primary-dark"
+              className="rounded bg-primary px-3 py-1 text-primary-foreground"
             >
               {editingId ? "Save scenario" : "Create scenario"}
             </button>
@@ -303,7 +312,7 @@ export function ScenarioInspector({
                 setDraft(null);
                 setEditingId(null);
               }}
-              className="rounded border border-line px-3 py-1 dark:border-line-dark"
+              className="rounded border border-border px-3 py-1"
             >
               Cancel
             </button>
