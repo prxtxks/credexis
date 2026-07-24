@@ -230,7 +230,7 @@ You cannot claim 99% without measuring it. This is the highest-leverage infrastr
 
 1. **Golden corpus:** 30–60 real, redacted deal documents (each tax form family × native/scanned/skewed × 2–3 tax years; QuickBooks + CPA-formatted + hand-built statements), each with a ground-truth JSON of every field (labeled once by you + domain experts in a purpose-built labeling screen — or via the review-queue UI itself).
 2. **Eval harness in CI:** every merge runs extraction on the corpus → per-field precision/recall, per-form and per-stage; auto-accept precision (target ≥ 99.5%), auto-accept coverage (target ≥ 85–90%), review-queue routing correctness (a wrong value slipping past review = the cardinal sin, tracked as its own metric). Regression = red build.
-3. **Vendor bake-off (M3.4):** run Reducto vs Extend vs Azure vs LandingAI on the corpus before committing the primary adapter. Decide with data, not marketing.
+3. **Vendor bake-off (M3.4):** ran Reducto vs Azure vs Claude vision on the corpus (ADR-0002). Outcome: **Reducto = Path-1 primary for all families; Claude vision = Path-2 second reader** (consensus). Azure lost (misread real CPA bundles) and is now an eval-only bench contender; Extend was never pursued. Decided with data, not marketing.
 4. **Production feedback loop:** every human correction in the review queue is a labeled example appended (with consent/PII controls) to the corpus. Accuracy compounds.
 
 ---
