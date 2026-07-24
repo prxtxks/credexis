@@ -82,8 +82,8 @@ The core precision mechanism. Two _independent_ extractors run per form; a deter
 **Path 1 — Specialized document-AI vendor.**
 
 - Primary recommendation: **Reducto** (strong published results on dense financial layouts, handwriting, low-quality scans; returns bounding boxes + confidence per field; SOC 2; ZDR available). Structured extraction ~$0.015–0.02/page.
-- For the 1040 family specifically, **Azure Document Intelligence prebuilt US tax models** (1040 + variants, W-2, 1099s, 1098) are cheap, deterministic, battle-tested — use them as Path 1 for the forms they cover. Business returns (1120/1120-S/1065) are NOT covered by Azure prebuilts → Reducto (or equivalent) with schema-driven extraction.
-- Alternates evaluated: **Extend**, **LandingAI ADE** (99.16% DocVQA), **Google Document AI**. The vendor sits behind an **ExtractorAdapter interface** — swapping vendors is a config change, not a rewrite. Benchmark all candidates against the golden corpus in Phase 1 and let the data pick (task list M3.4).
+- The 1040 family was originally slated for **Azure Document Intelligence prebuilt US tax models**, but the bake-off (ADR-0002) settled it differently: **Reducto is Path 1 for ALL families** (Azure misread real CPA bundles — hallucinated 1099s — and rate-limits on the free tier). Azure was **removed from the production path (2026-07-24)** and kept only as a bench-only eval contender.
+- Alternates evaluated: **Azure** (lost, now eval-only), **LandingAI ADE**, **Google Document AI**. **Extend** was never pursued (Reducto + Claude consensus is sufficient). The vendor sits behind an **ExtractorAdapter interface** — swapping vendors is a config change, not a rewrite. Data picked the primary (ADR-0002); re-promote any bench vendor only with data.
 
 **Path 2 — Frontier vision LLM, schema-constrained.**
 
