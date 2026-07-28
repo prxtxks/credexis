@@ -1,7 +1,14 @@
 {
   "version": 1,
   "extractor": "mock-perfect@1",
-  "real": null,
+  "real": {
+    "field_precision": 1,
+    "field_recall": 0.9953488372093023,
+    "auto_accept_precision": 1,
+    "auto_accept_coverage": 0.9953488372093023,
+    "silent_wrong_count": 0,
+    "documents": 13
+  },
   "synthetic_harness_check": {
     "field_precision": 1,
     "field_recall": 1,

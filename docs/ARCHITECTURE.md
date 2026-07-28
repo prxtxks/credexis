@@ -143,7 +143,10 @@ tenants ─ users (Supabase Auth; RLS everywhere; roles: admin/underwriter/viewe
    │       └─ pages (image ref, ocr text ref)
    ├─ periods (entity_id, kind: FY|interim|TTM|projection, start, end, label)
    ├─ facts  ⟵ THE SPINE
-   │   (entity_id, period_id, taxonomy_node_id, value_cents,
+   │   (entity_id, period_id, taxonomy_node_id [nullable], registry_field_id
+   │    [nullable; CHECK: at least one of the two set — M4.8 registry-only
+   │    facts carry derived tax lines like AGI that map to no taxonomy node],
+   │    value_cents,
    │    source: {logical_document_id, page, bbox} | transcript_line | human,
    │    method: vendor|llm|consensus|transcript|override,
    │    confidence, status: suggested|accepted|overridden|rejected,
