@@ -17,6 +17,12 @@ behavior they describe.
   change management.
 - **[runbooks/](runbooks/)** — operational runbooks (incident response,
   restore drill).
+- **[ROADMAP.md](ROADMAP.md)** — the product plan: MVP 2 → Final, architecture
+  evolution, YC readiness, 90-day action plan (approved 2026-07-28).
+- **[PRICING-STRATEGY.md](PRICING-STRATEGY.md)** — pricing model + benchmarks
+  (hypothesis; validate with design partners).
+- **[competitive/](competitive/)** — quarterly competitor teardowns; start with
+  the 2026-Q3 baseline.
 
 The root **[CLAUDE.md](../CLAUDE.md)** carries the ten iron laws and the working
 agreement; read it first.
