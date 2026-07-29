@@ -351,30 +351,35 @@
 /* ── Utility Classes ── */
 
 /* Glassmorphism card */
+/* surface-1 (design language §2): content cards are OPAQUE — hairline +
+   soft shadow carry the elevation, never transparency. The class keeps its
+   historical name so every existing page upgrades in place. */
 .glass-card {
-  background: oklch(1 0 0 / 60%);
-  backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid oklch(0.9 0.005 166);
+  background: oklch(1 0 0);
+  border: 1px solid oklch(0.92 0.006 166);
+  box-shadow: 0 1px 2px oklch(0.2 0.02 166 / 5%);
 }
 
 .dark .glass-card {
-  background: oklch(0.17 0.012 166 / 50%);
-  border: 1px solid oklch(1 0 0 / 10%);
+  background: oklch(0.19 0.012 166);
+  border: 1px solid oklch(1 0 0 / 8%);
+  box-shadow: 0 1px 3px oklch(0 0 0 / 30%);
 }
 
-/* Gradient mesh background */
+/* Gradient mesh: surface-0 texture only (design language §2) — felt, not
+   seen. Anything stronger reads as template decor. */
 .gradient-mesh {
   background:
-    radial-gradient(ellipse at 20% 50%, oklch(0.85 0.12 162 / 15%) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, oklch(0.8 0.1 180 / 12%) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 80%, oklch(0.85 0.08 145 / 10%) 0%, transparent 50%);
+    radial-gradient(ellipse at 20% 50%, oklch(0.85 0.12 162 / 6%) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, oklch(0.8 0.1 180 / 5%) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, oklch(0.85 0.08 145 / 4%) 0%, transparent 50%);
 }
 
 .dark .gradient-mesh {
   background:
-    radial-gradient(ellipse at 20% 50%, oklch(0.35 0.1 162 / 20%) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, oklch(0.3 0.08 180 / 15%) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 80%, oklch(0.35 0.06 145 / 12%) 0%, transparent 50%);
+    radial-gradient(ellipse at 20% 50%, oklch(0.35 0.1 162 / 8%) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, oklch(0.3 0.08 180 / 6%) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, oklch(0.35 0.06 145 / 5%) 0%, transparent 50%);
 }
 
 /* Gradient text */
@@ -464,15 +469,29 @@
 }
 
 /* Frosted glass toolbar */
+/* Chrome (top bar / tab bar) may blur — it floats over content — but at
+   high opacity so text on it never fights the page underneath. */
 .frosted-toolbar {
-  background: oklch(1 0 0 / 80%);
-  backdrop-filter: blur(12px) saturate(150%);
-  border-bottom: 1px solid oklch(0.91 0.01 166);
+  background: oklch(1 0 0 / 88%);
+  backdrop-filter: blur(16px) saturate(160%);
+  border-bottom: 1px solid oklch(0.92 0.006 166);
 }
 
 .dark .frosted-toolbar {
-  background: oklch(0.15 0.01 166 / 80%);
-  border-bottom: 1px solid oklch(0.28 0.015 166);
+  background: oklch(0.15 0.01 166 / 88%);
+  border-bottom: 1px solid oklch(1 0 0 / 8%);
+}
+
+/* Mobile bottom tab bar (ui-9): iOS-grade blur stack, top hairline only. */
+.tab-bar {
+  background: oklch(1 0 0 / 92%);
+  backdrop-filter: blur(20px) saturate(160%);
+  border-top: 1px solid oklch(0.92 0.006 166);
+}
+
+.dark .tab-bar {
+  background: oklch(0.15 0.01 166 / 92%);
+  border-top: 1px solid oklch(1 0 0 / 8%);
 }
 
 /* Animated border gradient */

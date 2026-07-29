@@ -54,7 +54,7 @@ export function AppShell({
       <aside
         aria-label="primary navigation"
         className={cn(
-          "sticky top-0 z-40 flex h-screen shrink-0 flex-col border-r border-border bg-sidebar transition-all duration-200 max-md:hidden",
+          "sticky top-0 z-40 flex h-screen shrink-0 flex-col border-r border-border/60 bg-sidebar transition-[width] duration-250 ease-[cubic-bezier(0.16,1,0.3,1)] max-md:hidden",
           open ? "w-56" : "w-14",
         )}
       >
@@ -75,13 +75,17 @@ export function AppShell({
                 href={href}
                 title={label}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors duration-200",
+                  "relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors duration-150",
                   active
                     ? "bg-sidebar-accent text-sidebar-primary"
                     : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
                   !open && "justify-center px-0",
                 )}
               >
+                {/* Active indicator: a 2px accent bar, not more color fill. */}
+                {active ? (
+                  <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-primary" />
+                ) : null}
                 <Icon className="h-4 w-4 shrink-0" />
                 {open ? label : null}
               </Link>
@@ -102,12 +106,13 @@ export function AppShell({
       {/* ── Main column ── */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="frosted-toolbar sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 px-4">
-          {/* Mobile: no sidebar — show the wordmark for orientation. */}
-          <span className="md:hidden">
+          {/* Mobile: breadcrumb IS the page title; the wordmark appears only
+              where there is no context to show (design language §3). */}
+          <span className={cn("md:hidden", breadcrumb && "max-md:hidden")}>
             <Logo size="sm" />
           </span>
           {breadcrumb ? (
-            <span className="truncate text-sm text-muted-foreground max-sm:hidden">
+            <span className="truncate text-sm text-muted-foreground max-md:text-[15px] max-md:font-semibold max-md:text-foreground">
               {breadcrumb}
             </span>
           ) : null}
@@ -120,10 +125,11 @@ export function AppShell({
                 variant="ghost"
                 size="sm"
                 type="submit"
+                aria-label="Sign out"
                 className="gap-1.5 rounded-full text-muted-foreground"
               >
                 <LogOut className="h-4 w-4" />
-                Sign out
+                <span className="max-sm:hidden">Sign out</span>
               </Button>
             </form>
           </div>
@@ -134,7 +140,7 @@ export function AppShell({
       {/* ── Mobile bottom tabs (iOS pattern, M11.8) — phones only ── */}
       <nav
         aria-label="mobile navigation"
-        className="frosted-toolbar fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-border pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="tab-bar fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {NAV.map(({ href, label, icon: Icon, exact }) => {
           const active = exact ? pathname === href : pathname.startsWith(href);
@@ -142,12 +148,19 @@ export function AppShell({
             <Link
               key={href}
               href={href}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors duration-200",
+                "flex min-h-12 flex-1 flex-col items-center justify-center gap-1 pt-2 pb-1.5 text-[10px] font-medium transition-colors duration-150",
                 active ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <Icon className="h-5 w-5" />
+              <Icon
+                className={cn(
+                  "h-[22px] w-[22px] transition-transform duration-150",
+                  active && "scale-105",
+                )}
+                strokeWidth={active ? 2.2 : 1.8}
+              />
               {label}
             </Link>
           );
