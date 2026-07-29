@@ -1,6 +1,7 @@
 import { protectedProcedure, publicProcedure, router } from "./init";
 import { addbacksRouter } from "./routers/addbacks";
 import { assignmentRouter, identitiesRouter } from "./routers/assignment";
+import { auditRouter } from "./routers/audit";
 import { dealsRouter } from "./routers/deals";
 import { documentsRouter } from "./routers/documents";
 import { issuesRouter } from "./routers/issues";
@@ -82,6 +83,9 @@ export const appRouter = router({
 
   /** Self profile + email preferences (M11.7): self-scoped via definer. */
   profile: profileRouter,
+
+  /** Audit trail + hash-chain verification (M12.3): reads through RLS. */
+  audit: auditRouter,
 
   /** Borrower portal, broker side (M12.1). */
   borrowers: borrowersRouter,
