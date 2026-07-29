@@ -13,7 +13,11 @@ import { Suspense, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, FileStack, ListChecks, UserRound } from "lucide-react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
+import { FieldSelect } from "@/components/ui/field-select";
+
+type DealStatus = "intake" | "parsing" | "review" | "complete";
 import { MetricsStrip } from "@/components/workspace/metrics-strip";
 import { SpreadGrid, type CellSelection } from "@/components/workspace/spread-grid";
 import { TaxSpreadGrid } from "@/components/workspace/tax-spread-grid";
@@ -67,6 +71,13 @@ function WorkspaceInner() {
 
   const utils = trpc.useUtils();
   const deal = trpc.deals.get.useQuery({ dealId });
+  const setStatus = trpc.deals.setStatus.useMutation({
+    onSuccess: () => {
+      void utils.deals.get.invalidate({ dealId });
+      toast.success("Deal status updated");
+    },
+    onError: (e) => toast.error(e.message),
+  });
   const entities = trpc.assignment.entities.useQuery({ dealId });
   const entityId = entityParam ?? entities.data?.[0]?.id ?? null;
   const docs = trpc.documents.list.useQuery({ dealId });
@@ -159,6 +170,28 @@ function WorkspaceInner() {
             aria-label="deal navigation"
             className="scroll-pane w-[280px] shrink-0 border-r border-border bg-card/40 py-3 backdrop-blur-sm max-md:hidden"
           >
+            <RailSection title="Deal status">
+              {/* The ONLY place a human can move a deal forward. Without it
+                  a deal reaches Review and sticks there permanently: the
+                  pipeline advances intake→parsing→review, but review→complete
+                  is a judgement nobody but an underwriter can make. */}
+              <div className="px-3 py-1">
+                <FieldSelect
+                  ariaLabel="Deal status"
+                  value={deal.data?.status ?? "intake"}
+                  onChange={(v) => setStatus.mutate({ dealId, status: v as DealStatus })}
+                  disabled={!deal.data || setStatus.isPending}
+                  options={[
+                    { value: "intake", label: "Intake" },
+                    { value: "parsing", label: "Parsing" },
+                    { value: "review", label: "Review" },
+                    { value: "complete", label: "Complete" },
+                  ]}
+                  className="w-full"
+                />
+              </div>
+            </RailSection>
+
             <RailSection title="Entities">
               {(entities.data ?? []).map((e) => (
                 <button

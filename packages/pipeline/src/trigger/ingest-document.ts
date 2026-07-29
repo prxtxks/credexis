@@ -74,6 +74,85 @@ async function notifyDocumentFailed(
   }
 }
 
+/** The pipeline board's vocabulary, in funnel order (deal_status enum). */
+const DEAL_STATUS_ORDER = ["intake", "parsing", "review", "complete"] as const;
+type DealStatus = (typeof DEAL_STATUS_ORDER)[number];
+
+/**
+ * Deal pipeline status (m8-10) — the writer the board never had.
+ *
+ * MONOTONIC AND IDEMPOTENT BY CONSTRUCTION: the statement names every
+ * status the deal may be coming FROM (strictly behind the target), so it
+ * is a no-op unless the deal is genuinely earlier in the funnel. A retried
+ * run, or a second document's run racing this one, therefore cannot drag a
+ * deal in 'review' back to 'parsing' — Postgres re-evaluates that
+ * predicate after the row lock is released, so the loser of a race matches
+ * zero rows instead of overwriting the winner. Human hands may still move
+ * a deal backwards (deals.setStatus); the worker never does.
+ *
+ * B4 posture, identical to the notification fan-out above: service-role
+ * writer with EXPLICIT tenant scoping in code, because the worker bypasses
+ * RLS. Best-effort — a board that lags must never fail an ingest — but
+ * errors are logged, not swallowed (supabase-js RETURNS errors).
+ */
+async function advanceDealStatus(
+  client: ReturnType<typeof serviceClient>,
+  log: LogContext,
+  payload: { tenantId: string; dealId: string },
+  to: DealStatus,
+): Promise<void> {
+  const from = DEAL_STATUS_ORDER.slice(0, DEAL_STATUS_ORDER.indexOf(to));
+  if (from.length === 0) return;
+  try {
+    const { data, error } = await client
+      .from("deals")
+      .update({ status: to, updated_at: new Date().toISOString() })
+      .eq("id", payload.dealId)
+      .eq("tenant_id", payload.tenantId)
+      .in("status", from)
+      .select("id");
+    if (error) {
+      logEvent(log, "deal-status-errored", { error: error.message.slice(0, 200) });
+      return;
+    }
+    if ((data ?? []).length > 0) logEvent(log, "deal-status-advanced", { status: to });
+  } catch (e) {
+    logEvent(log, "deal-status-errored", { error: (e as Error).message.slice(0, 200) });
+  }
+}
+
+/**
+ * parsing → review, gated on the deal actually HAVING something to review.
+ * The review queue is "suggested facts on this deal"
+ * (apps/web/src/server/trpc/routers/review.ts), so that count — not
+ * "extraction finished" — is the honest signal: consensus auto-accepts
+ * high-confidence facts, and a deal that lands in Review with an empty
+ * queue teaches underwriters to ignore the column. count+head is one round
+ * trip and, unlike summing rows client-side, immune to PostgREST's
+ * 1000-row page cap (the bug that once weakened the cost ceiling).
+ */
+async function advanceIfReviewable(
+  client: ReturnType<typeof serviceClient>,
+  log: LogContext,
+  payload: { tenantId: string; dealId: string },
+): Promise<void> {
+  try {
+    const { count, error } = await client
+      .from("facts")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", payload.tenantId)
+      .eq("deal_id", payload.dealId)
+      .eq("status", "suggested");
+    if (error) {
+      logEvent(log, "deal-status-errored", { error: error.message.slice(0, 200) });
+      return;
+    }
+    if ((count ?? 0) > 0) await advanceDealStatus(client, log, payload, "review");
+  } catch (e) {
+    logEvent(log, "deal-status-errored", { error: (e as Error).message.slice(0, 200) });
+  }
+}
+
 const payloadSchema = z.object({
   documentId: z.string().uuid(),
   tenantId: z.string().uuid(),
@@ -100,6 +179,15 @@ export const ingestDocument = task({
     }
 
     const client = serviceClient();
+
+    // intake → parsing. The upload route commits the documents row before
+    // it triggers this task, so reaching here IS "a document arrived" —
+    // no separate count needed. Deliberately ahead of the cost ceiling and
+    // the AV gate: a deal whose first document is withheld or infected
+    // must still leave Intake, or the board hides the one deal that needs
+    // a human most. Terminal state for that document is its own column.
+    await advanceDealStatus(client, log, payload, "parsing");
+
     const anthropicKey = process.env["ANTHROPIC_API_KEY"];
     const llmUsage: { model: string; inputTokens: number; outputTokens: number }[] = [];
 
@@ -383,6 +471,11 @@ export const ingestDocument = task({
         logEvent(log, "extract-errored", { error: (e as Error).message.slice(0, 300) });
         Sentry.captureException(e);
       }
+
+      // Outside the extract try on purpose: a partially-failed extraction
+      // still leaves suggested facts behind, and those are exactly what a
+      // human has to look at.
+      await advanceIfReviewable(client, log, payload);
       return result;
     } catch (e) {
       logEvent(log, "errored", { error: (e as Error).message });
