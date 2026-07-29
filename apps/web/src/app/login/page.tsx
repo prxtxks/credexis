@@ -160,11 +160,7 @@ function LoginForm() {
                   className="h-11 rounded-xl bg-background/50"
                 />
               </div>
-              <Button
-                type="submit"
-                disabled={busy}
-                className="w-full h-11 rounded-xl gradient-btn border-0 text-base font-medium"
-              >
+              <Button type="submit" disabled={busy} className="w-full h-11 text-base">
                 {busy ? "Signing in…" : "Sign in"}
               </Button>
             </form>

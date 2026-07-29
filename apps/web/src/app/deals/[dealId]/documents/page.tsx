@@ -276,10 +276,7 @@ export default function DocumentsPage() {
         </div>
 
         <div className="mt-6 flex justify-center sm:hidden">
-          <Button
-            onClick={() => inputRef.current?.click()}
-            className="gradient-btn rounded-full border-0"
-          >
+          <Button onClick={() => inputRef.current?.click()}>
             <Upload className="mr-1.5 h-4 w-4" />
             Choose files
           </Button>
