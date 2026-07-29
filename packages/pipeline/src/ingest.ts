@@ -20,7 +20,7 @@ import {
 } from "@credexis/extraction";
 import { extractPdfText, type PdfText } from "./pdf.js";
 import { anthropicCostMicroUsd } from "./pricing.js";
-import type { DbPort, StoragePort, VirusScanner, VirusScanStatus } from "./ports.js";
+import type { DbPort, DocumentRow, StoragePort, VirusScanner, VirusScanStatus } from "./ports.js";
 
 export const PIPELINE_VERSION = "0.1.0";
 
