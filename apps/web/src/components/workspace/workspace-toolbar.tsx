@@ -85,13 +85,13 @@ export function WorkspaceToolbar({
         </Button>
 
         {/* Inspector segmented pills (V1 panel-toggle language) */}
-        <div className="flex items-center gap-0.5 rounded-full bg-muted/60 p-0.5 max-md:hidden">
+        <div className="flex items-center gap-0.5 rounded-full border border-border/60 bg-muted/40 p-0.5 max-md:hidden">
           {INSPECTOR_TABS.map((t) => (
             <button
               key={t.key}
               onClick={() => onInspectorTab(t.key)}
               className={cn(
-                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-150",
                 inspectorTab === t.key && panelOpen
                   ? "bg-card text-primary shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
