@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { sha256Hex } from "@credexis/shared";
 import type { PageClassification, PageInput } from "@credexis/extraction";
-import { runIngest, type IngestDeps, type IngestPayload } from "./ingest.js";
+import {
+  assertStoragePathPinned,
+  runIngest,
+  type IngestDeps,
+  type IngestPayload,
+} from "./ingest.js";
 import type {
   DbPort,
   DocumentRow,
@@ -87,8 +92,9 @@ async function setup(opts?: {
     id: "doc-1",
     tenantId: "ten-1",
     dealId: "deal-1",
+    uploadedViaInviteId: null,
     fileName: "bundle.pdf",
-    storagePath: "ten-1/deal-1/abc.pdf",
+    storagePath: "ten-1/deals/deal-1/uploads/abc.pdf",
     sha256: opts?.sha256 ?? (await sha256Hex(bytes)),
     bytes: bytes.byteLength,
     mimeType: opts?.mimeType ?? "application/pdf",
@@ -96,7 +102,7 @@ async function setup(opts?: {
   const texts = opts?.pageTexts ?? BUNDLE_TEXTS;
   const deps: IngestDeps = {
     db,
-    storage: new FakeStorage({ "ten-1/deal-1/abc.pdf": bytes }),
+    storage: new FakeStorage({ "ten-1/deals/deal-1/uploads/abc.pdf": bytes }),
     scanner: opts?.scanner === undefined ? cleanScanner : opts.scanner,
     classifier: opts?.classifier ?? null,
     ...(opts?.takeLlmUsage ? { takeLlmUsage: opts.takeLlmUsage } : {}),
@@ -240,5 +246,82 @@ describe("runIngest", () => {
   it("throws on a payload whose tenant/deal do not match the document row", async () => {
     const { deps, payload } = await setup();
     await expect(runIngest(deps, { ...payload, tenantId: "ten-EVIL" })).rejects.toThrow(/mismatch/);
+  });
+});
+
+/* ── borrower path pinning (M12.1, attack B2) ──────────────────────────── */
+
+describe("assertStoragePathPinned", () => {
+  const SHA = "a".repeat(64);
+  const row = (over: Partial<DocumentRow> = {}): DocumentRow => ({
+    id: "doc-1",
+    tenantId: "ten-1",
+    dealId: "deal-1",
+    fileName: "x.pdf",
+    storagePath: `ten-1/deals/deal-1/borrower-uploads/inv-1/${SHA}.pdf`,
+    sha256: SHA,
+    bytes: 100,
+    mimeType: "application/pdf",
+    uploadedViaInviteId: "inv-1",
+    ...over,
+  });
+
+  it("accepts a correctly pinned borrower path", () => {
+    expect(() => assertStoragePathPinned(row())).not.toThrow();
+  });
+
+  it("accepts an ordinary staff path", () => {
+    expect(() =>
+      assertStoragePathPinned(
+        row({ storagePath: "ten-1/deals/deal-1/uploads/x.pdf", uploadedViaInviteId: null }),
+      ),
+    ).not.toThrow();
+  });
+
+  it("refuses another tenant's or deal's prefix", () => {
+    for (const p of [
+      `ten-2/deals/deal-1/borrower-uploads/inv-1/${SHA}.pdf`,
+      `ten-1/deals/deal-2/borrower-uploads/inv-1/${SHA}.pdf`,
+    ]) {
+      expect(() => assertStoragePathPinned(row({ storagePath: p })), p).toThrow(/prefix|pinned/);
+    }
+  });
+
+  it("refuses another invite's folder", () => {
+    expect(() =>
+      assertStoragePathPinned(
+        row({ storagePath: `ten-1/deals/deal-1/borrower-uploads/inv-2/${SHA}.pdf` }),
+      ),
+    ).toThrow(/pinned/);
+  });
+
+  it("refuses traversal even when it would normalise to a legal key", () => {
+    expect(() =>
+      assertStoragePathPinned(
+        row({ storagePath: `ten-1/deals/deal-1/../deal-1/borrower-uploads/inv-1/${SHA}.pdf` }),
+      ),
+    ).toThrow(/traversal/);
+  });
+
+  it("refuses a leaf that is not the row's own digest — no substituted bytes", () => {
+    expect(() =>
+      assertStoragePathPinned(
+        row({ storagePath: `ten-1/deals/deal-1/borrower-uploads/inv-1/${"b".repeat(64)}.pdf` }),
+      ),
+    ).toThrow(/digest|leaf/);
+  });
+
+  it("refuses a STAFF row parked in the borrower prefix", () => {
+    // That prefix is the only place borrower storage policies grant, so a
+    // staff row there would be readable by whoever owns the folder.
+    expect(() => assertStoragePathPinned(row({ uploadedViaInviteId: null }))).toThrow(
+      /no uploaded_via_invite_id/,
+    );
+  });
+
+  it("refuses a borrower row whose path is outside the borrower prefix", () => {
+    expect(() =>
+      assertStoragePathPinned(row({ storagePath: "ten-1/deals/deal-1/uploads/x.pdf" })),
+    ).toThrow(/outside the borrower-uploads prefix/);
   });
 });

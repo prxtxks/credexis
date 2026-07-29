@@ -20,9 +20,62 @@ import {
 } from "@credexis/extraction";
 import { extractPdfText, type PdfText } from "./pdf.js";
 import { anthropicCostMicroUsd } from "./pricing.js";
-import type { DbPort, StoragePort, VirusScanner, VirusScanStatus } from "./ports.js";
+import type { DbPort, DocumentRow, StoragePort, VirusScanner, VirusScanStatus } from "./ports.js";
 
 export const PIPELINE_VERSION = "0.1.0";
+
+/**
+ * Refuse any storage_path that is not pinned to the row's own tenant/deal —
+ * and, for borrower-originated rows, to its own invite.
+ *
+ * The DB trigger `documents_invite_path_guard` (migration 0031) already makes
+ * the forged state unreachable. This exists because either layer alone has to
+ * be sufficient: the worker holds service-role credentials, so if a forged row
+ * ever did reach it, RLS would not save us. Throws BEFORE the download, so a
+ * forged row costs neither egress nor a vendor call.
+ *
+ * Borrower-ness is decided by the PATH as well as the column: a row whose path
+ * sits under `borrower-uploads/` but carries no invite id is refused outright,
+ * so a staff row can never be parked where a borrower can read it.
+ */
+export function assertStoragePathPinned(doc: DocumentRow): void {
+  const dealPrefix = `${doc.tenantId}/deals/${doc.dealId}/`;
+  if (!doc.storagePath.startsWith(dealPrefix)) {
+    throw new Error("ingest: storage_path is outside the document's tenant/deal prefix");
+  }
+  // Reject traversal explicitly rather than relying on the equality below to
+  // catch it — a '..' that normalises to a legal-looking key must never even
+  // be considered.
+  if (doc.storagePath.split("/").includes("..")) {
+    throw new Error("ingest: storage_path contains a traversal segment");
+  }
+
+  const onBorrowerPath = doc.storagePath.split("/").includes("borrower-uploads");
+  const inviteId = doc.uploadedViaInviteId;
+
+  if (inviteId === null) {
+    if (onBorrowerPath) {
+      throw new Error("ingest: borrower-uploads path with no uploaded_via_invite_id");
+    }
+    return;
+  }
+  if (!onBorrowerPath) {
+    throw new Error("ingest: borrower document's path is outside the borrower-uploads prefix");
+  }
+
+  // ONE equality against a canonically rebuilt key settles element count,
+  // literal segments and invite identity at once — the same shape both the SQL
+  // guard and the TS key builder produce, so the three cannot drift into
+  // disagreeing about which paths are legal.
+  const leaf = doc.storagePath.slice(doc.storagePath.lastIndexOf("/") + 1);
+  const dot = leaf.lastIndexOf(".");
+  if (dot <= 0 || leaf.slice(0, dot) !== doc.sha256) {
+    throw new Error("ingest: borrower path leaf is not <documents.sha256>.<ext>");
+  }
+  if (doc.storagePath !== `${dealPrefix}borrower-uploads/${inviteId}/${leaf}`) {
+    throw new Error("ingest: borrower storage_path is not pinned to its invite");
+  }
+}
 
 export interface IngestPayload {
   documentId: string;
@@ -74,6 +127,9 @@ export async function runIngest(deps: IngestDeps, payload: IngestPayload): Promi
   let stageStartedAt = now();
 
   try {
+    // Pin the path BEFORE spending egress or a vendor call on it.
+    assertStoragePathPinned(doc);
+
     const bytes = await deps.storage.download(doc.storagePath);
 
     // The bytes we process must be the bytes that were uploaded — lineage

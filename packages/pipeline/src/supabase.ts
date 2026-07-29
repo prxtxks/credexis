@@ -33,7 +33,9 @@ export function supabaseDb(client: SupabaseClient): DbPort {
     async getDocument(documentId: string): Promise<DocumentRow | null> {
       const { data, error } = await client
         .from("documents")
-        .select("id, tenant_id, deal_id, file_name, storage_path, sha256, bytes, mime_type")
+        .select(
+          "id, tenant_id, deal_id, file_name, storage_path, sha256, bytes, mime_type, uploaded_via_invite_id",
+        )
         .eq("id", documentId)
         .maybeSingle();
       if (error) throw new Error(`documents select: ${error.message}`);
@@ -44,6 +46,7 @@ export function supabaseDb(client: SupabaseClient): DbPort {
         dealId: data.deal_id as string,
         fileName: data.file_name as string,
         storagePath: data.storage_path as string,
+        uploadedViaInviteId: (data.uploaded_via_invite_id as string | null) ?? null,
         sha256: data.sha256 as string,
         bytes: data.bytes as number,
         mimeType: data.mime_type as string,
