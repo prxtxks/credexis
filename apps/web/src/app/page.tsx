@@ -20,6 +20,7 @@ import { formatRatio } from "@/components/workspace/metrics-strip";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FieldSelect } from "@/components/ui/field-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -62,18 +63,14 @@ function NewDealWizard({ onDone }: { onDone: (dealId: string) => void }) {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="deal-type">Type</Label>
-          <select
-            id="deal-type"
+          <FieldSelect
+            ariaLabel="Deal type"
             value={type}
-            onChange={(e) => setType(e.target.value as (typeof DEAL_TYPES)[number])}
-            className="border-input h-9 w-full rounded-xl border bg-background/50 px-3 text-sm"
-          >
-            {DEAL_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t.replaceAll("_", " ")}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setType(v as (typeof DEAL_TYPES)[number])}
+            options={DEAL_TYPES.map((t) => ({ value: t, label: t.replaceAll("_", " ") }))}
+            size="default"
+            className="w-full"
+          />
         </div>
       </div>
 
@@ -89,23 +86,19 @@ function NewDealWizard({ onDone }: { onDone: (dealId: string) => void }) {
               placeholder="Entity legal name"
               className="rounded-xl bg-background/50"
             />
-            <select
+            <FieldSelect
+              ariaLabel="Entity kind"
               value={e.kind}
-              onChange={(ev) =>
+              onChange={(v) =>
                 setEntities(
                   entities.map((x, j) =>
-                    j === i ? { ...x, kind: ev.target.value as (typeof ENTITY_KINDS)[number] } : x,
+                    j === i ? { ...x, kind: v as (typeof ENTITY_KINDS)[number] } : x,
                   ),
                 )
               }
-              className="border-input h-9 rounded-xl border bg-background/50 px-3 text-sm"
-            >
-              {ENTITY_KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {k}
-                </option>
-              ))}
-            </select>
+              options={ENTITY_KINDS.map((k) => ({ value: k, label: k }))}
+              size="default"
+            />
           </div>
         ))}
         <button

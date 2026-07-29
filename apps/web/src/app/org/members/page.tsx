@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FieldSelect } from "@/components/ui/field-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -104,18 +105,13 @@ export default function MembersPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="invite-role">Role</Label>
-                <select
-                  id="invite-role"
+                <FieldSelect
+                  ariaLabel="Invite role"
                   value={role}
-                  onChange={(e) => setRole(e.target.value as (typeof GRANTABLE)[number])}
-                  className="border-input h-9 rounded-lg border bg-background/50 px-3 text-sm"
-                >
-                  {GRANTABLE.map((r) => (
-                    <option key={r} value={r}>
-                      {ROLE_LABEL[r]}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setRole(v as (typeof GRANTABLE)[number])}
+                  options={GRANTABLE.map((r) => ({ value: r, label: ROLE_LABEL[r] ?? r }))}
+                  size="default"
+                />
               </div>
               <Button
                 onClick={() => createInvite.mutate({ email, role })}
@@ -164,23 +160,17 @@ export default function MembersPage() {
                     Owner
                   </Badge>
                 ) : canManage && m.id !== me.data?.userId ? (
-                  <select
-                    aria-label={`role for ${m.email}`}
+                  <FieldSelect
+                    ariaLabel={`role for ${m.email}`}
                     value={m.role}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       setMemberRole.mutate({
                         userId: m.id,
-                        role: e.target.value as (typeof GRANTABLE)[number],
+                        role: v as (typeof GRANTABLE)[number],
                       })
                     }
-                    className="border-input h-8 rounded-lg border bg-background/50 px-2 text-xs"
-                  >
-                    {GRANTABLE.map((r) => (
-                      <option key={r} value={r}>
-                        {ROLE_LABEL[r]}
-                      </option>
-                    ))}
-                  </select>
+                    options={GRANTABLE.map((r) => ({ value: r, label: ROLE_LABEL[r] ?? r }))}
+                  />
                 ) : (
                   <Badge variant="secondary">{ROLE_LABEL[m.role] ?? m.role}</Badge>
                 )}

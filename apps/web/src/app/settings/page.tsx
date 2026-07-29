@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 
 export default function SettingsPage() {
   const utils = trpc.useUtils();
@@ -110,13 +111,11 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <label className="flex cursor-pointer items-center gap-3 text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  role="switch"
-                  className="h-4 w-4 accent-[oklch(0.55_0.13_162)]"
+                <Switch
                   checked={profile.data?.emailNotifications ?? true}
                   disabled={profile.isLoading || update.isPending}
-                  onChange={(e) => update.mutate({ emailNotifications: e.target.checked })}
+                  onCheckedChange={(checked) => update.mutate({ emailNotifications: checked })}
+                  aria-label="Send me email notifications"
                 />
                 Send me email notifications
               </label>
