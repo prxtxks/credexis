@@ -162,6 +162,20 @@
       "when": 1785300139390,
       "tag": "0022_quota-av-review-fixes",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1785330874157,
+      "tag": "0023_red_shockwave",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1785330875157,
+      "tag": "0024_audit-hash-chain",
+      "breakpoints": true
     }
   ]
 }
