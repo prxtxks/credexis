@@ -21,25 +21,62 @@ export async function prepareDatabase(sql: Sql): Promise<void> {
   await migrate(drizzle(sql), { migrationsFolder: join(HERE, "../../drizzle") });
   // Reconcile grants to the live Supabase END-STATE. On a real project the
   // platform's default privileges grant API roles access to every new
-  // table/function and the migrations then revoke selectively; default
-  // privileges proved unreliable under the harness runner, so the same
-  // end-state is (re)applied explicitly: authenticated gets blanket table
-  // + function access (RLS does the gating), anon gets nothing, and the
-  // migrations' explicit revokes are re-run LAST so they win, exactly as
-  // they do in production.
+  // table/function and the migrations then adjust selectively; default
+  // privileges proved unreliable under the harness runner, so the baseline
+  // is (re)applied explicitly here.
   await sql.unsafe(`
     grant all on all tables in schema public to authenticated, service_role;
     grant usage, select on all sequences in schema public to authenticated, service_role;
     grant execute on all functions in schema public to authenticated;
     revoke all on all tables in schema public from anon;
-    revoke update, delete on public.audit_log from anon, authenticated, service_role;
-    revoke all on function public.create_organization(text, org_kind) from public, anon;
-    revoke execute on function public.current_tenant_id() from public, anon;
-    revoke execute on function public.current_user_role() from public, anon;
-    revoke all on function public.accept_invite(text) from public, anon;
-    revoke all on function public.notify_tier(uuid,int,notification_kind,text,text,text,uuid,text) from public, anon, authenticated;
-    revoke all on function public.update_own_profile(text, boolean) from public, anon;
   `);
+
+  // …then REPLAY every GRANT/REVOKE the migrations themselves issued, in
+  // order, so migration intent wins — exactly as it does in production,
+  // where nothing runs after them.
+  //
+  // This used to be a hand-maintained list, which silently defeated the
+  // thing it was meant to test: the blanket `grant all` above re-granted
+  // table-level UPDATE and wiped 0026's column-level grant on
+  // borrower_invites, so the harness reported a broker COULD re-point a
+  // live invite (production could not). A hand-maintained list fails
+  // exactly when someone adds a grant and forgets — i.e. when it matters.
+  // Replaying from the migration files is self-maintaining.
+  await replayGrants(sql);
+}
+
+/**
+ * Re-execute the GRANT/REVOKE statements from every migration, in journal
+ * order. Only privilege statements are replayed — they are idempotent and
+ * never contain `$$` bodies, so simple statement splitting is safe.
+ */
+async function replayGrants(sql: Sql): Promise<void> {
+  const dir = join(HERE, "../../drizzle");
+  const journal = JSON.parse(readFileSync(join(dir, "meta/_journal.json"), "utf8")) as {
+    entries: { tag: string }[];
+  };
+
+  for (const { tag } of journal.entries) {
+    const file = join(dir, `${tag}.sql`);
+    let body: string;
+    try {
+      body = readFileSync(file, "utf8");
+    } catch {
+      continue;
+    }
+    for (const chunk of body.split("--> statement-breakpoint")) {
+      // Strip line comments so a commented-out GRANT is never replayed.
+      const cleaned = chunk
+        .split("\n")
+        .filter((l) => !l.trimStart().startsWith("--"))
+        .join("\n");
+      for (const raw of cleaned.split(";")) {
+        const stmt = raw.trim();
+        if (!/^(grant|revoke)\s/i.test(stmt)) continue;
+        await sql.unsafe(stmt);
+      }
+    }
+  }
 }
 
 /**
