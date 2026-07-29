@@ -822,6 +822,175 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
     });
   });
 
+  describe("claim flow + disjointness (M12.1 PR3)", () => {
+    const INVITEE = "00000000-0000-4000-8000-0000000000f5";
+    const ATTACKER = "00000000-0000-4000-8000-0000000000f6";
+    const TOKEN = "a".repeat(64);
+    let claimBorrowerId = "";
+    let claimInviteId = "";
+
+    beforeAll(async () => {
+      await sql`insert into auth.users (id, email) values
+        (${INVITEE}, 'invitee@borrower-test.dev'),
+        (${ATTACKER}, 'attacker@evil.dev') on conflict (id) do nothing`;
+      const [b] = await sql`insert into borrowers (tenant_id, full_name, email, created_by)
+        values (${TENANT_A}, 'Real Invitee', 'invitee@borrower-test.dev', ${U.underwriterA})
+        returning id`;
+      claimBorrowerId = (b as { id: string }).id;
+      const [inv] = await sql`insert into borrower_invites
+        (tenant_id, deal_id, borrower_id, email, token_hash, display_label, invited_by, expires_at)
+        values (${TENANT_A}, ${DEAL_A}, ${claimBorrowerId}, 'invitee@borrower-test.dev',
+                encode(sha256(convert_to(${TOKEN},'utf8')),'hex'),
+                'Alpha Deal', ${U.underwriterA}, now() + interval '30 days')
+        returning id`;
+      claimInviteId = (inv as { id: string }).id;
+    });
+
+    afterAll(async () => {
+      await sql`delete from borrower_invites where id = ${claimInviteId}`;
+    });
+
+    const claim = (uid: string, token: string) =>
+      asUser(sql, uid, (tx) => tx`select public.claim_borrower_invite(${token}) as id`);
+
+    it("A LEAKED LINK IS WORTHLESS: the mailbox is the gate, not the token", async () => {
+      // The whole security argument. An attacker who has the link and signs
+      // in as themselves is refused — they are not the invitee.
+      const err = await expectDenied(() => claim(ATTACKER, TOKEN));
+      expect(err.message).toContain("different email address");
+      const [row] =
+        await sql`select auth_user_id from borrower_invites where id = ${claimInviteId}`;
+      expect((row as { auth_user_id: string | null }).auth_user_id).toBeNull();
+    });
+
+    it("the real invitee claims it, and re-claiming is idempotent", async () => {
+      const [first] = await claim(INVITEE, TOKEN);
+      expect((first as { id: string }).id).toBe(claimInviteId);
+      const [again] = await claim(INVITEE, TOKEN); // page refresh, retried link
+      expect((again as { id: string }).id).toBe(claimInviteId);
+    });
+
+    it("a claimed invite is single-seat — nobody else can take it", async () => {
+      await sql`update auth.users set email = 'invitee@borrower-test.dev' where id = ${ATTACKER}`;
+      try {
+        // Even with a matching email, the seat is already bound.
+        const err = await expectDenied(() => claim(ATTACKER, TOKEN));
+        expect(err.message).toContain("already been claimed");
+      } finally {
+        await sql`update auth.users set email = 'attacker@evil.dev' where id = ${ATTACKER}`;
+      }
+    });
+
+    it("a bogus or revoked token reveals nothing beyond 'not found'", async () => {
+      const err = await expectDenied(() => claim(ATTACKER, "b".repeat(64)));
+      expect(err.message).toContain("not found");
+    });
+
+    it("DISJOINTNESS: an org member cannot claim a borrower invite", async () => {
+      const err = await expectDenied(() => claim(U.underwriterA, TOKEN));
+      expect(err.message).toContain("organization workspace");
+    });
+
+    it("DISJOINTNESS: a borrower cannot self-serve a workspace at /welcome", async () => {
+      // Without this the borrower would hold a profiles row, current_tenant_id()
+      // would stop being NULL for them, and every tenant policy would open.
+      const err = await expectDenied(() =>
+        asUser(
+          sql,
+          INVITEE,
+          (tx) => tx`select public.create_organization('Borrower Co', 'solo_broker'::org_kind)`,
+        ),
+      );
+      expect(err.message).toContain("borrower-portal account");
+    });
+
+    it("DISJOINTNESS: a borrower cannot accept a STAFF invite either", async () => {
+      const staffToken = "c".repeat(64);
+      await sql`insert into invites (tenant_id, email, role, token_hash, invited_by, expires_at)
+        values (${TENANT_A}, 'invitee@borrower-test.dev', 'underwriter',
+                encode(sha256(convert_to(${staffToken},'utf8')),'hex'),
+                ${U.adminA}, now() + interval '7 days')`;
+      const err = await expectDenied(() =>
+        asUser(sql, INVITEE, (tx) => tx`select public.accept_invite(${staffToken})`),
+      );
+      expect(err.message).toContain("borrower-portal account");
+    });
+
+    it("portal state is CURATED — no deal status, no metrics, no other parties", async () => {
+      const [row] = await asUser(
+        sql,
+        INVITEE,
+        (tx) => tx`select public.borrower_portal_state() as s`,
+      );
+      const state = (row as { s: Record<string, unknown> }).s;
+      expect(state["inviteId"]).toBe(claimInviteId);
+      expect(state["label"]).toBe("Alpha Deal"); // the SNAPSHOT, not deals.name
+      // The exact key set — anything new here is a deliberate decision.
+      expect(Object.keys(state).sort()).toEqual([
+        "entityLabel",
+        "expiresAt",
+        "inviteId",
+        "items",
+        "label",
+        "requests",
+        "status",
+        "uploads",
+      ]);
+      // Curated status vocabulary only — never intake/parsing/review.
+      expect(["collecting", "action_needed", "received", "in_review", "complete"]).toContain(
+        state["status"],
+      );
+    });
+
+    it("portal state returns NOTHING for an org user or an unclaimed stranger", async () => {
+      for (const uid of [U.underwriterA, ATTACKER]) {
+        const [row] = await asUser(
+          sql,
+          uid,
+          (tx) => tx`select public.borrower_portal_state() as s`,
+        );
+        expect((row as { s: unknown }).s).toBeNull();
+      }
+    });
+
+    it("attach_upload refuses an invite that is not yours, and fails CLOSED with no object", async () => {
+      // Not your invite → refused outright.
+      await expectDenied(() =>
+        asUser(
+          sql,
+          ATTACKER,
+          (tx) =>
+            tx`select public.borrower_attach_upload(${claimInviteId}, ${"d".repeat(64)}, 'pdf', 'x.pdf')`,
+        ),
+      );
+      // Your invite, but no finalized object → refuses rather than creating a
+      // documents row that points at nothing.
+      const err = await expectDenied(() =>
+        asUser(
+          sql,
+          INVITEE,
+          (tx) =>
+            tx`select public.borrower_attach_upload(${claimInviteId}, ${"e".repeat(64)}, 'pdf', 'x.pdf')`,
+        ),
+      );
+      expect(err.message).toContain("not finalized");
+    });
+
+    it("anon holds EXECUTE on none of the borrower definers", async () => {
+      for (const sig of [
+        "public.claim_borrower_invite(text)",
+        "public.borrower_portal_state()",
+        "public.borrower_attach_upload(uuid, text, text, text)",
+        "public.current_invite_ids()",
+      ]) {
+        const [row] = await sql.unsafe(
+          `select has_function_privilege('anon', '${sig}', 'EXECUTE') as ok`,
+        );
+        expect((row as { ok: boolean }).ok, sig).toBe(false);
+      }
+    });
+  });
+
   describe("definer EXECUTE surface", () => {
     it("anon cannot execute create_organization", async () => {
       const [row] = await sql`select has_function_privilege('anon',
