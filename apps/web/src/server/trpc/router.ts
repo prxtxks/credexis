@@ -14,6 +14,7 @@ import { transcriptsRouter } from "./routers/transcripts";
 import { invitesRouter, membersRouter, orgRouter } from "./routers/org";
 import { notificationsRouter } from "./routers/notifications";
 import { profileRouter } from "./routers/profile";
+import { borrowerInvitesRouter, borrowersRouter, documentRequestsRouter } from "./routers/borrower";
 
 /**
  * Application router (M2.3). Grows with the product; today it carries the
@@ -81,6 +82,11 @@ export const appRouter = router({
 
   /** Self profile + email preferences (M11.7): self-scoped via definer. */
   profile: profileRouter,
+
+  /** Borrower portal, broker side (M12.1). */
+  borrowers: borrowersRouter,
+  borrowerInvites: borrowerInvitesRouter,
+  documentRequests: documentRequestsRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -111,6 +111,31 @@ export function identityReviewEmail(opts: {
 }
 
 /**
+ * Borrower invitation (M12.1). Addressed to someone who has never heard of
+ * Credexis, so it names the broker's ask in plain language and carries no
+ * deal internals — the label is the broker's snapshot, never `deals.name`
+ * if that differs.
+ */
+export function borrowerInviteEmail(opts: {
+  borrowerName: string;
+  dealLabel: string;
+  claimUrl: string;
+  expiresAtLabel: string;
+}): RenderedEmail {
+  const name = escapeHtml(opts.borrowerName);
+  const label = escapeHtml(opts.dealLabel);
+  return {
+    subject: `Documents needed for ${opts.dealLabel}`,
+    html: layout({
+      heading: `Hello ${name}`,
+      bodyHtml: `Your loan file <strong>${label}</strong> needs some documents. This link is personal to you and expires ${escapeHtml(opts.expiresAtLabel)} — you'll confirm your email address before anything is shared.`,
+      cta: { label: "Send your documents", url: opts.claimUrl },
+    }),
+    text: `Hello ${opts.borrowerName},\n\nYour loan file ${opts.dealLabel} needs some documents. This link is personal to you and expires ${opts.expiresAtLabel}; you'll confirm your email address first.\n\n${opts.claimUrl}`,
+  };
+}
+
+/**
  * Daily digest (M11.7): everything that did NOT warrant an immediate email.
  * Approval-class events (identity_review) mail on the spot and are excluded
  * here on purpose — a digest must never be the first time someone learns an
