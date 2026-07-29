@@ -30,6 +30,7 @@ import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PageLoading } from "@/components/ui/page-loading";
 
 function formatBytes(n: number): string {
   if (n >= 1_048_576) return `${(n / 1_048_576).toFixed(1)} MiB`;
@@ -203,17 +204,7 @@ export default function DocumentsPage() {
         <div className="mt-6">
           {docs.isLoading ? (
             <div className="flex justify-center py-16">
-              <div className="grid-loader">
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-              </div>
+              <PageLoading />
             </div>
           ) : rows.length === 0 ? (
             <div className="glass-card rounded-xl px-6 py-12 text-center text-sm text-muted-foreground">

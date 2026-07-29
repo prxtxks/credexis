@@ -22,12 +22,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Search, X } from "lucide-react";
+import { ChevronRight, FileText, Plus, Search, X } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { checklistFor } from "@/lib/doc-checklist";
 import { formatRatio } from "@/lib/money-display";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
+import { Pill, PillDot } from "@/components/ui/pill";
 import { Button } from "@/components/ui/button";
 import { FieldSelect } from "@/components/ui/field-select";
 import { Input } from "@/components/ui/input";
@@ -275,7 +276,7 @@ export default function DashboardClient() {
                     {group.label}
                     <span className="text-foreground/70 ml-1.5 tabular-nums">{rows.length}</span>
                   </h2>
-                  <ul className="divide-border/60 divide-y">
+                  <ul className="space-y-1.5">
                     {rows.map((d) => (
                       <DealRow key={d.id} deal={d} />
                     ))}
@@ -319,6 +320,8 @@ type BoardDeal = {
   status: string;
   openIssues: number;
   formFamilies: string[];
+  createdAt: string;
+  updatedAt: string;
   dscr: { mantissa: string; scale: number; period: string } | null;
 };
 
@@ -331,11 +334,43 @@ function docProgress(deal: BoardDeal): { have: number; need: number } {
   };
 }
 
+/** Status dot colour — one dot per row, the only per-row colour. */
+const STATUS_DOT: Record<string, string> = {
+  intake: "bg-muted-foreground/50",
+  parsing: "bg-severity-warning",
+  review: "bg-primary",
+  complete: "bg-primary/40",
+};
+
+/** Human relative time. Vercel writes "51m ago"; an ISO string is not a fact
+ *  a person reads. Server-rendered dates stay absolute elsewhere; this is a
+ *  list-scanning affordance. */
+function relativeTime(iso: string): string {
+  const ms = Date.now() - Date.parse(iso);
+  if (!Number.isFinite(ms) || ms < 0) return "just now";
+  const m = Math.floor(ms / 60_000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return d < 30 ? `${d}d ago` : `${Math.floor(d / 30)}mo ago`;
+}
+
 /**
- * The phone row: two lines, ~64px, one <Link> so the accessible name stays the
- * deal name. The card's six visual objects collapse to text — the five
- * checklist dots survive only at md+, because their tooltip is unreachable on
- * touch and "3/5 docs" says the same thing legibly (plan 01 §7).
+ * The phone row (craft pass ui-16, derived from the Vercel project row Pratik
+ * referenced).
+ *
+ * My first pass deleted the card and left dot-separated grey text on the page
+ * background. That is a wireframe, not density. What actually makes Vercel's
+ * list read as finished, feature by feature:
+ *   - every row is a SURFACE with a hairline border, not naked text
+ *   - metadata sits in small bordered PILLS, so facts have edges and can be
+ *     counted without being read
+ *   - three lines of hierarchy: identity, then facts, then provenance/time
+ *   - the number you scan for is right-aligned and tabular
+ *   - relative time ("2h ago"), because nobody parses an ISO date in a list
+ *   - a chevron, so the row visibly IS a destination
  */
 function DealRow({ deal }: { deal: BoardDeal }) {
   const { have, need } = docProgress(deal);
@@ -343,39 +378,46 @@ function DealRow({ deal }: { deal: BoardDeal }) {
     <li>
       <Link
         href={`/deals/${deal.id}/workspace`}
-        className="hover:bg-accent/40 relative flex items-center justify-between gap-3 py-3 pl-3 transition-colors duration-150"
+        className="group border-border/60 bg-card/50 hover:border-primary/40 hover:bg-card active:bg-accent/60 block rounded-xl border p-3 transition-[background-color,border-color] duration-150"
       >
-        {/* Status is a 2px bar and one amber count — never a coloured row. */}
-        {deal.openIssues > 0 && (
+        <div className="flex items-center gap-2.5">
           <span
             aria-hidden="true"
-            className="bg-severity-warning absolute inset-y-2 left-0 w-0.5 rounded-full"
+            className={cn("size-1.5 shrink-0 rounded-full", STATUS_DOT[deal.status] ?? "bg-border")}
           />
-        )}
-        <span className="min-w-0">
-          <span className="block truncate text-[15px] font-medium">{deal.name}</span>
-          <span className="text-muted-foreground mt-0.5 block text-[13px]">
-            {deal.type.replaceAll("_", " ")} ·{" "}
+          <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{deal.name}</span>
+          {deal.dscr && (
+            <span className="text-foreground shrink-0 text-[15px] font-semibold tabular-nums">
+              {formatRatio(deal.dscr.mantissa, deal.dscr.scale)}×
+            </span>
+          )}
+          <ChevronRight
+            aria-hidden="true"
+            className="text-muted-foreground/40 group-hover:text-muted-foreground size-4 shrink-0 transition-colors duration-150"
+          />
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-4">
+          <Pill>{deal.type.replaceAll("_", " ")}</Pill>
+          <Pill>
+            <FileText aria-hidden="true" className="size-3" />
             <span className="tabular-nums">
               {have}/{need}
             </span>{" "}
             docs
-            {deal.openIssues > 0 && (
-              <>
-                {" · "}
-                <span className="text-severity-warning">
-                  <span className="tabular-nums">{deal.openIssues}</span>{" "}
-                  {deal.openIssues === 1 ? "issue" : "issues"}
-                </span>
-              </>
-            )}
-          </span>
-        </span>
-        {deal.dscr && (
-          <span className="shrink-0 text-[15px] font-semibold tabular-nums">
-            {formatRatio(deal.dscr.mantissa, deal.dscr.scale)}×
-          </span>
-        )}
+          </Pill>
+          {deal.openIssues > 0 && (
+            <Pill tone="warn">
+              <PillDot className="bg-severity-warning" />
+              <span className="tabular-nums">{deal.openIssues}</span>{" "}
+              {deal.openIssues === 1 ? "issue" : "issues"}
+            </Pill>
+          )}
+        </div>
+
+        <p className="text-muted-foreground mt-2 pl-4 text-[11px]">
+          Updated {relativeTime(deal.updatedAt)}
+        </p>
       </Link>
     </li>
   );

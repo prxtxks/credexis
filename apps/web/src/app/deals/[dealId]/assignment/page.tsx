@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { PageLoading } from "@/components/ui/page-loading";
 
 export default function AssignmentPage() {
   const params = useParams<{ dealId: string }>();
@@ -124,17 +125,7 @@ export default function AssignmentPage() {
 
         {list.isLoading ? (
           <div className="glass-card flex items-center justify-center rounded-xl py-16">
-            <div className="grid-loader">
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
+            <PageLoading />
           </div>
         ) : (
           <div className="glass-card overflow-x-auto rounded-xl p-2">

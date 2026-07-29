@@ -49,6 +49,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FieldSelect } from "@/components/ui/field-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const WRITE_ROLES = ["org_owner", "admin", "underwriter"];
 
@@ -360,17 +361,7 @@ export default function BorrowerInvitesPage() {
 
           {invites.isLoading ? (
             <div className="glass-card flex items-center justify-center rounded-xl py-16">
-              <div className="grid-loader">
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-              </div>
+              <PageLoading />
             </div>
           ) : rows.length === 0 ? (
             <EmptyState

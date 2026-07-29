@@ -3,18 +3,12 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
-import { motion } from "framer-motion";
 import { FileSearch, Layers, Shield, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
 
 function LoginForm() {
   const router = useRouter();
@@ -104,27 +98,14 @@ function LoginForm() {
           <ThemeToggle />
         </div>
 
-        <motion.div
-          className="relative w-full max-w-md mx-auto px-6"
-          initial="hidden"
-          animate="visible"
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
-        >
+        <div className="relative w-full max-w-md mx-auto px-6">
           {/* Mobile logo */}
-          <motion.div
-            variants={fadeInUp}
-            transition={{ duration: 0.4 }}
-            className="flex items-center justify-center gap-2.5 mb-8 lg:hidden"
-          >
+          <div className="flex items-center justify-center gap-2.5 mb-8 lg:hidden">
             <img src="/logo-credexis.svg" alt="Credexis" className="h-9 w-9" />
             <span className="font-bold text-xl tracking-tight">Credexis</span>
-          </motion.div>
+          </div>
 
-          <motion.div
-            variants={fadeInUp}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="glass-card rounded-[20px] p-8"
-          >
+          <div className="glass-card rounded-[20px] p-8">
             <div className="mb-8">
               <h1 className="text-2xl font-semibold tracking-tight mb-1.5">Welcome back</h1>
               <p className="text-muted-foreground text-sm">Sign in to your Credexis workspace.</p>
@@ -213,8 +194,8 @@ function LoginForm() {
                 Secure authentication powered by Supabase
               </p>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   );

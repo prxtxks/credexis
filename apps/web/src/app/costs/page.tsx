@@ -11,6 +11,7 @@ import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { formatMicroUsd } from "@/lib/money-display";
 import { AppShell } from "@/components/app-shell";
+import { PageLoading } from "@/components/ui/page-loading";
 import {
   Table,
   TableBody,
@@ -35,17 +36,7 @@ export default function CostsPage() {
 
         {costs.isLoading ? (
           <div className="flex justify-center py-16">
-            <div className="grid-loader">
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
+            <PageLoading />
           </div>
         ) : (
           <div className="glass-card overflow-x-auto rounded-xl p-2">
