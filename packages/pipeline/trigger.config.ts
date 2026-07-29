@@ -27,6 +27,14 @@ export default defineConfig({
           "REDUCTO_API_KEY",
           "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT",
           "AZURE_DOCUMENT_INTELLIGENCE_KEY",
+          // M11.7 email: the worker sends approval + digest mail. Without
+          // these the sender is a silent no-op in production even when the
+          // key exists locally — the failure mode that hid until now.
+          "RESEND_API_KEY",
+          "EMAIL_FROM",
+          // Absolute base for links in email (emails cannot use app-relative
+          // URLs the way in-app action_url does).
+          "NEXT_PUBLIC_APP_URL",
         ];
         return [
           ...Object.entries(required).map(([name, value]) => ({ name, value })),

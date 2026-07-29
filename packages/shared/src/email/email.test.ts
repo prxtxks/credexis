@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { escapeHtml, identityReviewEmail, inviteEmail } from "./templates.js";
+import { digestEmail, escapeHtml, identityReviewEmail, inviteEmail } from "./templates.js";
 import { createEmailSender } from "./transport.js";
 
 describe("email transport", () => {
@@ -47,5 +47,26 @@ describe("email templates", () => {
 
   it("escapeHtml covers the five metacharacters", () => {
     expect(escapeHtml(`&<>"'`)).toBe("&amp;&lt;&gt;&quot;&#39;");
+  });
+
+  it("digest lists every item in both parts and escapes untrusted names", () => {
+    const email = digestEmail({
+      items: [
+        { title: "Document processed — 42 facts", dealName: "Acme <Holdings> & Co" },
+        { title: "Jane joined the workspace", body: "Role: underwriter", dealName: null },
+      ],
+      appUrl: "https://app.credexis.co",
+    });
+    expect(email.subject).toContain("2 updates");
+    expect(email.html).toContain("Acme &lt;Holdings&gt; &amp; Co");
+    expect(email.html).not.toContain("<Holdings>");
+    expect(email.text).toContain("Jane joined the workspace");
+    expect(email.text).toContain("Role: underwriter");
+  });
+
+  it("digest singularizes a single update", () => {
+    const email = digestEmail({ items: [{ title: "One thing" }], appUrl: "https://x.co" });
+    expect(email.subject).toContain("1 update");
+    expect(email.subject).not.toContain("1 updates");
   });
 });
