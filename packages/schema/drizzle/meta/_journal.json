@@ -232,6 +232,13 @@
       "when": 1785334444931,
       "tag": "0032_org-owner-writes",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1785334445931,
+      "tag": "0033_borrower-upload-key",
+      "breakpoints": true
     }
   ]
 }
