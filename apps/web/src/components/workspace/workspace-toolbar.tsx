@@ -17,6 +17,7 @@ import {
   PanelLeftClose,
   PanelRight,
   PanelRightClose,
+  Sigma,
   SlidersHorizontal,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -25,11 +26,12 @@ import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
-export type InspectorTab = "source" | "issues" | "scenario";
+export type InspectorTab = "source" | "issues" | "addbacks" | "scenario";
 
 const INSPECTOR_TABS: { key: InspectorTab; label: string; icon: typeof FileSearch }[] = [
   { key: "source", label: "Source", icon: FileSearch },
   { key: "issues", label: "Issues", icon: AlertTriangle },
+  { key: "addbacks", label: "Add-backs", icon: Sigma },
   { key: "scenario", label: "Scenario", icon: SlidersHorizontal },
 ];
 
