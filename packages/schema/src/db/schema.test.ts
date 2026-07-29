@@ -45,6 +45,8 @@ describe("schema completeness (Blueprint §5)", () => {
       "learned_mappings",
       "policy_packs",
       "transcript_consents", // M9.2
+      "borrower_invites", // M12.1
+      "document_requests", // M12.1
     ];
     for (const table of required) {
       expect(names, `missing table ${table}`).toContain(table);

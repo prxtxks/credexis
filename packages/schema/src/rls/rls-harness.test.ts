@@ -388,6 +388,116 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
     });
   });
 
+  describe("borrower invites — org side (M12.1 PR1)", () => {
+    const mint = (tx: Sql, by: string, extra = "") =>
+      tx.unsafe(
+        `insert into borrower_invites
+           (tenant_id, deal_id, email, token_hash, display_label, invited_by, expires_at ${extra ? ", " + extra.split("=")[0] : ""})
+         values ('${TENANT_A}', '${DEAL_A}', 'borrower@test.dev',
+                 'hash-${by}-${extra}', 'Alpha Deal', '${by}', now() + interval '30 days'
+                 ${extra ? ", " + extra.split("=")[1] : ""})
+         returning id`,
+      );
+
+    it("underwriter+ can mint an invite on their own deal", async () => {
+      const rows = await asUser(sql, U.underwriterA, (tx) => mint(tx, U.underwriterA));
+      expect(rows.length).toBe(1);
+      await sql`delete from borrower_invites where deal_id = ${DEAL_A}`;
+    });
+
+    it("viewers cannot mint (tier floor)", async () => {
+      await expectDenied(() => asUser(sql, U.viewerA, (tx) => mint(tx, U.viewerA)));
+    });
+
+    it("an invite cannot be minted onto another tenant's deal", async () => {
+      await expectDenied(() =>
+        asUser(
+          sql,
+          U.underwriterA,
+          (tx) =>
+            tx`insert into borrower_invites
+               (tenant_id, deal_id, email, token_hash, display_label, invited_by, expires_at)
+             values (${TENANT_A}, ${DEAL_B}, 'x@test.dev', 'hash-cross', 'X',
+                     ${U.underwriterA}, now() + interval '30 days')`,
+        ),
+      );
+    });
+
+    it("a broker cannot re-point a live invite at another deal (column grant, not RLS)", async () => {
+      const [inv] = await asUser(sql, U.underwriterA, (tx) => mint(tx, U.underwriterA));
+      const id = (inv as { id: string }).id;
+      try {
+        // deal_id is NOT in the UPDATE column grant — the write is refused
+        // even though the row is visible and updatable in other columns.
+        await expectDenied(() =>
+          asUser(
+            sql,
+            U.underwriterA,
+            (tx) => tx`update borrower_invites set deal_id = ${DEAL_B} where id = ${id}`,
+          ),
+        );
+        // …while a granted column succeeds, proving the row IS reachable.
+        const ok = await asUser(
+          sql,
+          U.underwriterA,
+          (tx) =>
+            tx`update borrower_invites set portal_status = 'in_review' where id = ${id} returning id`,
+        );
+        expect(ok.length).toBe(1);
+      } finally {
+        await sql`delete from borrower_invites where id = ${id}`;
+      }
+    });
+
+    it("nobody can hand themselves an invite: auth_user_id is definer-only", async () => {
+      const [inv] = await asUser(sql, U.underwriterA, (tx) => mint(tx, U.underwriterA));
+      const id = (inv as { id: string }).id;
+      try {
+        await expectDenied(() =>
+          asUser(
+            sql,
+            U.underwriterA,
+            (tx) =>
+              tx`update borrower_invites set auth_user_id = ${U.underwriterA} where id = ${id}`,
+          ),
+        );
+      } finally {
+        await sql`delete from borrower_invites where id = ${id}`;
+      }
+    });
+
+    it("another tenant sees no invites at all", async () => {
+      const [inv] = await asUser(sql, U.underwriterA, (tx) => mint(tx, U.underwriterA));
+      const id = (inv as { id: string }).id;
+      try {
+        const rows = await asUser(sql, U.ownerB, (tx) => tx`select id from borrower_invites`);
+        expect(rows.length).toBe(0);
+      } finally {
+        await sql`delete from borrower_invites where id = ${id}`;
+      }
+    });
+
+    it("a signed-in user with NO profile (the borrower shape) reaches nothing", async () => {
+      // This is the spine: no profiles row ⇒ current_tenant_id() is NULL ⇒
+      // every policy in the database is vacuously false. Proven, not assumed.
+      const STRANGER = "00000000-0000-4000-8000-0000000000c9";
+      await sql`insert into auth.users (id, email) values (${STRANGER}, 'nobody@test.dev')
+                on conflict (id) do nothing`;
+      const [inv] = await asUser(sql, U.underwriterA, (tx) => mint(tx, U.underwriterA));
+      const id = (inv as { id: string }).id;
+      try {
+        for (const table of ["borrower_invites", "document_requests", "deals", "documents"]) {
+          const rows = await asUser(sql, STRANGER, (tx) =>
+            tx.unsafe(`select 1 from ${table} limit 1`),
+          );
+          expect(rows.length, `${table} leaked to a profile-less user`).toBe(0);
+        }
+      } finally {
+        await sql`delete from borrower_invites where id = ${id}`;
+      }
+    });
+  });
+
   describe("definer EXECUTE surface", () => {
     it("anon cannot execute create_organization", async () => {
       const [row] = await sql`select has_function_privilege('anon',
