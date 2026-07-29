@@ -171,6 +171,39 @@ export const ingestDocument = task({
                   { onConflict: "recipient_id,dedupe_key", ignoreDuplicates: true },
                 );
               }
+              // M11.6: identity mismatches need a human — "Name matches
+              // NN% — approve?" cards for every non-high suggested match
+              // on this document (same recipients, same B4 posture).
+              const ldIds = (lds ?? []).map((l) => l.id as string);
+              if (ldIds.length > 0 && recips && recips.length > 0) {
+                const { data: idents } = await client
+                  .from("document_identities")
+                  .select("id, logical_document_id, extracted_name, score_bps, band")
+                  .in("logical_document_id", ldIds)
+                  .eq("state", "suggested")
+                  .neq("band", "high");
+                for (const ident of idents ?? []) {
+                  const pct = Math.round((ident.score_bps as number) / 100);
+                  const title =
+                    (ident.band as string) === "mid"
+                      ? `Name matches ${pct}% — approve?`
+                      : `Name mismatch on a document (${pct}%)`;
+                  await client.from("notifications").upsert(
+                    recips.map((r) => ({
+                      tenant_id: payload.tenantId,
+                      recipient_id: r.id as string,
+                      kind: "identity_review",
+                      title,
+                      body: `Printed name: ${(ident.extracted_name as string).slice(0, 80)}`,
+                      action_url: `/deals/${payload.dealId}/assignment`,
+                      deal_id: payload.dealId,
+                      state: "unread",
+                      dedupe_key: `identity:${ident.id as string}`,
+                    })),
+                    { onConflict: "recipient_id,dedupe_key", ignoreDuplicates: true },
+                  );
+                }
+              }
             } catch (e) {
               // Notifications are best-effort: never fail the pipeline.
               logEvent(log, "notify-errored", { error: (e as Error).message.slice(0, 200) });

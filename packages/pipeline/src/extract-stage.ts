@@ -18,6 +18,7 @@
  */
 
 import { slicePdfPages } from "./pdf.js";
+import { matchDocumentEntities, pickIdentity } from "@credexis/extraction";
 import {
   getRegistryEntry,
   reconcile,
@@ -59,7 +60,18 @@ export interface FactInsert {
 
 export interface ExtractDbPort {
   /** Entities of the deal (sole entity = default assignment). */
-  getDealEntities(dealId: string): Promise<{ id: string; kind: string }[]>;
+  getDealEntities(dealId: string): Promise<{ id: string; kind: string; name: string }[]>;
+  /** M11.6: identity match rows (worker-only insert; never facts). */
+  insertDocumentIdentity(row: {
+    tenant_id: string;
+    logical_document_id: string;
+    entity_id: string | null;
+    extracted_name: string;
+    source_page: number | null;
+    method: string;
+    score_bps: number;
+    band: string;
+  }): Promise<void>;
   findOrCreatePeriod(row: {
     tenantId: string;
     entityId: string;
@@ -162,7 +174,7 @@ export async function runExtractStage(
           });
           continue;
         }
-        const n = await extractTaxForm(deps, input, ld, entityId, now);
+        const n = await extractTaxForm(deps, input, ld, entityId, entities, now);
         result.factsInserted += n;
         result.perDocument.push({ logicalDocumentId: ld.id, facts: n });
       } else {
@@ -206,6 +218,7 @@ async function extractTaxForm(
   input: ExtractStageInput,
   ld: ExtractLogicalDocument,
   entityId: string,
+  entities: { id: string; kind: string; name: string }[],
   now: () => number,
 ): Promise<number> {
   if (ld.taxYear === null) {
@@ -299,6 +312,29 @@ async function extractTaxForm(
   if (!p1 && !p2) return 0;
 
   const reconciled = reconcile(p1?.candidates ?? [], p2?.candidates ?? [], entry);
+
+  // ── M11.6 identity substage: the readers LOCATED the printed name
+  // (identity TEXT fields — never facts); the match math is deterministic
+  // (packages/shared). Advisory: a failure here must never fail
+  // extraction. Auto-confirm stays OFF — even high bands are `suggested`.
+  try {
+    const identity = pickIdentity(p1?.candidates ?? [], p2?.candidates ?? []);
+    if (identity) {
+      const match = matchDocumentEntities(identity, entities);
+      await deps.db.insertDocumentIdentity({
+        tenant_id: input.tenantId,
+        logical_document_id: ld.id,
+        entity_id: match.entityId,
+        extracted_name: identity.name,
+        source_page: identity.page,
+        method: identity.method,
+        score_bps: match.scoreBps,
+        band: match.band,
+      });
+    }
+  } catch {
+    // advisory substage — extraction result stands on its own
+  }
 
   // Confidence scorer decides auto-accept vs review (M6.2). A field
   // implicated by a violated registry relation can never auto-accept.

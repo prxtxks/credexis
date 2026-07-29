@@ -84,7 +84,9 @@ function capturePort(entityKind: string): { port: ExtractDbPort; result: Capture
   const periods = new Map<string, string>(); // id → label
   const result: CaptureResult = { facts: [], costMicroUsd: 0n };
   const port: ExtractDbPort = {
-    getDealEntities: () => Promise.resolve([{ id: "eval-entity", kind: entityKind }]),
+    getDealEntities: () =>
+      Promise.resolve([{ id: "eval-entity", kind: entityKind, name: "Eval Entity" }]),
+    insertDocumentIdentity: () => Promise.resolve(), // scored separately, not in field accuracy
     findOrCreatePeriod: (row) => {
       const id = `period:${row.label}`;
       periods.set(id, row.label);

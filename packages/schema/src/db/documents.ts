@@ -65,6 +65,9 @@ export const logicalDocuments = pgTable(
     /** Suggested by Stage S, human-confirmable (M6.5). */
     entityId: uuid("entity_id").references(() => entities.id),
     entityConfirmed: boolean("entity_confirmed").notNull().default(false),
+    /** Split-stage classifier's entity hint (M11.6): free-text prior for
+     *  the identity matcher — advisory only, never an assignment. */
+    entityHint: text("entity_hint"),
     /** e.g. "1120S", "PNL" — same vocabulary as the corpus formFamilySchema. */
     formFamily: text("form_family").notNull(),
     taxYear: integer("tax_year"),
@@ -97,5 +100,42 @@ export const pages = pgTable(
   (t) => [
     index("pages_tenant_idx").on(t.tenantId),
     index("pages_logical_document_idx").on(t.logicalDocumentId),
+  ],
+);
+
+/**
+ * Entity↔document identity matches (M11.6, design 02 §3): one row per
+ * (logical document, extracted identity) with the deterministic match
+ * score against the deal's best-matching entity. Full lineage (page,
+ * method); NEVER stored in facts (identities are not money). Auto-confirm
+ * stays OFF pre-pilot: even high-band matches are `suggested` until a
+ * human (or the future eval-gated auto band) confirms.
+ */
+export const documentIdentities = pgTable(
+  "document_identities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    logicalDocumentId: uuid("logical_document_id")
+      .notNull()
+      .references(() => logicalDocuments.id),
+    /** Best-matching deal entity; null = no candidate cleared the floor. */
+    entityId: uuid("entity_id").references(() => entities.id),
+    /** The name as printed on the document (located, never invented). */
+    extractedName: text("extracted_name").notNull(),
+    sourcePage: integer("source_page"),
+    /** Which reader located it: vendor | llm. */
+    method: text("method").notNull(),
+    /** Deterministic matcher output (packages/shared name-match). */
+    scoreBps: integer("score_bps").notNull(),
+    band: text("band").notNull(),
+    state: text("state").notNull().default("suggested"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("document_identities_tenant_idx").on(t.tenantId),
+    index("document_identities_ld_idx").on(t.logicalDocumentId),
   ],
 );

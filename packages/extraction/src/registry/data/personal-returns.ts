@@ -5,13 +5,18 @@
  */
 
 import type { FormDefinition } from "../types.js";
-import { money } from "./helpers.js";
+import { identityText, money } from "./helpers.js";
 
 export const F1040: FormDefinition = {
   formFamily: "1040",
   baseYear: 2023,
   base: {
     fields: [
+      identityText(
+        "f1040.taxpayer_name",
+        "Name of taxpayer (first name, middle initial, last name as printed at the top of Form 1040)",
+        "Concatenate the printed first name, middle initial, and last name boxes. Primary taxpayer only — not the spouse.",
+      ),
       money("f1040.line1a", "1a", "Total amount from Form(s) W-2, box 1", {
         aliases: ["Wages, salaries, tips"],
         taxonomyNodeKey: "pcf.income.wages",
