@@ -46,9 +46,71 @@ export async function prepareDatabase(sql: Sql): Promise<void> {
 }
 
 /**
+ * Split SQL into statements, honouring dollar-quoted bodies (`$$ … $$`,
+ * `$tag$ … $tag$`) and single-quoted literals. Splitting on a bare `;` is
+ * NOT safe here: `raise exception 'live invite bound to %; revoke it before
+ * changing the email'` yields a fragment starting with "revoke", which an
+ * earlier version of this file executed as SQL. Skipping whole chunks that
+ * contain `$$` is not safe either — 0001 defines functions and issues its
+ * grants in the same chunk, so that silently dropped `revoke all on all
+ * tables from anon`, leaving the harness MORE permissive than production.
+ */
+function splitStatements(sql: string): string[] {
+  const out: string[] = [];
+  let buf = "";
+  let i = 0;
+  let dollarTag: string | null = null;
+  let inSingle = false;
+
+  while (i < sql.length) {
+    if (dollarTag) {
+      if (sql.startsWith(dollarTag, i)) {
+        buf += dollarTag;
+        i += dollarTag.length;
+        dollarTag = null;
+      } else {
+        buf += sql[i++];
+      }
+      continue;
+    }
+    if (inSingle) {
+      // '' is an escaped quote inside a literal, not a terminator.
+      if (sql[i] === "'" && sql[i + 1] === "'") {
+        buf += "''";
+        i += 2;
+        continue;
+      }
+      if (sql[i] === "'") inSingle = false;
+      buf += sql[i++];
+      continue;
+    }
+    const dollar = /^\$[A-Za-z_]*\$/.exec(sql.slice(i));
+    if (dollar) {
+      dollarTag = dollar[0];
+      buf += dollarTag;
+      i += dollarTag.length;
+      continue;
+    }
+    if (sql[i] === "'") {
+      inSingle = true;
+      buf += sql[i++];
+      continue;
+    }
+    if (sql[i] === ";") {
+      out.push(buf);
+      buf = "";
+      i++;
+      continue;
+    }
+    buf += sql[i++];
+  }
+  if (buf.trim()) out.push(buf);
+  return out;
+}
+
+/**
  * Re-execute the GRANT/REVOKE statements from every migration, in journal
- * order. Only privilege statements are replayed — they are idempotent and
- * never contain `$$` bodies, so simple statement splitting is safe.
+ * order, so migration intent wins over the blanket baseline above.
  */
 async function replayGrants(sql: Sql): Promise<void> {
   const dir = join(HERE, "../../drizzle");
@@ -64,17 +126,17 @@ async function replayGrants(sql: Sql): Promise<void> {
     } catch {
       continue;
     }
-    for (const chunk of body.split("--> statement-breakpoint")) {
-      // Strip line comments so a commented-out GRANT is never replayed.
-      const cleaned = chunk
-        .split("\n")
-        .filter((l) => !l.trimStart().startsWith("--"))
-        .join("\n");
-      for (const raw of cleaned.split(";")) {
-        const stmt = raw.trim();
-        if (!/^(grant|revoke)\s/i.test(stmt)) continue;
-        await sql.unsafe(stmt);
-      }
+    // Strip line comments so a commented-out GRANT is never replayed.
+    const cleaned = body
+      .split("\n")
+      .filter((l) => !l.trimStart().startsWith("--"))
+      .join("\n")
+      .replaceAll("--> statement-breakpoint", "");
+
+    for (const raw of splitStatements(cleaned)) {
+      const stmt = raw.trim();
+      if (!/^(grant|revoke)\s/i.test(stmt)) continue;
+      await sql.unsafe(stmt);
     }
   }
 }
