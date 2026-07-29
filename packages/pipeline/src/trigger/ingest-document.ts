@@ -14,6 +14,7 @@ import {
   AnthropicVisionAdapter,
   ReductoAdapter,
 } from "@credexis/extraction";
+import { createEmailSender, identityReviewEmail } from "@credexis/shared";
 import { runIngest, type IngestResult } from "../ingest.js";
 import { logEvent } from "../log.js";
 import { runExtractStage } from "../extract-stage.js";
@@ -151,7 +152,7 @@ export const ingestDocument = task({
             try {
               const { data: recips } = await client
                 .from("profiles")
-                .select("id, role, status")
+                .select("id, role, status, email, email_notifications")
                 .eq("tenant_id", payload.tenantId)
                 .eq("status", "active")
                 .in("role", ["org_owner", "admin", "underwriter"]);
@@ -182,6 +183,25 @@ export const ingestDocument = task({
                   .in("logical_document_id", ldIds)
                   .eq("state", "suggested")
                   .neq("band", "high");
+                // M11.7: approval-class events also go out by email,
+                // immediately, to opted-in recipients. Env-gated no-op
+                // until RESEND_API_KEY exists; advisory like the cards.
+                const sender = createEmailSender({
+                  apiKey: process.env["RESEND_API_KEY"],
+                  from: process.env["EMAIL_FROM"] ?? "Credexis <notifications@credexis.co>",
+                });
+                const baseUrl = (
+                  process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000"
+                ).replace(/\/$/, "");
+                let dealName = "a deal";
+                if (sender.enabled && (idents ?? []).length > 0) {
+                  const { data: deal } = await client
+                    .from("deals")
+                    .select("name")
+                    .eq("id", payload.dealId)
+                    .single();
+                  dealName = (deal?.name as string | undefined) ?? dealName;
+                }
                 for (const ident of idents ?? []) {
                   const pct = Math.round((ident.score_bps as number) / 100);
                   const title =
@@ -202,6 +222,23 @@ export const ingestDocument = task({
                     })),
                     { onConflict: "recipient_id,dedupe_key", ignoreDuplicates: true },
                   );
+                  if (sender.enabled) {
+                    const rendered = identityReviewEmail({
+                      title,
+                      extractedName: (ident.extracted_name as string).slice(0, 120),
+                      dealName,
+                      reviewUrl: `${baseUrl}/deals/${payload.dealId}/assignment`,
+                    });
+                    for (const r of recips) {
+                      if (r.email_notifications !== true) continue;
+                      const res = await sender.send({ to: r.email as string, ...rendered });
+                      if (!res.sent) {
+                        logEvent(log, "email-skipped", {
+                          reason: res.reason?.slice(0, 120) ?? "unknown",
+                        });
+                      }
+                    }
+                  }
                 }
               }
             } catch (e) {

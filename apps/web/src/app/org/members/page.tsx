@@ -46,7 +46,11 @@ export default function MembersPage() {
       setInviteLink(`${window.location.origin}/invite/accept?token=${r.token}`);
       setEmail("");
       refresh();
-      toast.success("Invite created — copy the link below and send it");
+      toast.success(
+        r.emailSent
+          ? "Invite created and emailed — the link below also works"
+          : "Invite created — copy the link below and send it",
+      );
     },
     onError: (e) => toast.error(e.message),
   });

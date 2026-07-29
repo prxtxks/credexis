@@ -4,7 +4,15 @@
  * the caller's tenant from the JWT and filters on it (Iron Law #7).
  */
 
-import { jsonb, pgTable, text, timestamp, uuid, type AnyPgColumn } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  type AnyPgColumn,
+} from "drizzle-orm/pg-core";
 import { orgKind, profileStatus, userRole } from "./enums.js";
 import { pgEnum } from "drizzle-orm/pg-core";
 
@@ -35,6 +43,15 @@ export const profiles = pgTable("profiles", {
   role: userRole("role").notNull().default("underwriter"),
   /** Deactivation kill-switch (M11.2): RLS helpers require 'active'. */
   status: profileStatus("status").notNull().default("active"),
+  /**
+   * M11.7: per-user email delivery toggle. Email is an advisory channel —
+   * in-app notifications are always written regardless; this only gates
+   * whether Resend also delivers them to the inbox. Self-service via the
+   * update_own_profile() definer (never a direct RLS UPDATE — admins'
+   * profiles_update_manage must not be the only write path, and users
+   * must not be able to touch role/status/tenant on their own row).
+   */
+  emailNotifications: boolean("email_notifications").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
