@@ -19,6 +19,7 @@ import { SpreadGrid, type CellSelection } from "@/components/workspace/spread-gr
 import { TaxSpreadGrid } from "@/components/workspace/tax-spread-grid";
 import { SourceViewer } from "@/components/workspace/source-viewer";
 import { IssuesPanel } from "@/components/workspace/issues-panel";
+import { AddbacksPanel } from "@/components/workspace/addbacks-panel";
 import { ScenarioInspector } from "@/components/workspace/scenario-inspector";
 import { WorkspaceToolbar, type InspectorTab } from "@/components/workspace/workspace-toolbar";
 import { cn } from "@/lib/utils";
@@ -278,6 +279,8 @@ function WorkspaceInner() {
                 selectedScenarioId={scenarioId}
                 onSelectScenario={(id) => setParam("scenario", id)}
               />
+            ) : inspectorTab === "addbacks" ? (
+              <AddbacksPanel dealId={dealId} />
             ) : inspectorTab === "issues" ? (
               <IssuesPanel
                 dealId={dealId}
