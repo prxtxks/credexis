@@ -168,7 +168,9 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Placeholder until M1.4 wires the real extraction scorecard + baseline
-      # regression gate. Runs `turbo run eval` (currently a no-op) so the job
-      # slot and required-check name exist from day one.
+      # M1.4 harness, armed for the REAL corpus (audit-fixes-1): runs the
+      # mock extractor over corpus ground truth (real + synthetic) and
+      # compares against eval-baseline.json — corpus/scorer/loader
+      # regressions on the 13 real docs go red. Live vendor accuracy is
+      # measured out-of-band (bake-offs; RUN_LIVE_VENDOR_TESTS).
       - run: pnpm eval

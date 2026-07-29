@@ -11,7 +11,12 @@ behavior they describe.
 - **[environments.md](environments.md)** — environments & secret management.
 - **[adr/](adr/)** — architecture decision records. Start from
   [ADR-0000-template.md](adr/ADR-0000-template.md); [ADR-0001](adr/ADR-0001-stack.md)
-  records the stack.
+  records the stack; [ADR-0002](adr/ADR-0002-extractor-selection.md) records
+  the extraction-vendor bake-off and selection.
+- **[soc2/](soc2/)** — SOC 2 groundwork: access review, vendor register,
+  change management.
+- **[runbooks/](runbooks/)** — operational runbooks (incident response,
+  restore drill).
 
 The root **[CLAUDE.md](../CLAUDE.md)** carries the ten iron laws and the working
 agreement; read it first.

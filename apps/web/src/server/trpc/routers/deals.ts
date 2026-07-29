@@ -134,19 +134,4 @@ export const dealsRouter = router({
       if (entErr) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: entErr.message });
       return { dealId: deal.id as string };
     }),
-
-  list: protectedProcedure.query(async ({ ctx }) => {
-    const { data, error } = await ctx.supabase
-      .from("deals")
-      .select("id, name, type, status, created_at")
-      .order("created_at", { ascending: false });
-    if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
-    return (data ?? []).map((d) => ({
-      id: d.id as string,
-      name: d.name as string,
-      type: d.type as string,
-      status: d.status as string,
-      createdAt: d.created_at as string,
-    }));
-  }),
 });

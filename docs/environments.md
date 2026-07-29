@@ -1,8 +1,9 @@
 # Environments & Secrets
 
 How Credexis manages configuration and secrets across environments. The
-governing rule (Blueprint §11, Iron Law #7): **no secret value ever enters
-git**, and the **service-role key never appears in a request path**.
+governing rules: **no secret value ever enters git** (Workflow rule,
+gitleaks-enforced in CI) and — Iron Law #7 — the **service-role key never
+appears in a request path**.
 
 ## Secret management
 
@@ -31,17 +32,17 @@ git**, and the **service-role key never appears in a request path**.
 **[PRATIK] M0.5** — fill in as each service is procured. Nothing is assumed
 live until recorded here.
 
-| Service                     | Status            | Notes                                                                                                                                 |
-| --------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Supabase (fresh project)    | ✅ Live           | Org `Credexis`, project `Credexis Web App`, us-east-2, Postgres 17. Fresh — no V1 reuse.                                              |
-| Vercel                      | ✅ Live           | `credexis-web.vercel.app` — middleware auth verified in production (2026-07-18).                                                      |
-| Trigger.dev org             | ✅ Live           | Secret key + project id verified (2026-07-18). `ingest-document` task built (M3.1); deploy pending `TRIGGER_ACCESS_TOKEN` ([PRATIK]). |
-| Sentry                      | ☐ DSN NOT set     | M10.2 wiring is live but DSN-gated → currently inert. Paste `SENTRY_DSN` (+ `NEXT_PUBLIC_SENTRY_DSN`) to enable ([PRATIK]).           |
-| Anthropic API               | ✅ Live           | Key verified (2026-07-18). ⚠️ Confirm org ZDR status before REAL tax docs ([PRATIK]).                                                 |
-| Reducto                     | ✅ Live           | Key verified (2026-07-18). Primary extractor candidate (M3.4).                                                                        |
-| Extend                      | ✖ Dropped        | Never built (no adapter/config). Optional 3rd bake-off contender not pursued — Reducto+Claude consensus is sufficient (2026-07-24).   |
-| Azure Document Intelligence | ⚠ Eval-only      | Removed from the production path (2026-07-24): lost the bake-off (misread CPA bundles). Adapter kept as a bench-only eval contender.  |
-| Transcript provider (M9)    | ☐ Not provisioned | TaxStatus / Halcyon-class.                                                                                                            |
+| Service                     | Status            | Notes                                                                                                                                                                                                           |
+| --------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Supabase (fresh project)    | ✅ Live           | Org `Credexis`, project `Credexis Web App`, us-east-2, Postgres 17. Fresh — no V1 reuse.                                                                                                                        |
+| Vercel                      | ✅ Live           | `credexis-web.vercel.app` — middleware auth verified in production (2026-07-18).                                                                                                                                |
+| Trigger.dev org             | ✅ Live           | Keys verified. `ingest-document` DEPLOYED to prod (2026-07-20) and verified live end-to-end; app currently points at the dev environment (local worker) — prod key swap in Vercel is an optional [PRATIK] step. |
+| Sentry                      | ☐ DSN NOT set     | M10.2 wiring is live but DSN-gated → currently inert. Paste `SENTRY_DSN` (+ `NEXT_PUBLIC_SENTRY_DSN`) to enable ([PRATIK]).                                                                                     |
+| Anthropic API               | ✅ Live           | Key verified; credits topped up 2026-07-28 (exhausted 07-22→07-28). ZDR written confirmation required before real borrower docs ([PRATIK]).                                                                     |
+| Reducto                     | ✅ Live           | Key verified (2026-07-18). Path-1 primary per ADR-0002.                                                                                                                                                         |
+| Extend                      | ✖ Dropped        | Never built (no adapter/config). Optional 3rd bake-off contender not pursued — Reducto+Claude consensus is sufficient (2026-07-24).                                                                             |
+| Azure Document Intelligence | ⚠ Eval-only      | Removed from the production path (2026-07-24): lost the bake-off (misread CPA bundles). Adapter kept as a bench-only eval contender.                                                                            |
+| Transcript provider (M9)    | ☐ Not provisioned | TaxStatus / Halcyon-class.                                                                                                                                                                                      |
 
 **[PRATIK] pending review (M2.6):** policy pack `sop-50-10-8-2026-03` is
 seeded with `reviewStatus: "draft"` — every threshold (DSCR 1.15/1.10, 10%

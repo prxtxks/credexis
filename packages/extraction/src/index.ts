@@ -7,8 +7,6 @@
  * src/contract/ define what any future vendor must satisfy.
  */
 
-export const EXTRACTION_PACKAGE = "@credexis/extraction" as const;
-
 export * from "./types.js";
 export * from "./config.js";
 export { AnthropicVisionAdapter } from "./adapters/anthropic-vision.js";
