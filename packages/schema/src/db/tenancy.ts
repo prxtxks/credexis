@@ -37,3 +37,25 @@ export const profiles = pgTable("profiles", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * Member invites (M11.3, design 01 §4): claims, not accounts — the invitee
+ * authenticates themself and accept_invite() (SECURITY DEFINER) converts a
+ * matching pending invite into a profiles row. No admin API in request
+ * paths (Iron Law #7). Append-mostly: revoke stamps revoked_at, no deletes.
+ */
+export const invites = pgTable("invites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id")
+    .notNull()
+    .references(() => tenants.id),
+  email: text("email").notNull(),
+  role: userRole("role").notNull(),
+  /** sha256 of the URL token; the raw token is shown once, never stored. */
+  tokenHash: text("token_hash").notNull(),
+  invitedBy: uuid("invited_by").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

@@ -1,7 +1,7 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
-export type UserRole = "admin" | "underwriter" | "viewer";
+export type UserRole = "org_owner" | "admin" | "underwriter" | "viewer";
 
 export interface Profile {
   id: string;

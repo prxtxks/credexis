@@ -43,15 +43,15 @@ describe("tRPC mutation tier matrix (M10.3)", () => {
   });
 
   /**
-   * The ONE designed exception (M11.2, design 01 §4.1): org.create runs
-   * pre-profile — the caller cannot hold a role because the mutation
-   * creates the first profile. It is sessionProcedure by necessity; every
-   * invariant (authenticated, profile-less, atomic, caller→org_owner) is
-   * enforced inside the create_organization SECURITY DEFINER function.
+   * The designed exceptions (M11.2/M11.3, design 01 §4): org.create and
+   * invites.accept both run PRE-PROFILE — the caller cannot hold a role
+   * because the mutation is what creates their profile. They are
+   * sessionProcedure by necessity; every invariant is enforced inside the
+   * create_organization / accept_invite SECURITY DEFINER functions.
    * Anything else appearing here must be treated as a regression.
    */
   const SESSION_TIER_EXCEPTIONS: Record<string, readonly string[]> = {
-    "org.ts": ["create"],
+    "org.ts": ["create", "accept"],
   };
 
   for (const file of files) {

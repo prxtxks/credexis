@@ -11,7 +11,7 @@ import { reviewRouter } from "./routers/review";
 import { sourceRouter } from "./routers/source";
 import { spreadRouter } from "./routers/spread";
 import { transcriptsRouter } from "./routers/transcripts";
-import { orgRouter } from "./routers/org";
+import { invitesRouter, membersRouter, orgRouter } from "./routers/org";
 
 /**
  * Application router (M2.3). Grows with the product; today it carries the
@@ -66,6 +66,10 @@ export const appRouter = router({
 
   /** Org bootstrap (M11.2): signup → create org → org_owner. */
   org: orgRouter,
+
+  /** Members & invites (M11.3): delegated access on the tier lattice. */
+  members: membersRouter,
+  invites: invitesRouter,
 });
 
 export type AppRouter = typeof appRouter;

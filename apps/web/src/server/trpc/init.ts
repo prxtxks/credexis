@@ -48,8 +48,8 @@ function requireRole(roles: readonly UserRole[]) {
   });
 }
 
-/** Write access: underwriters and admins. */
-export const underwriterProcedure = requireRole(["admin", "underwriter"]);
+/** Write access: underwriters and above (org_owner ≥ admin, M11.3). */
+export const underwriterProcedure = requireRole(["org_owner", "admin", "underwriter"]);
 
-/** Administrative access only. */
-export const adminProcedure = requireRole(["admin"]);
+/** Administrative access: org_owner and admin. */
+export const adminProcedure = requireRole(["org_owner", "admin"]);
