@@ -21,7 +21,8 @@
     "@credexis/engine": "workspace:*",
     "@credexis/extraction": "workspace:*",
     "@credexis/pipeline": "workspace:*",
-    "@credexis/schema": "workspace:*"
+    "@credexis/schema": "workspace:*",
+    "@credexis/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "24.2.0",
