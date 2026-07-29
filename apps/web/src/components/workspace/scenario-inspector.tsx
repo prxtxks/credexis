@@ -12,6 +12,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { formatCents, parseDollarsInput } from "@/lib/money-display";
+import { FieldSelect } from "@/components/ui/field-select";
 
 const USE_OF_PROCEEDS = ["business_acquisition", "working_capital", "equipment", "real_estate"];
 
@@ -206,16 +207,16 @@ export function ScenarioInspector({
           <div className="grid grid-cols-3 gap-2">
             <label className="block text-xs font-semibold">
               Rate
-              <select
+              <FieldSelect
+                ariaLabel="Rate type"
                 value={draft.rateType}
-                onChange={(e) =>
-                  setDraft({ ...draft, rateType: e.target.value as Draft["rateType"] })
-                }
-                className="mt-0.5 w-full rounded border border-border px-2 py-1 font-normal"
-              >
-                <option value="prime_spread">Prime + spread</option>
-                <option value="fixed">Fixed</option>
-              </select>
+                onChange={(v) => setDraft({ ...draft, rateType: v as Draft["rateType"] })}
+                options={[
+                  { value: "prime_spread", label: "Prime + spread" },
+                  { value: "fixed", label: "Fixed" },
+                ]}
+                className="mt-0.5 w-full font-normal"
+              />
             </label>
             {draft.rateType === "fixed" ? (
               <label className="block text-xs font-semibold">

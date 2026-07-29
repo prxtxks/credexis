@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { formatCents, parseDollarsInput } from "@/lib/money-display";
+import { FieldSelect } from "@/components/ui/field-select";
 import type { CellSelection } from "./spread-grid";
 
 const ADDBACK_CATEGORIES = [
@@ -195,18 +196,16 @@ export function SourceViewer({
           Add back this line
         </label>
         <div className="mt-1 flex gap-2">
-          <select
-            id="addback-category"
+          <FieldSelect
+            ariaLabel="Add-back category"
             value={addbackCategory}
-            onChange={(e) => setAddbackCategory(e.target.value)}
-            className="w-full rounded border border-border px-2 py-1"
-          >
-            {ADDBACK_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c.replaceAll("_", " ")}
-              </option>
-            ))}
-          </select>
+            onChange={setAddbackCategory}
+            options={ADDBACK_CATEGORIES.map((c) => ({
+              value: c,
+              label: c.replaceAll("_", " "),
+            }))}
+            className="w-full"
+          />
           <button
             onClick={() =>
               createAddback.mutate({

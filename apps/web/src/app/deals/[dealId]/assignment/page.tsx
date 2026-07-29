@@ -20,6 +20,7 @@ import { trpc } from "@/lib/trpc/client";
 import { ASSIGNABLE_FAMILIES } from "@/lib/form-families";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { FieldSelect } from "@/components/ui/field-select";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -198,21 +199,16 @@ export default function AssignmentPage() {
                         {row.pageStart}–{row.pageEnd}
                       </TableCell>
                       <TableCell>
-                        <select
+                        <FieldSelect
+                          ariaLabel={`Form family for ${row.fileName}`}
                           value={family}
-                          onChange={(e) => setDraft(row.id, { formFamily: e.target.value })}
+                          onChange={(v) => setDraft(row.id, { formFamily: v })}
+                          options={ASSIGNABLE_FAMILIES.map((f) => ({ value: f, label: f }))}
                           className={cn(
-                            "h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                             family === "UNKNOWN" &&
                               "text-severity-warning ring-1 ring-severity-warning",
                           )}
-                        >
-                          {ASSIGNABLE_FAMILIES.map((f) => (
-                            <option key={f} value={f}>
-                              {f}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </TableCell>
                       <TableCell>
                         <Input
@@ -225,18 +221,16 @@ export default function AssignmentPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <select
+                          <FieldSelect
+                            ariaLabel={`Entity for ${row.fileName}`}
                             value={entityId}
-                            onChange={(e) => setDraft(row.id, { entityId: e.target.value })}
-                            className="h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
-                          >
-                            <option value="">— unassigned —</option>
-                            {(entities.data ?? []).map((e) => (
-                              <option key={e.id} value={e.id}>
-                                {e.name} ({e.kind})
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(v) => setDraft(row.id, { entityId: v })}
+                            placeholder="— unassigned —"
+                            options={(entities.data ?? []).map((e) => ({
+                              value: e.id,
+                              label: `${e.name} (${e.kind})`,
+                            }))}
+                          />
                           {row.entityConfirmed && !dirty && (
                             <span className="flex items-center gap-1 whitespace-nowrap text-xs font-medium text-primary">
                               <Check className="h-3.5 w-3.5" />✓ confirmed
