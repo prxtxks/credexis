@@ -8,10 +8,16 @@
  * CATCHING the uncertain 5–8%, not by wishing the extractor were perfect —
  * so every rule here fails toward review.
  *
- * Thresholds live in config. Real tuning happens against the corpus
- * (auto-accept precision ≥99.5% governs the threshold; coverage is what it
- * is — task M6.2); the defaults below are deliberately conservative until
- * that ROC run exists.
+ * Thresholds live in config. TUNED against the real corpus 2026-07-28
+ * (M6.2 ROC run, packages/eval/src/tune-confidence.ts): 131 signal rows
+ * over 8 real tax documents; at EVERY autoAcceptMin ≤ 0.75 all 77
+ * agreement-passing fields were correct (0 wrong auto-accepts, coverage
+ * 65.8% of GT fields) — vendor confidences cluster below 0.8, so the old
+ * 0.9 bar discarded agreement wins (coverage 7.7%) without buying any
+ * precision. PROVISIONAL: 0/77 observed errors bounds the true error
+ * rate at ~3.9% (95%, rule of three) — the ≥99.5% CERTIFICATION claim
+ * (M10.6) needs ~600+ clean auto-accepts, i.e. corpus growth (M1.3).
+ * Re-run the tuner whenever the corpus grows materially.
  */
 
 export type Decision = "auto_accept" | "review" | "reject";
@@ -36,9 +42,14 @@ export interface ConfidenceThresholds {
   rejectBelow: number;
 }
 
-/** Conservative until the corpus ROC run tunes them (M6.2 / M1.3). */
+/**
+ * Tuned 2026-07-28 (see header): 0.75 = the top of the zero-wrong
+ * plateau on the real corpus — the most conservative value that keeps
+ * full agreement coverage. 0.9 measured at 7.7% coverage for identical
+ * (perfect) precision.
+ */
 export const DEFAULT_THRESHOLDS: ConfidenceThresholds = {
-  autoAcceptMin: 0.9,
+  autoAcceptMin: 0.75,
   rejectBelow: 0.3,
 };
 

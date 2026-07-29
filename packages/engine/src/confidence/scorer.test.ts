@@ -60,10 +60,11 @@ describe("confidence scorer (M6.2) — every rule fails toward review", () => {
   });
 
   it("agreement below the auto-accept bar → review (threshold boundary exact)", () => {
-    expect(scoreField(signals({ path1Confidence: 0.9, path2Confidence: 0.9 })).decision).toBe(
+    // Bar = 0.75 (M6.2 ROC tuning, 2026-07-28 — see scorer.ts header).
+    expect(scoreField(signals({ path1Confidence: 0.75, path2Confidence: 0.75 })).decision).toBe(
       "auto_accept",
     ); // exactly at the bar
-    expect(scoreField(signals({ path1Confidence: 0.9, path2Confidence: 0.899 })).decision).toBe(
+    expect(scoreField(signals({ path1Confidence: 0.75, path2Confidence: 0.749 })).decision).toBe(
       "review",
     ); // a hair under
   });
