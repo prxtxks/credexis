@@ -19,11 +19,11 @@ export { formatRatio };
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="flex flex-col px-4 py-1.5 min-w-28">
-      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
-      <span
-        className={`font-mono text-sm font-semibold tabular-nums ${accent ? "text-primary" : ""}`}
-      >
+    <div className="flex min-w-28 flex-col border-r border-border/40 px-4 py-1.5">
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground/80">{label}</span>
+      {/* Money/ratios are the protagonist (design language §2): Geist
+          tabular figures, semibold — never mono-terminal, never muted. */}
+      <span className={`text-[15px] font-semibold tabular-nums ${accent ? "text-primary" : ""}`}>
         {value}
       </span>
     </div>
