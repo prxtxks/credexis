@@ -21,18 +21,9 @@ function isPublic(pathname: string): boolean {
  * signed-out, never as signed-in.
  */
 export async function middleware(request: NextRequest) {
-  // M12.3: per-request CSP nonce. Next.js reads the policy off the REQUEST
-  // headers to stamp its hydration scripts, so the header goes on both the
-  // request (for Next) and the response (for the browser). Defined FIRST so
-  // that every exit below — including the rate-limit rejection — is covered.
-  const nonce = crypto.randomUUID().replaceAll("-", "");
-  const csp = buildCsp(nonce, process.env.NODE_ENV === "development");
-  const withNonce = (): Headers => {
-    const h = new Headers(request.headers);
-    h.set("x-nonce", nonce);
-    h.set("Content-Security-Policy", csp);
-    return h;
-  };
+  // M12.3 security headers. Defined FIRST so every exit below — including
+  // the rate-limit rejection — carries them.
+  const csp = buildCsp(process.env.NODE_ENV === "development");
   /** Every return path carries the same headers — no route ships unprotected. */
   const secured = (res: NextResponse): NextResponse => {
     res.headers.set("Content-Security-Policy", csp);
@@ -49,7 +40,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  let response = NextResponse.next({ request: { headers: withNonce() } });
+  let response = NextResponse.next({ request });
 
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"];
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"];
@@ -66,7 +57,7 @@ export async function middleware(request: NextRequest) {
             for (const { name, value } of cookiesToSet) {
               request.cookies.set(name, value);
             }
-            response = NextResponse.next({ request: { headers: withNonce() } });
+            response = NextResponse.next({ request });
             for (const { name, value, options } of cookiesToSet) {
               response.cookies.set(name, value, options);
             }
