@@ -98,6 +98,38 @@ jobs:
       # this job exists so a schema-only failure is legible at a glance.
       - run: pnpm vitest run packages/schema/src/db/schema-checks.test.ts
 
+  rls-harness:
+    name: RLS harness (live policies)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Throwaway service container only — the harness applies migrations
+      # and seeds fixture tenants; it must never point at a real database.
+      RLS_HARNESS_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Impersonated-user scenarios against the REAL migrations: tenant
+      # isolation, tier lattice (A1), no client notification inserts (B1),
+      # storage path scoping, kill-switch, definer EXECUTE revokes.
+      - run: pnpm vitest run packages/schema/src/rls/rls-harness.test.ts
+
   test:
     name: Unit tests
     runs-on: ubuntu-latest
