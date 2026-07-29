@@ -62,7 +62,11 @@ export function NotificationsBell() {
             className="fixed inset-0 z-40 cursor-default"
             onClick={() => setOpen(false)}
           />
-          <div className="glass-card absolute right-0 z-50 mt-2 w-80 rounded-xl border border-border/60 p-2 shadow-lg">
+          {/* Overlay = surface-2 (design language §2): OPAQUE bg-popover +
+              hairline + shadow — text never sits on transparency. Phones:
+              fixed full-width sheet under the top bar (an absolute panel
+              anchored to the bell overflows the viewport edge). */}
+          <div className="fixed inset-x-3 top-16 z-50 rounded-xl border border-border bg-popover p-2 shadow-xl md:absolute md:inset-x-auto md:top-auto md:right-0 md:mt-2 md:w-96">
             <div className="flex items-center justify-between px-2 py-1.5">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Notifications
