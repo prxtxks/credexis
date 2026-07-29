@@ -632,6 +632,174 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
     });
   });
 
+  describe("borrower access path (M12.1 PR2) — the only two policies they match", () => {
+    // A claimed borrower. claim_borrower_invite() lands in the next
+    // migration, so the claim is simulated here by setting auth_user_id as
+    // superuser — the access path under test is identical either way.
+    const BORROWER = "00000000-0000-4000-8000-0000000000e1";
+    const OTHER_BORROWER = "00000000-0000-4000-8000-0000000000e2";
+    let inviteId = "";
+    let otherInviteId = "";
+    let prefix = "";
+    const sha = (n: number) => String(n).padStart(64, "0");
+    const key = (p: string, n: number) => `${p}${sha(n)}.pdf`;
+
+    beforeAll(async () => {
+      await sql`insert into auth.users (id, email) values
+        (${BORROWER}, 'claimed@borrower-test.dev'),
+        (${OTHER_BORROWER}, 'other@borrower-test.dev') on conflict (id) do nothing`;
+      const [b1] = await sql`insert into borrowers (tenant_id, full_name, email, created_by)
+        values (${TENANT_A}, 'Claimed Borrower', 'claimed@borrower-test.dev', ${U.underwriterA})
+        returning id`;
+      const [b2] = await sql`insert into borrowers (tenant_id, full_name, email, created_by)
+        values (${TENANT_A}, 'Other Borrower', 'other@borrower-test.dev', ${U.underwriterA})
+        returning id`;
+      const mk = async (borrowerId: string, uid: string, hash: string) => {
+        const [row] = await sql`insert into borrower_invites
+          (tenant_id, deal_id, borrower_id, email, token_hash, display_label, invited_by,
+           expires_at, status, auth_user_id, claimed_at)
+          values (${TENANT_A}, ${DEAL_A}, ${borrowerId},
+                  ${uid === BORROWER ? "claimed@borrower-test.dev" : "other@borrower-test.dev"},
+                  ${hash}, 'Alpha Deal', ${U.underwriterA}, now() + interval '30 days',
+                  'active', ${uid}, now()) returning id`;
+        return (row as { id: string }).id;
+      };
+      inviteId = await mk((b1 as { id: string }).id, BORROWER, "hash-claimed");
+      otherInviteId = await mk((b2 as { id: string }).id, OTHER_BORROWER, "hash-other");
+      prefix = `${TENANT_A}/deals/${DEAL_A}/borrower-uploads/${inviteId}/`;
+    });
+
+    afterAll(async () => {
+      await sql`delete from storage.objects where name like ${`${TENANT_A}/deals/${DEAL_A}/borrower-uploads/%`}`;
+      await sql`delete from borrower_invites where token_hash in ('hash-claimed','hash-other')`;
+    });
+
+    const upload = (uid: string, name: string) =>
+      asUser(
+        sql,
+        uid,
+        (tx) =>
+          tx`insert into storage.objects (bucket_id, name) values ('deal-documents', ${name}) returning id`,
+      );
+
+    it("a claimed borrower CAN upload under their own invite prefix", async () => {
+      const rows = await upload(BORROWER, key(prefix, 1));
+      expect(rows.length).toBe(1);
+    });
+
+    it("cannot forge the INVITE segment (another borrower's folder, same deal)", async () => {
+      const forged = `${TENANT_A}/deals/${DEAL_A}/borrower-uploads/${otherInviteId}/${sha(2)}.pdf`;
+      await expectDenied(() => upload(BORROWER, forged));
+    });
+
+    it("cannot forge the DEAL segment", async () => {
+      await expectDenied(() =>
+        upload(BORROWER, `${TENANT_A}/deals/${DEAL_B}/borrower-uploads/${inviteId}/${sha(3)}.pdf`),
+      );
+    });
+
+    it("cannot forge the TENANT segment", async () => {
+      await expectDenied(() =>
+        upload(BORROWER, `${TENANT_B}/deals/${DEAL_A}/borrower-uploads/${inviteId}/${sha(4)}.pdf`),
+      );
+    });
+
+    it("cannot escape into the staff upload prefix", async () => {
+      await expectDenied(() =>
+        upload(BORROWER, `${TENANT_A}/deals/${DEAL_A}/uploads/${sha(5)}.pdf`),
+      );
+    });
+
+    it("rejects wrong path shapes and filenames (never raises — a cast error would be an oracle)", async () => {
+      for (const bad of [
+        `${TENANT_A}/deals/${DEAL_A}/borrower-uploads/${inviteId}/extra/${sha(6)}.pdf`, // 7 elements
+        `${TENANT_A}/deals/${DEAL_A}/borrower-uploads/${inviteId}`, // 5 elements
+        `${TENANT_A}/deals/${DEAL_A}/borrower-uploads/${inviteId}/notahash.pdf`,
+        `${TENANT_A}/deals/${DEAL_A}/borrower-uploads/${inviteId}/${sha(7)}.exe`,
+        `not-a-uuid/deals/${DEAL_A}/borrower-uploads/${inviteId}/${sha(8)}.pdf`,
+      ]) {
+        await expectDenied(() => upload(BORROWER, bad));
+      }
+    });
+
+    it("reads ONLY their own objects — not staff uploads on the same deal", async () => {
+      const seen = await asUser(
+        sql,
+        BORROWER,
+        (tx) => tx`select name from storage.objects where bucket_id = 'deal-documents'`,
+      );
+      expect(seen.length).toBeGreaterThan(0);
+      for (const r of seen) {
+        expect((r as { name: string }).name.startsWith(prefix)).toBe(true);
+      }
+    });
+
+    it("reaches NOTHING in public — including the reference tables (A-3)", async () => {
+      for (const t of [
+        "deals",
+        "documents",
+        "borrower_invites",
+        "borrowers",
+        "taxonomy_nodes",
+        "form_registry",
+        "policy_packs",
+        "learned_mappings",
+      ]) {
+        const rows = await asUser(sql, BORROWER, (tx) => tx.unsafe(`select 1 from ${t} limit 1`));
+        expect(rows.length, `${t} leaked to a borrower`).toBe(0);
+      }
+    });
+
+    it("REVOKING the invite cuts access on the very next statement", async () => {
+      await sql`update borrower_invites set status = 'revoked', revoked_at = now() where id = ${inviteId}`;
+      try {
+        await expectDenied(() => upload(BORROWER, key(prefix, 20)));
+        const seen = await asUser(
+          sql,
+          BORROWER,
+          (tx) => tx`select name from storage.objects where bucket_id = 'deal-documents'`,
+        );
+        expect(seen.length).toBe(0);
+      } finally {
+        await sql`update borrower_invites set status = 'active', revoked_at = null where id = ${inviteId}`;
+      }
+    });
+
+    it("an EXPIRED invite is dead without anyone revoking it", async () => {
+      await sql`update borrower_invites set expires_at = now() - interval '1 day' where id = ${inviteId}`;
+      try {
+        await expectDenied(() => upload(BORROWER, key(prefix, 21)));
+      } finally {
+        await sql`update borrower_invites set expires_at = now() + interval '30 days' where id = ${inviteId}`;
+      }
+    });
+
+    it("the object budget stops bucket flooding that row quotas would miss", async () => {
+      await sql`update borrower_invites set max_docs = 3 where id = ${inviteId}`;
+      try {
+        // One object already exists from the first scenario.
+        await upload(BORROWER, key(prefix, 30));
+        await upload(BORROWER, key(prefix, 31));
+        await expectDenied(() => upload(BORROWER, key(prefix, 32)));
+      } finally {
+        await sql`update borrower_invites set max_docs = null where id = ${inviteId}`;
+      }
+    });
+
+    it("org users are unaffected — staff storage access is byte-identical", async () => {
+      const rows = await asUser(sql, U.underwriterA, (tx) => tx`select name from storage.objects`);
+      expect(rows.length).toBe(1);
+      expect((rows[0] as { name: string }).name.startsWith(TENANT_A)).toBe(true);
+      // …and an org user matches NEITHER borrower policy (disjointness).
+      const [row] = await asUser(
+        sql,
+        U.underwriterA,
+        (tx) => tx`select public.has_borrower_invite() as b`,
+      );
+      expect((row as { b: boolean }).b).toBe(false);
+    });
+  });
+
   describe("definer EXECUTE surface", () => {
     it("anon cannot execute create_organization", async () => {
       const [row] = await sql`select has_function_privilege('anon',
