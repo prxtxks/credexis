@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Credexis borrower portal — minimal design tokens.
+
+   A deliberately small subset of the staff app's system: the brand
+   values match apps/web so a borrower recognises the lender's tool,
+   but nothing here is imported from apps/web (separate deployment,
+   design 05 §10.1) and no metric/DSCR/severity colours exist — the
+   portal has nothing to colour by risk.
+
+   Dark mode follows the OS. There is no theme toggle and therefore
+   no theme boot script, which keeps one more inline <script> off an
+   internet-facing page.
+   ============================================================ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans:
+    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(0.985 0.002 166);
+  --foreground: oklch(0.17 0.02 166);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.17 0.02 166);
+  --primary: oklch(0.52 0.17 162);
+  --primary-foreground: oklch(0.99 0 0);
+  --muted: oklch(0.96 0.01 166);
+  --muted-foreground: oklch(0.5 0.02 166);
+  --accent: oklch(0.95 0.03 166);
+  --accent-foreground: oklch(0.25 0.04 166);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.93 0.005 166);
+  --input: oklch(0.91 0.01 166);
+  --ring: oklch(0.6 0.17 162);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.13 0.01 166);
+    --foreground: oklch(0.94 0.005 166);
+    --card: oklch(0.17 0.012 166);
+    --card-foreground: oklch(0.94 0.005 166);
+    --primary: oklch(0.7 0.18 162);
+    --primary-foreground: oklch(0.13 0.02 166);
+    --muted: oklch(0.22 0.015 166);
+    --muted-foreground: oklch(0.6 0.02 166);
+    --accent: oklch(0.22 0.02 166);
+    --accent-foreground: oklch(0.9 0.01 166);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(0.28 0.015 166);
+    --input: oklch(0.25 0.015 166);
+    --ring: oklch(0.65 0.17 162);
+  }
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  /* Borrowers arrive on unfamiliar ground and many are keyboard-first;
+     never let a focus ring go missing. */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}
