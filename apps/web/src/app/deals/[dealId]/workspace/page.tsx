@@ -105,8 +105,54 @@ function WorkspaceInner() {
         }}
       />
 
+      {/* ── Mobile deal summary (M11.8): the cockpit is desktop-grade —
+          phones get status, progress, and the actionable surfaces
+          (documents, review), never a 13-column grid. ── */}
+      <div className="scroll-pane flex-1 space-y-4 overflow-y-auto p-4 md:hidden">
+        <div className="glass-card rounded-xl p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Deal status
+          </p>
+          <p className="mt-1 text-lg font-bold">{deal.data?.status ?? "…"}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {(docs.data ?? []).length} documents ·{" "}
+            {(docs.data ?? []).filter((d) => d.status === "processed").length} processed ·{" "}
+            {(issues.data ?? []).length} open issues
+          </p>
+        </div>
+        {progress.data ? (
+          <div className="glass-card rounded-xl p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Review queue
+            </p>
+            <p className="mt-1 text-sm">{progress.data.remaining} awaiting a decision</p>
+            <Link
+              href={`/deals/${dealId}/review`}
+              className="mt-2 inline-block text-sm font-medium text-primary underline underline-offset-2"
+            >
+              Open review queue
+            </Link>
+          </div>
+        ) : null}
+        <div className="glass-card rounded-xl p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Documents
+          </p>
+          <Link
+            href={`/deals/${dealId}/documents`}
+            className="mt-2 inline-block text-sm font-medium text-primary underline underline-offset-2"
+          >
+            Upload & track documents
+          </Link>
+        </div>
+        <p className="px-1 text-xs text-muted-foreground">
+          The full underwriting workspace — spread grid, source viewer, and exports — is designed
+          for desktop. Open Credexis on a larger screen for the complete cockpit.
+        </p>
+      </div>
+
       {/* ── Three zones ─────────────────────────────────────────────── */}
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 max-md:hidden">
         {railOpen && (
           <nav
             aria-label="deal navigation"
@@ -307,7 +353,9 @@ function WorkspaceInner() {
         )}
       </div>
 
-      <MetricsStrip dealId={dealId} scenarioId={scenarioId} />
+      <div className="max-md:hidden">
+        <MetricsStrip dealId={dealId} scenarioId={scenarioId} />
+      </div>
     </div>
   );
 }
