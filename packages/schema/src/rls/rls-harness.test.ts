@@ -356,26 +356,28 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
       const rows = await auditRows();
       expect(rows.length).toBeGreaterThanOrEqual(2);
       const victim = rows[0] as { id: string };
-      const [saved] = await sql`select * from audit_log where id = ${victim.id}`;
-      await sql`delete from audit_log where id = ${victim.id}`;
-      try {
-        const found = await breaks();
-        // The row after the hole no longer matches its recorded predecessor.
-        expect(found.length).toBe(1);
-        expect((found[0] as { reason: string }).reason).toContain("altered or removed");
-      } finally {
-        const r = saved as Record<string, unknown>;
-        // Re-insert with hashes intact: the chain trigger would recompute
-        // them, so disable it for the restore.
-        await sql`alter table audit_log disable trigger audit_log_chain`;
-        await sql`insert into audit_log (id, tenant_id, actor_id, action, table_name, row_id, before, after, created_at, prev_hash, row_hash)
-          values (${r["id"] as string}, ${r["tenant_id"] as string}, ${r["actor_id"] as string | null},
-                  ${r["action"] as string}, ${r["table_name"] as string}, ${r["row_id"] as string},
-                  ${r["before"] as object | null}, ${r["after"] as object | null},
-                  ${r["created_at"] as string}, ${r["prev_hash"] as string | null}, ${r["row_hash"] as string})`;
-        await sql`alter table audit_log enable trigger audit_log_chain`;
-      }
+      // Delete inside a transaction we abort: the break is observed WHILE the
+      // row is missing, then the rollback restores history byte-exactly. A
+      // hand-rebuilt row could be restored subtly wrong and would prove
+      // nothing, so we never rebuild one.
+      let found: readonly unknown[] = [];
+      const ROLLBACK = "intentional-rollback";
+      await sql
+        .begin(async (tx) => {
+          await tx`delete from audit_log where id = ${victim.id}`;
+          // The row after the hole no longer matches its recorded predecessor.
+          found = await tx`select broken_at, reason from verify_audit_chain(${TENANT_A})`;
+          throw new Error(ROLLBACK);
+        })
+        .catch((e: Error) => {
+          if (e.message !== ROLLBACK) throw e;
+        });
+
+      expect(found.length).toBe(1);
+      expect((found[0] as { reason: string }).reason).toContain("altered or removed");
+      // Chain intact and row count unchanged — the test left no damage.
       expect((await breaks()).length).toBe(0);
+      expect((await auditRows()).length).toBe(rows.length);
     });
 
     it("chains are independent per tenant — one tenant's history cannot break another's", async () => {
