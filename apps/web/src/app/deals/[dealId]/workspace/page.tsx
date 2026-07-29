@@ -12,7 +12,7 @@
 import { Suspense, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, FileStack, ListChecks } from "lucide-react";
+import { ArrowRight, FileStack, ListChecks, UserRound } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { MetricsStrip } from "@/components/workspace/metrics-strip";
 import { SpreadGrid, type CellSelection } from "@/components/workspace/spread-grid";
@@ -255,6 +255,13 @@ function WorkspaceInner() {
               >
                 <FileStack className="h-3.5 w-3.5" />
                 Document assignment
+              </Link>
+              <Link
+                href={`/deals/${dealId}/borrower`}
+                className="flex items-center gap-1.5 px-3 py-1 text-sm text-primary hover:underline"
+              >
+                <UserRound className="h-3.5 w-3.5" />
+                Borrower portal
               </Link>
             </RailSection>
           </nav>
