@@ -85,6 +85,39 @@ awaits the same review.
   Management API. Until then the Google button returns a provider-disabled
   error; email/password works.
 
+### Email delivery (M11.7 — LIVE as of 2026-07-29)
+
+Resend is the single sender for both classes of mail:
+
+| Class                                            | Path                                                                                            | Sent by                  |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------ |
+| Auth (confirm / reset / magic-link)              | Supabase Auth → **Resend SMTP** (`smtp.resend.com:465`, user `resend`, pass = `RESEND_API_KEY`) | Supabase                 |
+| Product (invites, approval alerts, daily digest) | Resend **REST** via `packages/shared/src/email`                                                 | web app + Trigger worker |
+
+Configuration that must stay in sync (all three, or mail silently degrades):
+
+- `.env.local` — `RESEND_API_KEY`, `EMAIL_FROM`, `NEXT_PUBLIC_APP_URL`.
+- **Vercel** env vars — same three (the web app sends invite mail).
+- **Trigger.dev** — synced at deploy time by `trigger.config.ts` `syncEnvVars`;
+  the worker sends approval mail and the daily digest.
+
+Gotchas that have already bitten (2026-07-29):
+
+- `EMAIL_FROM=Credexis <notifications@credexis.co>` **must be quoted** in
+  `.env.local` — unquoted `<`/`>` are shell redirection and the whole line
+  fails to parse, leaving the variable unset (see also the inline-comment
+  trap in this doc).
+- `NEXT_PUBLIC_APP_URL` must be an **origin only** — no path. It is the base
+  for every link in every email; a stray `/login` corrupts all of them.
+- Supabase `site_url` / `uri_allow_list` now include the production origin
+  (they were localhost-only, which would have made production password
+  resets link to localhost). Both localhost and prod are allowed.
+- The Resend key in use is a **sending-only restricted key** (it cannot list
+  domains via the API). That is correct least-privilege; don't "fix" it.
+
+Verified end to end on 2026-07-29: a REST send returned a message id, and a
+real `/auth/v1/recover` call delivered a reset email through Resend SMTP.
+
 ### Supabase operations model
 
 Schema/RLS/seeds are applied **token-only**, no dashboard login and no DB
