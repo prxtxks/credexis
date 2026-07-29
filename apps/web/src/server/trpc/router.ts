@@ -13,6 +13,7 @@ import { spreadRouter } from "./routers/spread";
 import { transcriptsRouter } from "./routers/transcripts";
 import { invitesRouter, membersRouter, orgRouter } from "./routers/org";
 import { notificationsRouter } from "./routers/notifications";
+import { profileRouter } from "./routers/profile";
 
 /**
  * Application router (M2.3). Grows with the product; today it carries the
@@ -77,6 +78,9 @@ export const appRouter = router({
 
   /** Entity↔document identity matches (M11.6). */
   identities: identitiesRouter,
+
+  /** Self profile + email preferences (M11.7): self-scoped via definer. */
+  profile: profileRouter,
 });
 
 export type AppRouter = typeof appRouter;

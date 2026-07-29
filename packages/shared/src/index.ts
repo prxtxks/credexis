@@ -8,3 +8,4 @@ export * from "./hash.js";
 export * from "./money/index.js";
 export * from "./normalize/number.js";
 export * from "./match/name-match.js";
+export * from "./email/index.js";

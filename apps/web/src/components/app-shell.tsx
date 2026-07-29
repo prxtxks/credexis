@@ -13,7 +13,15 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Coins, LogOut, PanelLeftClose, PanelLeftOpen, Users } from "lucide-react";
+import {
+  Briefcase,
+  Coins,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings,
+  Users,
+} from "lucide-react";
 import { Logo } from "@/components/logo";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -24,6 +32,7 @@ const NAV = [
   { href: "/", label: "Deals", icon: Briefcase, exact: true },
   { href: "/org/members", label: "Members", icon: Users, exact: false },
   { href: "/costs", label: "Costs", icon: Coins, exact: false },
+  { href: "/settings", label: "Settings", icon: Settings, exact: false },
 ];
 
 export function AppShell({

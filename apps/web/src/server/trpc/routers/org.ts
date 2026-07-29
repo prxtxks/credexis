@@ -10,6 +10,8 @@
 import { createHash, randomBytes } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { inviteEmail } from "@credexis/shared";
+import { appBaseUrl, emailSender } from "../../email";
 import { adminProcedure, protectedProcedure, router, sessionProcedure } from "../init";
 
 export const orgRouter = router({
@@ -156,8 +158,32 @@ export const invitesRouter = router({
         // RLS WITH CHECK failure = lattice denial (e.g. admin minting admin)
         throw new TRPCError({ code: "FORBIDDEN", message: error.message });
       }
+
+      // M11.7: also email the one-time link (advisory — the copyable link
+      // below remains the primary delivery; a failed send loses nothing).
+      let emailSent = false;
+      try {
+        const sender = emailSender();
+        if (sender.enabled) {
+          const { data: org } = await ctx.supabase
+            .from("tenants")
+            .select("name")
+            .eq("id", ctx.profile.tenantId)
+            .single();
+          const rendered = inviteEmail({
+            orgName: (org?.name as string | undefined) ?? "your organization",
+            role: input.role,
+            acceptUrl: `${appBaseUrl()}/invite/accept?token=${token}`,
+            expiresAtLabel: "in 7 days",
+          });
+          emailSent = (await sender.send({ to: input.email.toLowerCase(), ...rendered })).sent;
+        }
+      } catch {
+        emailSent = false;
+      }
+
       // The raw token is returned exactly once for the copyable link.
-      return { inviteId: data?.id as string, token, expiresAt };
+      return { inviteId: data?.id as string, token, expiresAt, emailSent };
     }),
 
   revoke: adminProcedure

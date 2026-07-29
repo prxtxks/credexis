@@ -127,6 +127,20 @@
       "when": 1785296988463,
       "tag": "0017_identities-rls",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785300135390,
+      "tag": "0018_medical_silver_surfer",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1785300136390,
+      "tag": "0019_own-profile-settings",
+      "breakpoints": true
     }
   ]
 }

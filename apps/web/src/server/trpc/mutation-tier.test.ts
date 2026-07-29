@@ -62,6 +62,10 @@ describe("tRPC mutation tier matrix (M10.3)", () => {
    */
   const SELF_SCOPED_EXCEPTIONS: Record<string, readonly string[]> = {
     "notifications.ts": ["setState", "markAllRead"],
+    // profile.update goes through update_own_profile() (SECURITY DEFINER,
+    // auth.uid() row only, full_name/email_notifications columns only) —
+    // every role may manage their own name and email preference.
+    "profile.ts": ["update"],
   };
 
   for (const file of files) {
