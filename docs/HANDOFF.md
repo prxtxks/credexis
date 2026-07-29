@@ -59,6 +59,44 @@ worked because an `ON CONFLICT` could not infer a partial index (0022).
 - Key rotation before real borrower documents arrive — a launch-checklist
   item, not a code blocker (Pratik's call, 2026-07-29).
 
+## UI state, 2026-07-29 evening — READ THIS FIRST if you are picking up UI
+
+Pratik's standing verdict: the app still does not look like a finished
+product, and UI is the top priority. His reference is Vercel's dashboard
+(he is logged in and can supply screenshots of any view).
+
+What has been done: `docs/design/ui-overhaul/00-DESIGN-LANGUAGE.md` (the
+"Precision Instrument" language) and `01-DENSITY-AND-COMPLETENESS.md` (the
+ordered plan, with a delete/merge ledger and a forbidden list worth reading
+before adding anything). Tier 1 shipped: account menu, deal-status control,
+audit viewer, 267 lines of dead UI deleted. Tier 2 partly shipped: the phone
+home now leads with the work (first deal row 484px -> 182px), and a craft
+pass added row surfaces, metadata pills, one shared loader, an always-present
+logo, and removed a duplicated nav entry.
+
+**What Pratik has explicitly rejected as still wrong:**
+
+1. Desktop has had almost no attention — the whole density/craft effort so far
+   has been phone-first. He wants Vercel-grade on BOTH.
+2. `/settings` is still three stacked icon+title cards — the exact repetitive
+   pattern he named twice. Plan step 11 (settings shell + sub-nav + grouped
+   rows, delete `card.tsx`) is written and not started.
+3. "I told you to add world class UI and this is what you changed?" — the
+   honest read is that most of the day went into security and plumbing, and
+   the visible surface still trails the engineering underneath.
+
+**Lessons that cost real time today, do not relearn them:**
+
+- Optimising for a pixel metric produced a bare screen. Dense != bare. Every
+  row needs a surface, an edge, and right-aligned scannable data.
+- Verify UI in a browser at 375px AND at desktop width, against a PRODUCTION
+  build. The dev server renders differently and hid two outages.
+- NEVER `rm -rf .next` while the dev server runs — it corrupts the build and
+  produces blank pages that look like real bugs. I did this twice and once
+  reported a false "users cannot sign in" alarm from it.
+- An agent's confident report is not evidence. Two builds this week called
+  database functions that did not exist. Read the files.
+
 ## Working rules learned the hard way
 
 - **Verify against a production build, never the dev server**, for anything
