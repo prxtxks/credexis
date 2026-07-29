@@ -173,7 +173,7 @@ export default function ReviewPage() {
             <div className="text-[13px] text-muted-foreground">{p.label}</div>
             <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-primary transition-all"
+                className="h-full rounded-full bg-primary transition-[width] duration-250 ease-out"
                 style={{
                   width: p.total === 0 ? "0%" : `${Math.round((p.done / p.total) * 100)}%`,
                 }}
@@ -221,7 +221,10 @@ export default function ReviewPage() {
               </code>
             </div>
 
-            <div className="my-6 font-mono text-4xl font-semibold tabular-nums tracking-tight text-foreground">
+            {/* The number under review IS the screen (design language §2):
+                Geist tabular at display size — identifiers stay mono, money
+                does not. */}
+            <div className="my-6 text-[40px] font-semibold leading-none tabular-nums tracking-tight text-foreground">
               {formatCents(current.valueCents)}
             </div>
 
