@@ -308,6 +308,86 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
     });
   });
 
+  describe("audit tamper evidence (M12.3 hash chain)", () => {
+    // These mutate audit_log directly — only possible as superuser on this
+    // throwaway database, which is exactly the adversary the chain models:
+    // someone with DB credentials rewriting history. Never run against a
+    // real environment.
+    const auditRows = () =>
+      sql`select id, action from audit_log where tenant_id = ${TENANT_A} order by id`;
+    const breaks = () => sql`select broken_at, reason from verify_audit_chain(${TENANT_A})`;
+
+    it("normal writes build an intact chain", async () => {
+      // Any audited write seeds rows; profiles/tenants/invites are audited.
+      await sql`update profiles set full_name = 'Chain Seed 1' where id = ${U.viewerA}`;
+      await sql`update profiles set full_name = 'Chain Seed 2' where id = ${U.viewerA}`;
+      const rows = await auditRows();
+      expect(rows.length).toBeGreaterThanOrEqual(2);
+      expect((await breaks()).length).toBe(0);
+    });
+
+    it("every row commits to its predecessor", async () => {
+      const rows =
+        await sql`select prev_hash, row_hash from audit_log where tenant_id = ${TENANT_A} order by id`;
+      expect((rows[0] as { prev_hash: string | null }).prev_hash).toBeNull();
+      for (let i = 1; i < rows.length; i++) {
+        expect((rows[i] as { prev_hash: string }).prev_hash).toBe(
+          (rows[i - 1] as { row_hash: string }).row_hash,
+        );
+      }
+    });
+
+    it("ALTERING a historical row is detected", async () => {
+      const rows = await auditRows();
+      const victim = rows[0] as { id: string; action: string };
+      await sql`update audit_log set action = 'tampered' where id = ${victim.id}`;
+      try {
+        const found = await breaks();
+        expect(found.length).toBe(1);
+        expect((found[0] as { broken_at: string }).broken_at).toBe(victim.id);
+        expect((found[0] as { reason: string }).reason).toContain("altered");
+      } finally {
+        await sql`update audit_log set action = ${victim.action} where id = ${victim.id}`;
+      }
+      expect((await breaks()).length).toBe(0); // restoring the row restores the chain
+    });
+
+    it("DELETING a historical row is detected", async () => {
+      const rows = await auditRows();
+      expect(rows.length).toBeGreaterThanOrEqual(2);
+      const victim = rows[0] as { id: string };
+      // Delete inside a transaction we abort: the break is observed WHILE the
+      // row is missing, then the rollback restores history byte-exactly. A
+      // hand-rebuilt row could be restored subtly wrong and would prove
+      // nothing, so we never rebuild one.
+      let found: readonly unknown[] = [];
+      const ROLLBACK = "intentional-rollback";
+      await sql
+        .begin(async (tx) => {
+          await tx`delete from audit_log where id = ${victim.id}`;
+          // The row after the hole no longer matches its recorded predecessor.
+          found = await tx`select broken_at, reason from verify_audit_chain(${TENANT_A})`;
+          throw new Error(ROLLBACK);
+        })
+        .catch((e: Error) => {
+          if (e.message !== ROLLBACK) throw e;
+        });
+
+      expect(found.length).toBe(1);
+      expect((found[0] as { reason: string }).reason).toContain("altered or removed");
+      // Chain intact and row count unchanged — the test left no damage.
+      expect((await breaks()).length).toBe(0);
+      expect((await auditRows()).length).toBe(rows.length);
+    });
+
+    it("chains are independent per tenant — one tenant's history cannot break another's", async () => {
+      await sql`update profiles set full_name = 'B seed' where id = ${U.ownerB}`;
+      const [row] = await sql`select count(*)::int as n from verify_audit_chain(${TENANT_B})`;
+      expect((row as { n: number }).n).toBe(0);
+      expect((await breaks()).length).toBe(0);
+    });
+  });
+
   describe("definer EXECUTE surface", () => {
     it("anon cannot execute create_organization", async () => {
       const [row] = await sql`select has_function_privilege('anon',

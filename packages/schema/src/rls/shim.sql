@@ -7,7 +7,12 @@
 --
 -- Test-only. Never applied to a real environment.
 
-create extension if not exists pgcrypto;
+-- Supabase installs extensions into a dedicated `extensions` schema, and
+-- migrations call them schema-qualified (e.g. extensions.digest for the
+-- audit hash chain). Mirror that here or the harness would exercise a
+-- different code path than production.
+create schema if not exists extensions;
+create extension if not exists pgcrypto with schema extensions;
 
 do $$ begin create role anon nologin; exception when duplicate_object then null; end $$;
 do $$ begin create role authenticated nologin; exception when duplicate_object then null; end $$;

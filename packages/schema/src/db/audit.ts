@@ -25,6 +25,15 @@ export const auditLog = pgTable(
     before: jsonb("before").$type<Record<string, unknown>>(),
     after: jsonb("after").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * Tamper-evidence chain (M12.3 GAP list). Each row's `rowHash` is
+     * sha256(prevHash ‖ this row's content), chained per tenant by a BEFORE
+     * INSERT trigger — so altering or deleting any historical row breaks
+     * every hash after it, and `verify_audit_chain()` names the first break.
+     * Hex text (not bytea) so an auditor can read and compare them directly.
+     */
+    prevHash: text("prev_hash"),
+    rowHash: text("row_hash"),
   },
   (t) => [
     index("audit_log_tenant_idx").on(t.tenantId),
