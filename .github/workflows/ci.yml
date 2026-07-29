@@ -126,6 +126,11 @@ jobs:
       # gate costs one `next build` rather than a whole job's setup.
       - name: Production build (apps/web)
         run: pnpm --filter @credexis/web build
+      # The portal is the BORROWER's only surface — an unrenderable portal is
+      # a stranger staring at a dead page with no support path. It gets the
+      # same production-build proof as the staff app.
+      - name: Production build (apps/portal)
+        run: pnpm --filter @credexis/portal build
       # Writes over the dev-server report on purpose: the step only runs when
       # the dev run passed, so the surviving report is always the failing one.
       - name: Production smoke (next start)
