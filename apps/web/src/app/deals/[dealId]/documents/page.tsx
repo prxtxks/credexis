@@ -5,7 +5,7 @@
  * rows → pipeline. Status polls every 2.5s (Trigger.dev Realtime replaces
  * polling in M8.8). The client renders server truth only.
  *
- * V1 restyle (ui-3): frosted AppHeader with a back link to the workspace and
+ * V1 restyle (ui-3): app shell top bar with a back link to the workspace and
  * the deal name as breadcrumb, gradient-mesh page wash, a dashed drop-zone
  * with a drag-over emerald/scale state, and each document a glass card with a
  * 3px type-colored left border, a status badge, and per-stage chips whose
@@ -14,6 +14,7 @@
  */
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   Upload,
@@ -25,7 +26,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -121,13 +122,14 @@ export default function DocumentsPage() {
   const rows = docs.data ?? [];
 
   return (
-    <div className="gradient-mesh min-h-screen">
-      <AppHeader
-        backHref={`/deals/${dealId}/workspace`}
-        backLabel="Back to workspace"
-        breadcrumb={deal.data?.name ?? "…"}
-      />
-
+    <AppShell
+      breadcrumb={deal.data?.name ?? "…"}
+      actions={
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/deals/${dealId}/workspace`}>Back to workspace</Link>
+        </Button>
+      }
+    >
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-5 flex items-end justify-between gap-3">
           <div>
@@ -282,6 +284,6 @@ export default function DocumentsPage() {
           </Button>
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }
