@@ -176,6 +176,30 @@ Companion to `ARCHITECTURE.md` (the spec) and `POSTMORTEM_V1.md` (the traps). Ex
 
 ---
 
+## M11 — Platform shell (MVP 2.5: identity, notifications, validation, UI standard)
+
+Design: `docs/design/platform/00-SYNTHESIS.md` (authoritative) + 01–04.
+Adversarially reviewed 2026-07-28; blocking fixes B1–B4/A1/X1–X5/C1 are
+binding requirements. Standing rules in synthesis §4 apply to every PR.
+
+- **M11.1 UI primitives:** Button v2 (brand geometry: gradient, rounded-lg, Geist semibold) + Skeleton/Tabs/Tooltip/EmptyState/PageHeader/StatTile + reduced-motion; e2e accessible-name invariants (X4) preserved per PR.
+- **M11.2 Org bootstrap:** org enums (`org_kind`), `tenants.settings`, `profiles.status`, `org_owner` value, `parent_tenant_id` seam (NULL-only), `create_organization()` definer, `/signup` + `/welcome` flows.
+- **M11.3 Members & invites:** append-mostly `invites` (token_hash, expiry, revoke) + `/org/members` + `/org/invites`; role-tier lattice enforced in RLS (A1); audit triggers on profiles/invites/tenants; profile settings + password reset + email change.
+- **M11.4 Identity groundwork:** persist split-stage `entity_hint`; deterministic name-matcher in packages/shared (token-set + Jaro-Winkler; fixture table from design 02 §3.7) — pure TDD, no vendor spend.
+- **M11.5 Notifications + shell v2:** notifications schema/router (typed events, capability-derived recipients, hardened fan-out — B1/B4/X3) + left-sidebar shell + top bar with bell/panel; workspace cockpit unchanged inside shell.
+- **M11.6 Entity↔document validation substage:** registry identity TEXT fields (taxpayer/business name, EIN/SSN-last4 where printed) + pipeline substage writing `document_identities` (auto-confirm band OFF initially) + assignment-screen identity UI + "Name matches NN% — approve?" notifications. Gated on eval/CI green.
+
+**Exit gate M11:** a lender org signs up, invites a member, both see brand-standard UI with a working notification bell; a mismatched-name document raises an approvable identity notification with full lineage.
+
+## M12 — Borrower portal & bank-grade hardening (post-walkthrough feedback)
+
+- **M12.1 Borrower portal:** magic-link invites scoped to (deal, entity); upload-only RLS with full path pinning (B2/B3); curated status tracker; checklist-driven uploads; T+7 reminder; upload quotas + AV-before-extraction.
+- **M12.2 Remaining roles:** loan_officer, processor, auditor, it_admin, external per-deal seats; capability layer + team visibility mode.
+- **M12.3 Vendor-security GAP list:** session timeouts, rate limits/lockout, auth event logging, PII-at-rest decision, retention/offboarding, audit tamper evidence, email SPF/DKIM/DMARC + DPA, CSP/headers, RLS harness as CI gate.
+- **M12.4 Email digests + document-request messaging.**
+
+---
+
 ## Dependency map (why this order has no blockers)
 
 ```
