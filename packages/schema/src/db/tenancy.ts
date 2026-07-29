@@ -92,6 +92,9 @@ export const notificationKind = pgEnum("notification_kind", [
   "document_failed",
   "identity_review",
   "review_backlog",
+  // M12.1: a borrower uploaded to a deal. Emitted by a trigger with a fixed
+  // literal title — borrower-supplied text never reaches a staff bell card.
+  "borrower_upload",
 ]);
 
 export const notificationState = pgEnum("notification_state", [

@@ -11,3 +11,4 @@ export * from "./documents.js";
 export * from "./facts.js";
 export * from "./metrics.js";
 export * from "./audit.js";
+export * from "./borrower.js";

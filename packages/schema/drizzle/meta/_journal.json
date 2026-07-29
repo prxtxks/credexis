@@ -176,6 +176,20 @@
       "when": 1785330875157,
       "tag": "0024_audit-hash-chain",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1785333510565,
+      "tag": "0025_cloudy_longshot",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1785333511565,
+      "tag": "0026_borrower-tables-rls",
+      "breakpoints": true
     }
   ]
 }

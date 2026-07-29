@@ -127,3 +127,30 @@ export const registryDtype = pgEnum("registry_dtype", [
 
 /** How a computed metric's value is encoded (money vs ratio — never floats). */
 export const metricValueKind = pgEnum("metric_value_kind", ["cents", "ratio"]);
+
+/* ── Borrower portal (M12.1) ─────────────────────────────────────────── */
+
+/** Lifecycle of a borrower invite claim. */
+export const borrowerInviteStatus = pgEnum("borrower_invite_status", [
+  "pending",
+  "active",
+  "revoked",
+  "expired",
+]);
+
+/**
+ * Broker-controlled CURATED status shown in the portal. Deliberately NOT
+ * deals.status: internal pipeline state must never leak to a borrower.
+ */
+export const borrowerPortalStatus = pgEnum("borrower_portal_status", [
+  "collecting",
+  "in_review",
+  "complete",
+]);
+
+/** A broker's request for one specific document from one borrower. */
+export const documentRequestStatus = pgEnum("document_request_status", [
+  "open",
+  "fulfilled",
+  "withdrawn",
+]);
