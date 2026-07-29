@@ -11,7 +11,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { MailCheck, Sparkles } from "lucide-react";
+import { MailCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,12 +85,10 @@ export default function SignupPage() {
             </div>
           ) : (
             <>
-              <div className="mb-8 text-center">
-                <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                  <Sparkles className="h-3 w-3" />
-                  AI-Powered Underwriting
-                </div>
-                <h1 className="mb-2 text-2xl font-bold">Create your account</h1>
+              <div className="mb-8">
+                <h1 className="mb-1.5 text-2xl font-semibold tracking-tight">
+                  Create your account
+                </h1>
                 <p className="text-sm text-muted-foreground">
                   Lenders, broker firms, and independent brokers — your workspace is next.
                 </p>

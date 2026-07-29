@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
-import { FileSearch, Layers, Shield, Sparkles, Zap } from "lucide-react";
+import { FileSearch, Layers, Shield, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,13 +57,9 @@ function LoginForm() {
     <div className="min-h-screen flex">
       {/* Left panel — brand */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-primary/70" />
-        <div className="absolute inset-0 dot-pattern opacity-20" />
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-white/10 blur-3xl animate-float" />
-        <div
-          className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full bg-white/8 blur-3xl animate-float"
-          style={{ animationDelay: "2s" }}
-        />
+        {/* Deep brand field + faint dot texture — no floating decor (ui-12). */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary to-[oklch(0.32_0.09_168)]" />
+        <div className="absolute inset-0 dot-pattern opacity-15" />
 
         <div className="relative z-10 flex flex-col justify-between w-full p-12">
           <div className="flex items-center gap-2.5">
@@ -127,15 +123,11 @@ function LoginForm() {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="glass-card rounded-2xl p-8 border border-border/50 glow-sm"
+            className="glass-card rounded-[20px] p-8"
           >
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">
-                <Sparkles className="w-3 h-3" />
-                AI-Powered Underwriting
-              </div>
-              <h1 className="text-2xl font-bold mb-2">Credexis</h1>
-              <p className="text-muted-foreground text-sm">Sign in to your workspace.</p>
+            <div className="mb-8">
+              <h1 className="text-2xl font-semibold tracking-tight mb-1.5">Welcome back</h1>
+              <p className="text-muted-foreground text-sm">Sign in to your Credexis workspace.</p>
             </div>
 
             <form onSubmit={signInWithEmail} className="space-y-4">
