@@ -3,7 +3,7 @@
 /**
  * App shell v2 (ui-7, design 03 §2 — Vercel/Linear-class): persistent
  * left sidebar (nav + collapse) and a slim top bar (breadcrumb slot,
- * bell, theme, sign out) for every page-style surface. The deal
+ * bell, account menu) for every page-style surface. The deal
  * WORKSPACE deliberately keeps its own cockpit chrome (X4 e2e contracts
  * live there); this shell wraps everything else. Collapse state is a
  * cookie-free useState — persistence intentionally cut (verdict CUT:
@@ -13,19 +13,10 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Briefcase,
-  Coins,
-  LogOut,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Settings,
-  Users,
-} from "lucide-react";
+import { Briefcase, Coins, PanelLeftClose, PanelLeftOpen, Settings, Users } from "lucide-react";
+import { AccountMenu } from "@/components/account-menu";
 import { Logo } from "@/components/logo";
 import { NotificationsBell } from "@/components/notifications-bell";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -119,19 +110,10 @@ export function AppShell({
           <div className="ml-auto flex items-center gap-2">
             {actions}
             <NotificationsBell />
-            <ThemeToggle />
-            <form action="/auth/signout" method="post">
-              <Button
-                variant="ghost"
-                size="sm"
-                type="submit"
-                aria-label="Sign out"
-                className="gap-1.5 rounded-full text-muted-foreground"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="max-sm:hidden">Sign out</span>
-              </Button>
-            </form>
+            {/* Identity, theme and sign out now live behind one control
+                (ui-14-2). /login keeps its own ThemeToggle — it renders
+                outside this shell. */}
+            <AccountMenu />
           </div>
         </header>
         <div className="gradient-mesh min-w-0 flex-1 max-md:pb-20">{children}</div>
