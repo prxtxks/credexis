@@ -388,16 +388,150 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
     });
   });
 
-  describe("borrower invites — org side (M12.1 PR1)", () => {
-    const mint = (tx: Sql, by: string, extra = "") =>
-      tx.unsafe(
-        `insert into borrower_invites
-           (tenant_id, deal_id, email, token_hash, display_label, invited_by, expires_at ${extra ? ", " + extra.split("=")[0] : ""})
-         values ('${TENANT_A}', '${DEAL_A}', 'borrower@test.dev',
-                 'hash-${by}-${extra}', 'Alpha Deal', '${by}', now() + interval '30 days'
-                 ${extra ? ", " + extra.split("=")[1] : ""})
-         returning id`,
+  describe("borrowers — durable identity (M12.1)", () => {
+    const addBorrower = (
+      tx: Sql,
+      by: string,
+      tenant: string,
+      email: string,
+      name = "Jane Q Borrower",
+    ) =>
+      tx`insert into borrowers (tenant_id, full_name, email, created_by)
+         values (${tenant}, ${name}, ${email}, ${by}) returning id`;
+
+    afterAll(async () => {
+      await sql`delete from borrowers where email like '%@borrower-test.dev'`;
+    });
+
+    it("underwriter+ can add a borrower; viewers cannot", async () => {
+      const rows = await asUser(sql, U.underwriterA, (tx) =>
+        addBorrower(tx, U.underwriterA, TENANT_A, "one@borrower-test.dev"),
       );
+      expect(rows.length).toBe(1);
+      await expectDenied(() =>
+        asUser(sql, U.viewerA, (tx) =>
+          addBorrower(tx, U.viewerA, TENANT_A, "two@borrower-test.dev"),
+        ),
+      );
+    });
+
+    it("the same email twice in ONE tenant is rejected (identity is unique)", async () => {
+      await asUser(sql, U.underwriterA, (tx) =>
+        addBorrower(tx, U.underwriterA, TENANT_A, "dup@borrower-test.dev"),
+      );
+      // Case-insensitively — an address variant is the same person.
+      await expectDenied(() =>
+        asUser(sql, U.underwriterA, (tx) =>
+          addBorrower(tx, U.underwriterA, TENANT_A, "DUP@Borrower-Test.dev"),
+        ),
+      );
+    });
+
+    it("the same email in a DIFFERENT tenant is allowed — and invisible either way", async () => {
+      // Two lenders may legitimately both work with the same borrower. A
+      // global unique index would not only reject this, it would leak that
+      // another tenant holds them.
+      const rows = await asUser(sql, U.ownerB, (tx) =>
+        addBorrower(tx, U.ownerB, TENANT_B, "dup@borrower-test.dev"),
+      );
+      expect(rows.length).toBe(1);
+      const seenByA = await asUser(
+        sql,
+        U.underwriterA,
+        (tx) => tx`select id from borrowers where lower(email) = 'dup@borrower-test.dev'`,
+      );
+      expect(seenByA.length).toBe(1); // only their own
+    });
+
+    it("a borrower cannot be moved to another tenant (column grant)", async () => {
+      const [b] = await asUser(sql, U.underwriterA, (tx) =>
+        addBorrower(tx, U.underwriterA, TENANT_A, "move@borrower-test.dev"),
+      );
+      const id = (b as { id: string }).id;
+      await expectDenied(() =>
+        asUser(
+          sql,
+          U.underwriterA,
+          (tx) => tx`update borrowers set tenant_id = ${TENANT_B} where id = ${id}`,
+        ),
+      );
+      // …but correcting the name is allowed, proving the row is reachable.
+      const ok = await asUser(
+        sql,
+        U.underwriterA,
+        (tx) =>
+          tx`update borrowers set full_name = 'Jane Q. Borrower' where id = ${id} returning id`,
+      );
+      expect(ok.length).toBe(1);
+    });
+
+    it("changing the email while a live invite is bound to it is refused", async () => {
+      const [b] = await asUser(sql, U.underwriterA, (tx) =>
+        addBorrower(tx, U.underwriterA, TENANT_A, "bound@borrower-test.dev"),
+      );
+      const bid = (b as { id: string }).id;
+      const [inv] = await asUser(
+        sql,
+        U.underwriterA,
+        (tx) => tx`insert into borrower_invites
+             (tenant_id, deal_id, borrower_id, email, token_hash, display_label, invited_by, expires_at)
+           values (${TENANT_A}, ${DEAL_A}, ${bid}, 'bound@borrower-test.dev', 'hash-bound',
+                   'Alpha Deal', ${U.underwriterA}, now() + interval '30 days') returning id`,
+      );
+      const invId = (inv as { id: string }).id;
+      try {
+        // A silent re-target would break the claim binding without anyone
+        // seeing it; revoke-and-re-mint is the visible path.
+        const err = await expectDenied(() =>
+          asUser(
+            sql,
+            U.underwriterA,
+            (tx) =>
+              tx`update borrowers set email = 'elsewhere@borrower-test.dev' where id = ${bid}`,
+          ),
+        );
+        expect(err.message).toContain("live invite");
+      } finally {
+        await sql`delete from borrower_invites where id = ${invId}`;
+      }
+    });
+
+    it("one live invite per borrower per deal", async () => {
+      const [b] = await asUser(sql, U.underwriterA, (tx) =>
+        addBorrower(tx, U.underwriterA, TENANT_A, "once@borrower-test.dev"),
+      );
+      const bid = (b as { id: string }).id;
+      const mint = (tx: Sql, hash: string) =>
+        tx`insert into borrower_invites
+             (tenant_id, deal_id, borrower_id, email, token_hash, display_label, invited_by, expires_at)
+           values (${TENANT_A}, ${DEAL_A}, ${bid}, 'once@borrower-test.dev', ${hash},
+                   'Alpha Deal', ${U.underwriterA}, now() + interval '30 days') returning id`;
+      const [first] = await asUser(sql, U.underwriterA, (tx) => mint(tx, "hash-once-1"));
+      try {
+        await expectDenied(() => asUser(sql, U.underwriterA, (tx) => mint(tx, "hash-once-2")));
+      } finally {
+        await sql`delete from borrower_invites where id = ${(first as { id: string }).id}`;
+      }
+    });
+  });
+
+  describe("borrower invites — org side (M12.1 PR1)", () => {
+    let borrowerA = "";
+    let hashSeq = 0;
+
+    beforeAll(async () => {
+      const [b] = await sql`insert into borrowers (tenant_id, full_name, email, created_by)
+        values (${TENANT_A}, 'Invite Fixture', 'invite-fixture@borrower-test.dev',
+                ${U.underwriterA}) returning id`;
+      borrowerA = (b as { id: string }).id;
+    });
+
+    const mint = (tx: Sql, by: string) =>
+      tx`insert into borrower_invites
+           (tenant_id, deal_id, borrower_id, email, token_hash, display_label, invited_by, expires_at)
+         values (${TENANT_A}, ${DEAL_A}, ${borrowerA}, 'borrower@test.dev',
+                 ${`hash-${by}-${hashSeq++}`}, 'Alpha Deal', ${by}, now() + interval '30 days')
+         returning id`;
 
     it("underwriter+ can mint an invite on their own deal", async () => {
       const rows = await asUser(sql, U.underwriterA, (tx) => mint(tx, U.underwriterA));
@@ -416,8 +550,8 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
           U.underwriterA,
           (tx) =>
             tx`insert into borrower_invites
-               (tenant_id, deal_id, email, token_hash, display_label, invited_by, expires_at)
-             values (${TENANT_A}, ${DEAL_B}, 'x@test.dev', 'hash-cross', 'X',
+               (tenant_id, deal_id, borrower_id, email, token_hash, display_label, invited_by, expires_at)
+             values (${TENANT_A}, ${DEAL_B}, ${borrowerA}, 'x@test.dev', 'hash-cross', 'X',
                      ${U.underwriterA}, now() + interval '30 days')`,
         ),
       );

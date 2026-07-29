@@ -45,6 +45,7 @@ describe("schema completeness (Blueprint §5)", () => {
       "learned_mappings",
       "policy_packs",
       "transcript_consents", // M9.2
+      "borrowers", // M12.1
       "borrower_invites", // M12.1
       "document_requests", // M12.1
     ];
