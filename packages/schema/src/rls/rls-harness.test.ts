@@ -221,6 +221,93 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
     });
   });
 
+  describe("deal upload limits (M12.1 backstop trigger)", () => {
+    const insertDoc = (tx: Sql, n: number, bytes: number) =>
+      tx`insert into documents (tenant_id, deal_id, file_name, storage_path, sha256, bytes, mime_type)
+         values (${TENANT_A}, ${DEAL_A}, ${"q" + n + ".pdf"},
+                 ${TENANT_A + "/deals/" + DEAL_A + "/uploads/q" + n + ".pdf"},
+                 ${String(n).padStart(64, "0")}, ${bytes}, 'application/pdf')
+         returning id`;
+
+    it("doc-count limit binds even for legitimate uploaders", async () => {
+      await sql`update tenants set settings = '{"limits":{"maxDocsPerDeal":2}}' where id = ${TENANT_A}`;
+      try {
+        await asUser(sql, U.underwriterA, (tx) => insertDoc(tx, 1, 100));
+        await asUser(sql, U.underwriterA, (tx) => insertDoc(tx, 2, 100));
+        const err = await expectDenied(() =>
+          asUser(sql, U.underwriterA, (tx) => insertDoc(tx, 3, 100)),
+        );
+        expect(err.message).toContain("document limit");
+      } finally {
+        await sql`delete from documents where deal_id = ${DEAL_A}`;
+        await sql`update tenants set settings = '{}' where id = ${TENANT_A}`;
+      }
+    });
+
+    it("byte limit binds; superuser/service-role inserts are NOT exempt", async () => {
+      await sql`update tenants set settings = '{"limits":{"maxBytesPerDeal":1000}}' where id = ${TENANT_A}`;
+      try {
+        await asUser(sql, U.underwriterA, (tx) => insertDoc(tx, 4, 600));
+        // The backstop is a BEFORE INSERT trigger, not RLS — even the
+        // superuser connection (the worker's posture) hits the wall.
+        const err = await expectDenied(() => insertDoc(sql, 5, 600));
+        expect(err.message).toContain("storage limit");
+      } finally {
+        await sql`delete from documents where deal_id = ${DEAL_A}`;
+        await sql`update tenants set settings = '{}' where id = ${TENANT_A}`;
+      }
+    });
+
+    it("CONCURRENT inserts cannot exceed the quota (advisory lock, 0022)", async () => {
+      // The first cut read-then-checked with no lock: N parallel uploads
+      // each saw the pre-burst count and all committed. This fires 10 at
+      // once against a limit of 3 — exactly the borrower threat model.
+      await sql`update tenants set settings = '{"limits":{"maxDocsPerDeal":3}}' where id = ${TENANT_A}`;
+      try {
+        const attempts = await Promise.allSettled(
+          Array.from({ length: 10 }, (_, i) =>
+            asUser(sql, U.underwriterA, (tx) => insertDoc(tx, 100 + i, 10)),
+          ),
+        );
+        const accepted = attempts.filter((a) => a.status === "fulfilled").length;
+        const [row] = await sql`select count(*)::int as n from documents where deal_id = ${DEAL_A}`;
+        expect(accepted).toBe(3);
+        expect((row as { n: number }).n).toBe(3);
+      } finally {
+        await sql`delete from documents where deal_id = ${DEAL_A}`;
+        await sql`update tenants set settings = '{}' where id = ${TENANT_A}`;
+      }
+    });
+
+    it("JSON-string overrides are ignored by BOTH parsers (no route/DB disagreement)", async () => {
+      // {"maxDocsPerDeal":"2"} is a string, not a number: resolveDealLimits
+      // rejects it, so the DB must too — otherwise the route's friendly
+      // wall sits at 60 while the trigger rejects at 2, surfacing as a
+      // confusing hard error instead of the quota message.
+      await sql`update tenants set settings = '{"limits":{"maxDocsPerDeal":"2"}}' where id = ${TENANT_A}`;
+      try {
+        for (let i = 0; i < 3; i++) {
+          const rows = await asUser(sql, U.underwriterA, (tx) => insertDoc(tx, 200 + i, 10));
+          expect(rows.length).toBe(1);
+        }
+      } finally {
+        await sql`delete from documents where deal_id = ${DEAL_A}`;
+        await sql`update tenants set settings = '{}' where id = ${TENANT_A}`;
+      }
+    });
+
+    it("malformed limit overrides fall back to defaults, never off", async () => {
+      await sql`update tenants set settings = '{"limits":{"maxDocsPerDeal":"lots","maxBytesPerDeal":-5}}' where id = ${TENANT_A}`;
+      try {
+        const rows = await asUser(sql, U.underwriterA, (tx) => insertDoc(tx, 6, 100));
+        expect(rows.length).toBe(1); // defaults (60 / 1 GiB) allow it
+      } finally {
+        await sql`delete from documents where deal_id = ${DEAL_A}`;
+        await sql`update tenants set settings = '{}' where id = ${TENANT_A}`;
+      }
+    });
+  });
+
   describe("definer EXECUTE surface", () => {
     it("anon cannot execute create_organization", async () => {
       const [row] = await sql`select has_function_privilege('anon',
