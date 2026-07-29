@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
@@ -206,6 +207,13 @@ function LoginForm() {
                 {error}
               </p>
             ) : null}
+
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              New to Credexis?{" "}
+              <Link href="/signup" className="font-medium text-primary hover:underline">
+                Create an account
+              </Link>
+            </p>
 
             <div className="mt-6 pt-5 border-t border-border/50">
               <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">

@@ -9,8 +9,9 @@
  * cards with hover lift, staggered reveals.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Activity, Briefcase, CheckCircle2, Coins, Plus, X } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
@@ -143,9 +144,19 @@ function NewDealWizard({ onDone }: { onDone: (dealId: string) => void }) {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const board = trpc.deals.board.useQuery(undefined, { refetchInterval: 15_000 });
   const [showWizard, setShowWizard] = useState(false);
   const utils = trpc.useUtils();
+
+  // M11.2: a signed-in account with no workspace bootstraps at /welcome
+  // (replaces the old dead end where every query just said FORBIDDEN).
+  const bootstrap = trpc.org.bootstrap.useQuery(undefined, {
+    enabled: board.error?.data?.code === "FORBIDDEN",
+  });
+  useEffect(() => {
+    if (bootstrap.data && !bootstrap.data.hasProfile) router.replace("/welcome");
+  }, [bootstrap.data, router]);
 
   const deals = board.data ?? [];
   const reviewCount = deals.filter((d) => d.status === "review").length;
