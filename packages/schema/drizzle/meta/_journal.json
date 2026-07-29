@@ -225,6 +225,13 @@
       "when": 1785334443931,
       "tag": "0031_borrower-upload-guards",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1785334444931,
+      "tag": "0032_org-owner-writes",
+      "breakpoints": true
     }
   ]
 }

@@ -1078,6 +1078,63 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
     });
   });
 
+  describe("org_owner can write (M12.3 — the onboarding lockout, migration 0032)", () => {
+    // 0001 wrote every tenant WRITE policy as ('admin','underwriter').
+    // org_owner arrived in 0010 and no migration amended them, while
+    // create_organization() stamps every org creator org_owner. So the
+    // person who signs up owned a workspace they could not use. These
+    // scenarios exist so that can never silently return.
+    it("the org owner can create a deal in their own workspace", async () => {
+      const [pack] = await sql`select id from policy_packs limit 1`;
+      const rows = await asUser(
+        sql,
+        U.ownerA,
+        (tx) => tx`insert into deals (tenant_id, name, type, policy_pack_id)
+                   values (${TENANT_A}, 'Owner Deal', 'working_capital',
+                           ${(pack as { id: string }).id}) returning id`,
+      );
+      expect(rows.length).toBe(1);
+      await sql`delete from deals where id = ${(rows[0] as { id: string }).id}`;
+    });
+
+    it("the org owner can update a deal", async () => {
+      const rows = await asUser(
+        sql,
+        U.ownerA,
+        (tx) => tx`update deals set name = 'Renamed by owner' where id = ${DEAL_A} returning id`,
+      );
+      expect(rows.length).toBe(1);
+      await sql`update deals set name = 'Alpha Deal' where id = ${DEAL_A}`;
+    });
+
+    it("every tier-2+ role can write, and viewers still cannot", async () => {
+      for (const uid of [U.ownerA, U.adminA, U.underwriterA]) {
+        const rows = await asUser(
+          sql,
+          uid,
+          (tx) => tx`update deals set name = name where id = ${DEAL_A} returning id`,
+        );
+        expect(rows.length, `uid ${uid} should write`).toBe(1);
+      }
+      const denied = await asUser(
+        sql,
+        U.viewerA,
+        (tx) => tx`update deals set name = 'nope' where id = ${DEAL_A} returning id`,
+      );
+      expect(denied.length).toBe(0);
+    });
+
+    it("the audit log no longer out-ranks the tables it audits", async () => {
+      // invites_select needs tier 3, but audit_log_select had no role
+      // predicate — so a viewer could read invitee emails, granted roles and
+      // token hashes out of audit rows they were forbidden at the source.
+      const viewerSees = await asUser(sql, U.viewerA, (tx) => tx`select id from audit_log limit 1`);
+      expect(viewerSees.length).toBe(0);
+      const adminSees = await asUser(sql, U.adminA, (tx) => tx`select id from audit_log limit 1`);
+      expect(adminSees.length).toBe(1);
+    });
+  });
+
   describe("definer EXECUTE surface", () => {
     it("anon cannot execute create_organization", async () => {
       const [row] = await sql`select has_function_privilege('anon',
