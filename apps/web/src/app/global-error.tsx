@@ -42,7 +42,7 @@ export default function GlobalError({
             <p className="mb-6 text-sm text-muted-foreground">
               The error has been reported. Your data is unchanged.
             </p>
-            <Button onClick={reset} className="gradient-btn rounded-full border-0 px-6">
+            <Button onClick={reset} className="px-6">
               Try again
             </Button>
           </div>

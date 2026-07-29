@@ -129,7 +129,7 @@ function NewDealWizard({ onDone }: { onDone: (dealId: string) => void }) {
           create.mutate({ name, type, entities: entities.filter((e) => e.name.trim() !== "") })
         }
         disabled={create.isPending || name.trim() === ""}
-        className="gradient-btn rounded-full border-0 px-6"
+        className="px-6"
       >
         Create deal
       </Button>
@@ -202,10 +202,7 @@ export default function DashboardPage() {
               Intake through complete — documents in, pro-forma out.
             </p>
           </div>
-          <Button
-            onClick={() => setShowWizard((v) => !v)}
-            className="gradient-btn rounded-full border-0 px-5"
-          >
+          <Button onClick={() => setShowWizard((v) => !v)} className="px-5">
             {showWizard ? (
               <>
                 <X className="mr-1.5 h-4 w-4" />

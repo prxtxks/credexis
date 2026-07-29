@@ -210,7 +210,6 @@ export default function AssignmentPage() {
                           disabled={
                             assign.isPending || (!dirty && (row.entityConfirmed || !row.entityId))
                           }
-                          className={cn("rounded-full", dirty && "gradient-btn border-0")}
                         >
                           {assign.isPending && (
                             <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
