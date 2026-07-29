@@ -239,6 +239,9 @@ importers:
       '@credexis/schema':
         specifier: workspace:*
         version: link:../schema
+      '@credexis/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       '@types/node':
         specifier: 24.2.0

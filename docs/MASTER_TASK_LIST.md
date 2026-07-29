@@ -128,6 +128,7 @@ Companion to `ARCHITECTURE.md` (the spec) and `POSTMORTEM_V1.md` (the traps). Ex
 - **M7.4 Global cash flow:** guarantor personal income aggregation (1040/W-2/K-1 facts) − living expense input − personal debt service; combined DSCR.
 - **M7.5 Policy evaluation:** pass/fail/margin per policy rule; deal pins its policy_pack_version.
 - **M7.6 Golden pro-forma tests** **[PRATIK]**: 3–5 complete real deals with expert-built Excel outcomes → engine must reproduce every metric to the cent (or documented rounding diff). These are the engine's constitution.
+  - ✅ Harness scaffolded (2026-07): `packages/eval/src/golden.ts` + `golden.test.ts` replay every `packages/eval/golden-deals/<deal>/deal.json` through `computeMetrics` with cent-exact assertions; `golden-deals/README.md` is the intake contract (integer-cent strings, folder = workbook + canonical JSON, synthetic-flag honesty rules). Waiting on the expert's real deals — drop a folder in and CI enforces it forever.
 - **M7.7 Recompute orchestration:** any fact/addback/scenario mutation → server recompute → computed_metrics upsert → UI invalidation. No client math anywhere (CI grep-check for arithmetic on metric fields in `apps/web`).
 
 **Exit gate M7:** golden deals reproduce expert Excel; override → recompute round-trip < 2s.

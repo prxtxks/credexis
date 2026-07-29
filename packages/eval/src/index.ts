@@ -10,3 +10,4 @@ export * from "./report.js";
 export * from "./mock-extractors.js";
 export { loadCorpus } from "./corpus.js";
 export * from "./classification.js";
+export * from "./golden.js";

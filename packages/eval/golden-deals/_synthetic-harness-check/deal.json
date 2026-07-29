@@ -1,0 +1,75 @@
+{
+  "id": "_synthetic-harness-check",
+  "synthetic": true,
+  "notes": "Harness self-check ONLY — proves loader → engine → cent-exact comparator plumbing. Never evidence of engine correctness, never counted in accuracy claims (Iron Law #9). Numbers chosen so every expectation is verifiable by hand: EBITDA = 150,000 NI + 20,000 tax + 30,000 depr = $200,000; SDE = + 80,000 officer comp + 5,000 one-time = $285,000; CFADS = − 60,000 replacement salary = $225,000; personal CF = 120,000 − 70,000 = $50,000; global CF = $275,000. The loan is 0% APR precisely so debt service is trivial arithmetic: $1,200,000 / 120 months = $10,000/mo → $120,000/yr. DSCR business = 225,000/120,000 = 1.875 → banker's rounding at scale 2 → 1.88; DSCR global = 275,000/120,000 = 2.2916… → 2.29.",
+  "facts": [
+    {
+      "entityId": "opco",
+      "periodLabel": "FY2024",
+      "taxonomyNodeKey": "is.net_income",
+      "valueCents": "15000000"
+    },
+    {
+      "entityId": "opco",
+      "periodLabel": "FY2024",
+      "taxonomyNodeKey": "is.income_tax",
+      "valueCents": "2000000"
+    },
+    {
+      "entityId": "opco",
+      "periodLabel": "FY2024",
+      "taxonomyNodeKey": "is.opex.depreciation",
+      "valueCents": "3000000"
+    },
+    {
+      "entityId": "guarantor",
+      "periodLabel": "FY2024",
+      "taxonomyNodeKey": "pcf.income.total",
+      "valueCents": "12000000"
+    },
+    {
+      "entityId": "guarantor",
+      "periodLabel": "FY2024",
+      "taxonomyNodeKey": "pcf.outflow.total",
+      "valueCents": "7000000"
+    }
+  ],
+  "addbacks": [
+    {
+      "entityId": "opco",
+      "periodLabel": "FY2024",
+      "category": "officer_comp",
+      "amountCents": "8000000"
+    },
+    { "entityId": "opco", "periodLabel": "FY2024", "category": "one_time", "amountCents": "500000" }
+  ],
+  "scenario": {
+    "amountCents": "120000000",
+    "termMonths": 120,
+    "rateSteps": [{ "fromMonth": 1, "annualRateBps": 0 }],
+    "replacementSalaryCents": "6000000"
+  },
+  "expected": [
+    { "metric": "net_income", "entityId": "opco", "periodLabel": "FY2024", "cents": "15000000" },
+    { "metric": "ebitda", "entityId": "opco", "periodLabel": "FY2024", "cents": "20000000" },
+    { "metric": "sde", "entityId": "opco", "periodLabel": "FY2024", "cents": "28500000" },
+    { "metric": "cfads", "entityId": "opco", "periodLabel": "FY2024", "cents": "22500000" },
+    {
+      "metric": "personal_cash_flow",
+      "entityId": "guarantor",
+      "periodLabel": "FY2024",
+      "cents": "5000000"
+    },
+    {
+      "metric": "global_cash_flow",
+      "entityId": null,
+      "periodLabel": "FY2024",
+      "cents": "27500000"
+    },
+    { "metric": "annual_debt_service", "entityId": null, "periodLabel": null, "cents": "12000000" },
+    { "metric": "loan_amount", "entityId": null, "periodLabel": null, "cents": "120000000" },
+    { "metric": "term_months", "entityId": null, "periodLabel": null, "ratio": "120" },
+    { "metric": "dscr_business", "entityId": "opco", "periodLabel": "FY2024", "ratio": "1.88" },
+    { "metric": "dscr_global", "entityId": null, "periodLabel": "FY2024", "ratio": "2.29" }
+  ]
+}
