@@ -1,0 +1,75 @@
+Verification pass done against the repo (`0001_rls-v1.sql`, `0003_storage-layout.sql`, `packages/pipeline/src/{supabase.ts,ingest.ts}`, `apps/web/e2e/*.spec.ts`, `apps/web/src/components/workspace/workspace-toolbar.tsx`, ARCHITECTURE.md §2). Verdict follows.
+
+# ADVERSARIAL REVIEW VERDICT
+
+## BLOCKING (must fix in synthesis)
+
+**B1 — `notify()` is a borrower-controlled spoofing/flooding channel into bank staff's UI.** Design B grants `EXECUTE ... TO authenticated` and its guard admits "a borrower with an active invite on p_deal." Supabase exposes definer functions as RPC endpoints, so any borrower JWT can call `notify()` directly with **arbitrary `title`/`body`/`action_url`** targeting every profile in the lender's tenant ("Deal approved — click here"), bypassing the portal route entirely. Fix: the definer must derive type/title/body internally from a caller-class whitelist (borrower callers may only produce `borrower_upload` events keyed to their invite), validate `action_url` is app-relative inside the function, and rate-limit per invite — or replace borrower fan-out with an AFTER INSERT trigger on `documents`.
+
+**B2 — Borrower `documents` INSERT policy enables a cross-tenant confused-deputy via the pipeline.** The policy pins `deal_id`/`tenant_id` to the invite but leaves `storage_path` (and `sha256`) unconstrained. Verified: `ingest.ts:66` only checks payload-vs-row tenant/deal match, then `ingest.ts:77` downloads `doc.storagePath` with the **service-role** client (`supabase.ts` header confirms service key in worker). A borrower can insert a row whose `storage_path` points at _another tenant's_ object; the worker will ingest that tenant's tax return into the borrower's deal, surfacing its contents as facts to the lender. Fix both ends: RLS `WITH CHECK` that `storage_path` starts with `<invite.tenant>/deals/<invite.deal>/borrower-uploads/<invite.id>/`, plus a defense-in-depth assertion in `runIngest` that `storagePath` is prefixed by `${doc.tenantId}/deals/${doc.dealId}/`. Also note the `documents_deal_sha256_unique` 409 path is a hash-existence oracle and lets a borrower squat a sha256 to block a future org upload.
+
+**B3 — Borrower storage policy is off-by-one against its own key convention.** Stated key: `<tenant_id>/deals/<deal_id>/borrower-uploads/<invite_id>/<sha>.<ext>` → `foldername` segments are `[tenant, 'deals', deal_id, 'borrower-uploads', invite_id]`, but the policy checks `[3] = 'borrower-uploads'` and `[4]::uuid = invite`. As written every legitimate upload is rejected; if the key is "fixed" to match the policy, the **deal segment disappears and is never validated against the invite's deal** in either reading. Pin every segment explicitly, and cover it in the RLS integration harness.
+
+**B4 — The worker-detection guard in `notify()` is wrong on two axes.** Inside a SECURITY DEFINER function `current_user` is the function _owner_, never `credexis_worker`; and the pipeline doesn't connect as `credexis_worker` anyway — it uses the service-role key (`supabase.ts`), for which RLS and the proposed GRANT are moot. As sketched, pipeline fan-out either fails outright or the guard is dead code. Design C's `notifications_worker_insert ... to credexis_worker` has the same reality mismatch (and C also claims "admins fan out member events" while sketching no authenticated INSERT policy at all). Synthesis must pick one honest worker posture: service-role inserts with explicit tenant checks in code (the existing, documented pattern), or actually landing the M3 "connect as worker role" plan first.
+
+**A1 — org_owner is demotable/deactivatable by admins, and invite tier-escalation is app-layer only.** `profiles_update_admin` USING passes for an admin editing the org*owner's row; WITH CHECK only blocks setting a role \_to* org*owner, not \_from* it — an admin can demote or `status='deactivated'` the accountable principal at the DB layer. Similarly `invites_insert` WITH CHECK only requires `members.manage`, so an admin (or `it_admin`!) can mint an `org_owner` or `admin` invite via direct PostgREST, bypassing the tRPC "nobody grants above their tier" guard. Encode the tier lattice in the RLS predicates / `accept_invite`, not just tRPC. Related: `it_admin` holding `members.manage` is itself an escalation path to deal data (invite an admin, control their onboarding) — the matrix's "it_admin sees no deal data" is soft; either restrict it_admin's grantable roles in RLS or document the accepted escalation.
+
+**X1 — A and C ship two conflicting membership/invite schemas.** A: `invites` (token_hash, expiry, revoked_at, append-mostly, definer accept) vs C: `invitations` (no token at all, mutable text `status`, `FOR ALL` admin policy incl. DELETE — violates append-mostly, iron law #5 spirit). C's policies also hardcode `current_user_role() = 'admin'` literals, which break the moment A's `org_owner` exists (an owner couldn't manage invites), and C's `profiles_admin_update_role` (WITH CHECK = tenant only) reintroduces the exact self/owner-escalation A's policies try to prevent. **Synthesis: Design A's §4/§7 is authoritative; delete Design C §5 invitations/profiles-policy sketches entirely.** Also reconcile routes: C's `/settings/members` vs A's `/org/members`.
+
+**X2 — B and C ship two conflicting notification schemas.** `type` text+zod vs `kind` pg enum; `state` 4-value enum + guard trigger vs `read_at`-only + column grant; nullable `action_url` vs NOT NULL `href`; dedupe/digest columns vs none; different event vocabularies. **Synthesis: B's schema is the superset and better argued — adopt it (with B1/B4 fixed), delete C's; C's UI (bell/popover/`/notifications`) binds to B's router.**
+
+**X3 — Notification recipients contradict the RBAC matrix.** B's fallback recipient set is "all admin/underwriter profiles" and owner = `deals.created_by`. Under A: (a) `org_owner` is excluded from the fallback; (b) a `loan_officer` can create deals, so the "82% match — Approve?" notification lands on someone the matrix forbids from deciding (`identity.approve` is `facts.decide`). Recipient rules must be capability-derived (`facts.decide` holders, or deal `lead` in A's `deal_members`) — and B's open question §5.1 is literally answered by A's `deal_members`; wire them together instead of inventing an owner concept.
+
+**X4 — Design C breaks these live e2e accessible-name contracts** (verified against specs):
+
+- `getByRole("heading", { name: "M8.9 Workspace Deal" })` (`workspace-e2e.live.spec.ts:145`), `"M4.8 Tax Spread Deal"` (`tax-spread-e2e.live.spec.ts:109`), `"M9 Transcript Deal"` (`transcripts-e2e.live.spec.ts:95`) — the deal name is the `<h1>` in `workspace-toolbar.tsx:70`, which C deletes in favor of a top-bar breadcrumb (breadcrumbs are not headings).
+- `getByRole("button", { name: "Scenario" })` (`workspace-e2e:148`) and `getByRole("button", { name: /Issues/ })` (`transcripts-e2e:110`) — converting inspector pills to Radix Tabs changes role `button` → `tab`.
+- `getByRole("heading", { name: /Queue clear/ })` (`review-e2e:148`) — extracting the review empty state into `EmptyState` loses the heading role unless the component's title is mandated to render as `<h2>/<h3>`.
+- At risk: `"accept"`/`"correct"` `exact:true` (`review-e2e:152,156`) under Button v2 — the known shadcn inline-flex label-splitting trap (single-`<span>` rule must be a stated invariant); `getByText("✓ 2023.pdf")`/`"✓ test-upload.pdf"` if the ✓ text becomes an icon+Tooltip.
+  Each shell migration PR (steps 5–6 especially) must either preserve these names or update the spec in the same PR.
+
+**C1 — Iron law 3/8 violation in C's Badge spec.** "DSCR traffic light (`bg-dscr-good/warn/bad` — thresholds from policy pack at render time)" has the _client_ comparing a metric to a threshold, i.e., computing the compliance adjudication. The engine/`computed_metrics` + policy evaluation already produce a server-side band (the metrics strip consumes it) — the badge must render a server-provided status string, never compare numbers.
+
+**X5 — Migration number collision.** A claims `0010–0014`; B claims `0010/0011/0012`. Renumber once in synthesis; also B's G7 `ALTER TYPE ... ADD VALUE` same-transaction caveat applies equally to A's six `user_role` values under Drizzle's transactional runner — both need the values landed one migration _file_ ahead of first reference, which A states but B's step table doesn't fully honor (0012 adds G7 and tables referencing it).
+
+## ADVISORY
+
+1. **`can_access_deal()` per-row cost**: the tenant-settings subquery + EXISTS runs per row on hot tables (facts, pages). Fine while `open` short-circuits, but measure before enabling `team` mode; consider caching mode in a claim or definer-stable lookup.
+2. **A's `profiles_update_self` WITH CHECK** does a same-table subselect to pin `role` — fragile under RLS evaluation; column-level grants (`GRANT UPDATE (full_name)`) are simpler and provably closed.
+3. **`borrower_portal_state(p_invite, families jsonb)`** taking caller-supplied form-family sets turns the checklist into a deal-composition oracle (a borrower can probe which form families exist on the deal, including other guarantors' filings). Move the checklist definition server-side (table or function-embedded) and return only the curated list.
+4. **Borrower invite is entity-scoped but the identity substage ignores it**: `uploaded_via_invite_id → entity_id` is a strong deterministic prior for B §3 matching; use it.
+5. **Hardcoded operational constants** that belong in `tenants.settings` (which A creates — B's open Q4 is already answered): chase cadence T+3/T+7/weekly, digest hour, notification retention 90/180d, review-backlog threshold N. Not SOP policy (law #8 doesn't apply), but make them config, not literals.
+6. **CI reality check**: A step `0013`'s acceptance gate is "M6.6 live e2e green before/after," and B steps 5–7 gate on `pnpm eval` — but GitHub Actions is billing-blocked and Anthropic credits are exhausted right now. Do not land the 50-policy swap or the identity substage until those gates can actually run.
+7. **Portal holds the Trigger.dev trigger secret** — scope it to the ingest task only; a leaked portal env otherwise triggers arbitrary pipeline tasks.
+8. B's claim in §0.4 (entity_hint dropped at persistence) and the `taxonomy-mapper.ts` levenshtein precedent checked out; the name-matcher design itself is iron-law-clean (LLM locates only, deterministic scoring, non-money strings kept out of `facts`, lineage on `document_identities`). Good.
+9. `outbound_emails` stores borrower email + subject lines — include it in the tenant retention/deletion story.
+
+## CUT (pre-pilot)
+
+- **A**: `processor`, `it_admin`, `auditor`, `external` roles; `deal_members` + `team` mode + `decider` grants; the `role_capabilities` layer and the entire `0013` 50-policy drop/recreate; MFA _enforcement_ middleware (keep optional TOTP enroll); ownership-transfer ceremony; session-inventory question. Pre-pilot needs: `org_owner`, the `/welcome` bootstrap, internal invites, deactivation — all achievable on the existing 3-role floor + one enum value. The capability layer is good architecture, wrong quarter.
+- **B**: digest email infrastructure + retention purge task (in-app + at most one immediate email class first); `document_requests` messaging seam; nickname table (ship empty-table seam); weekly chase cadence (one reminder at T+7 suffices for pilots).
+- **C**: `user_prefs` table + prefs router (the cookie already solves sidebar state — a DB table for a boolean is pure ceremony); density toggle; Command palette + `search.query` router; global `/documents` surface; `/costs`→`/reports` rename (churn, zero user value); "source peek"/"cell history" signature interactions → roadmap, not scope.
+
+## GAP (a bank vendor-security review WILL ask; none of the three designs answer)
+
+1. **Idle timeout / absolute session lifetime** for the org app (FFIEC-shaped expectation) — only borrower session lifetimes are discussed.
+2. **Rate limiting & lockout** beyond OTP issuance: login brute force, invite issuance, portal upload frequency.
+3. **Borrower upload quota / pipeline cost ceiling** — every portal upload triggers paid Reducto+Claude extraction under an internet-facing surface; per-invite caps (count/day, total) are a security _and_ solvency control.
+4. **Authentication event logging** — `audit_log` covers table mutations only; sign-ins, failed logins, OTP issuance, session revocations aren't captured anywhere queryable per tenant.
+5. **PII at rest**: EIN/SSN-last4 column encryption decision (B open Q2), and full-document retention/deletion policy incl. borrower right-to-delete and tenant offboarding export.
+6. **Audit-log retention + tamper evidence** (hash-chain or WORM export) for the "auditability wedge" story to survive scrutiny.
+7. **Email authenticity**: SPF/DKIM/DMARC + provider DPA for borrower-facing magic links and reminders (phishing-lookalike surface), and the subprocessor list (Supabase, Vercel, Trigger.dev, Reducto, Anthropic, email vendor).
+8. **Key rotation**: memory already flags Supabase/Trigger/Azure keys pending rotation — mandatory before any real borrower data touches the portal.
+9. **Portal hardening basics**: CSP/security headers, AV verdict enforced _before_ extraction (not just scanned-eventually), MIME sniffing.
+10. **RLS regression harness as a required gate** for every new policy in all three designs (B mentions a pen-test pass once; make it CI).
+
+## RECOMMENDED BUILD ORDER (first 6 PRs)
+
+1. **C step 1 — primitives PR**: Button v2 + Skeleton/Tabs/Tooltip/EmptyState/PageHeader/StatTile + reduced-motion CSS, with the e2e name-invariants (X4) written into the PR checklist. No schema, unblocks everything visual.
+2. **A-lite — `0010` org enums + `tenants.settings` + `profiles.status` + `org_owner` value only**, `create_organization()` bootstrap, `/welcome` + `/signup` (fixes the live signup dead-end — highest-value auth gap pre-pilot).
+3. **A-lite — internal `invites` (A's table, RLS-enforced tier guard per A1) + `/org/members`, `/org/invites`** on the existing 3-role floor; audit triggers on profiles/invites/tenants.
+4. **B step 2+3 — persist `entity_hint` through `runIngest` + `packages/shared` name-matcher with the §3.7 fixture table** (pure code + one column; TDD; no vendor spend, so CI-viable today).
+5. **Notifications — B's schema with B1/B4 fixed** (hardened `notify()`, honest worker write path) + `notifications` router + C's bell/popover in the new shell top bar (C step 2's shell layout rides in here or immediately before).
+6. **B steps 4–6 — `0012_identity` tables + registry identity fields + identity substage (auto band OFF) + assignment-screen identity UI** — gated on eval/CI being restored (Advisory 6).
+
+The borrower portal (B steps 8–10) is deliberately **not** in the first six: it is the largest attack surface, it depends on notifications + identity + the B1–B3 fixes, and the pilot can run with underwriter-side uploads. Land it seventh, preceded by the RLS integration harness covering §1.4's enumeration and the quota/AV gaps above.
