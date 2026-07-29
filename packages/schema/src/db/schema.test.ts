@@ -36,6 +36,7 @@ describe("schema completeness (Blueprint §5)", () => {
       "loan_scenarios",
       "invites",
       "notifications",
+      "document_identities",
       "computed_metrics",
       "issues",
       "audit_log",

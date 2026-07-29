@@ -12,13 +12,17 @@
  */
 
 import type { FormDefinition } from "../types.js";
-import { money } from "./helpers.js";
+import { identityText, money } from "./helpers.js";
 
 export const F1120S: FormDefinition = {
   formFamily: "1120S",
   baseYear: 2023,
   base: {
     fields: [
+      identityText(
+        "f1120s.corp_name",
+        "Name of corporation (as printed at the top of Form 1120-S)",
+      ),
       money("f1120s.line1a", "1a", "Gross receipts or sales"),
       money("f1120s.line1b", "1b", "Returns and allowances", { sign: -1 }),
       money("f1120s.line1c", "1c", "Balance (1a minus 1b)", {
@@ -148,6 +152,7 @@ export const F1120: FormDefinition = {
   baseYear: 2023,
   base: {
     fields: [
+      identityText("f1120.corp_name", "Name of corporation (as printed at the top of Form 1120)"),
       money("f1120.line1a", "1a", "Gross receipts or sales"),
       money("f1120.line1b", "1b", "Returns and allowances", { sign: -1 }),
       money("f1120.line1c", "1c", "Balance (1a minus 1b)", {
@@ -251,6 +256,10 @@ export const F1065: FormDefinition = {
   baseYear: 2023,
   base: {
     fields: [
+      identityText(
+        "f1065.partnership_name",
+        "Name of partnership (as printed at the top of Form 1065)",
+      ),
       money("f1065.line1a", "1a", "Gross receipts or sales"),
       money("f1065.line1b", "1b", "Returns and allowances", { sign: -1 }),
       money("f1065.line1c", "1c", "Balance (1a minus 1b)", {

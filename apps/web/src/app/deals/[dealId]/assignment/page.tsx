@@ -36,6 +36,11 @@ export default function AssignmentPage() {
   const utils = trpc.useUtils();
   const deal = trpc.deals.get.useQuery({ dealId });
   const list = trpc.assignment.list.useQuery({ dealId });
+  // M11.6: printed-name identity matches per logical document.
+  const identities = trpc.identities.forDeal.useQuery({ dealId });
+  const decideIdentity = trpc.identities.decide.useMutation({
+    onSuccess: () => void utils.identities.forDeal.invalidate({ dealId }),
+  });
   const entities = trpc.assignment.entities.useQuery({ dealId });
   const assign = trpc.assignment.assign.useMutation({
     onSuccess: () => void utils.assignment.list.invalidate({ dealId }),
@@ -151,7 +156,43 @@ export default function AssignmentPage() {
                   const dirty = Object.keys(draft).length > 0;
                   return (
                     <TableRow key={row.id}>
-                      <TableCell className="font-medium">{row.fileName}</TableCell>
+                      <TableCell className="font-medium">
+                        {row.fileName}
+                        {(identities.data ?? [])
+                          .filter((i) => i.logicalDocumentId === row.id && i.state === "suggested")
+                          .map((i) => (
+                            <span
+                              key={i.id}
+                              className={cn(
+                                "mt-1 flex items-center gap-1.5 text-[11px] font-normal",
+                                i.band === "high"
+                                  ? "text-primary"
+                                  : i.band === "mid"
+                                    ? "text-severity-warning"
+                                    : "text-severity-critical",
+                              )}
+                            >
+                              &ldquo;{i.extractedName}&rdquo; — matches{" "}
+                              {Math.round(i.scoreBps / 100)}%
+                              <button
+                                className="underline underline-offset-2"
+                                onClick={() =>
+                                  decideIdentity.mutate({ identityId: i.id, state: "confirmed" })
+                                }
+                              >
+                                approve
+                              </button>
+                              <button
+                                className="text-muted-foreground underline underline-offset-2"
+                                onClick={() =>
+                                  decideIdentity.mutate({ identityId: i.id, state: "rejected" })
+                                }
+                              >
+                                reject
+                              </button>
+                            </span>
+                          ))}
+                      </TableCell>
                       <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
                         {row.pageStart}–{row.pageEnd}
                       </TableCell>

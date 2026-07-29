@@ -189,6 +189,9 @@ binding requirements. Standing rules in synthesis §4 apply to every PR.
 - **M11.5 Notifications + shell v2:** notifications schema/router (typed events, capability-derived recipients, hardened fan-out — B1/B4/X3) + left-sidebar shell + top bar with bell/panel; workspace cockpit unchanged inside shell.
 - **M11.6 Entity↔document validation substage:** registry identity TEXT fields (taxpayer/business name, EIN/SSN-last4 where printed) + pipeline substage writing `document_identities` (auto-confirm band OFF initially) + assignment-screen identity UI + "Name matches NN% — approve?" notifications. Gated on eval/CI green.
 
+- **M11.7 Email infrastructure (Resend) [PRATIK: provision Resend + domain]:** route Supabase auth emails (confirm/reset/magic-link) through Resend SMTP on the brand domain; notification emails driven by the same events as the bell (immediate for approvals, daily digest otherwise); per-user email preferences page (toggle per notification kind); templates render server-side from event data only (B1 discipline); SPF/DKIM/DMARC per the M12.3 GAP list.
+- **M11.8 Responsive / mobile pass:** iOS-app-clean mobile experience with deliberate feature restriction — phones get dashboard, deal status, notifications, review approvals, uploads, members; spread grid / source viewer / XLSX stay desktop-only (pointed there explicitly); tablets get the full app.
+
 **Exit gate M11:** a lender org signs up, invites a member, both see brand-standard UI with a working notification bell; a mismatched-name document raises an approvable identity notification with full lineage.
 
 ## M12 — Borrower portal & bank-grade hardening (post-walkthrough feedback)

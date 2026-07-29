@@ -6,7 +6,7 @@
  */
 
 import type { FormDefinition } from "../types.js";
-import { money } from "./helpers.js";
+import { identityText, money } from "./helpers.js";
 
 export const F4562: FormDefinition = {
   formFamily: "4562",
@@ -127,6 +127,11 @@ export const K1_1120S: FormDefinition = {
   baseYear: 2023,
   base: {
     fields: [
+      identityText(
+        "k1s.shareholder_name",
+        "Shareholder's name (Part II item F1 of Schedule K-1)",
+        "The individual shareholder's printed name — not the corporation in Part I.",
+      ),
       money("k1s.box1", "1", "Ordinary business income (loss)", {
         taxonomyNodeKey: "pcf.income.k1",
       }),

@@ -84,3 +84,61 @@ export const assignmentRouter = router({
       return { logicalDocumentId: data.id as string };
     }),
 });
+
+/**
+ * M11.6: identity matches for the assignment screen — the printed name,
+ * its deterministic score, and the suggested entity, keyed by logical
+ * document. Deciding (confirm/reject) is underwriter-tier; RLS enforces
+ * the same floor.
+ */
+export const identitiesRouter = router({
+  forDeal: protectedProcedure
+    .input(z.object({ dealId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      // Identities reach the deal through logical_documents → documents.
+      const { data, error } = await ctx.supabase
+        .from("document_identities")
+        .select(
+          "id, logical_document_id, entity_id, extracted_name, source_page, method, score_bps, band, state, logical_documents(document_id, documents(deal_id))",
+        )
+        .eq("tenant_id", ctx.profile.tenantId);
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+      return (data ?? [])
+        .filter((r) => {
+          const ld = r.logical_documents as unknown as {
+            documents: { deal_id: string } | null;
+          } | null;
+          return ld?.documents?.deal_id === input.dealId;
+        })
+        .map((r) => ({
+          id: r.id as string,
+          logicalDocumentId: r.logical_document_id as string,
+          entityId: (r.entity_id as string | null) ?? null,
+          extractedName: r.extracted_name as string,
+          sourcePage: (r.source_page as number | null) ?? null,
+          method: r.method as string,
+          scoreBps: r.score_bps as number,
+          band: r.band as string,
+          state: r.state as string,
+        }));
+    }),
+
+  decide: underwriterProcedure
+    .input(
+      z.object({
+        identityId: z.string().uuid(),
+        state: z.enum(["confirmed", "rejected"]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { data, error } = await ctx.supabase
+        .from("document_identities")
+        .update({ state: input.state })
+        .eq("id", input.identityId)
+        .select("id")
+        .maybeSingle();
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+      if (!data) throw new TRPCError({ code: "NOT_FOUND", message: "identity match not found" });
+      return { id: data.id as string, state: input.state };
+    }),
+});

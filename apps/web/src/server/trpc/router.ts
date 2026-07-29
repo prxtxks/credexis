@@ -1,6 +1,6 @@
 import { protectedProcedure, publicProcedure, router } from "./init";
 import { addbacksRouter } from "./routers/addbacks";
-import { assignmentRouter } from "./routers/assignment";
+import { assignmentRouter, identitiesRouter } from "./routers/assignment";
 import { dealsRouter } from "./routers/deals";
 import { documentsRouter } from "./routers/documents";
 import { issuesRouter } from "./routers/issues";
@@ -74,6 +74,9 @@ export const appRouter = router({
 
   /** Notification center (M11.5): self-scoped reads + state changes. */
   notifications: notificationsRouter,
+
+  /** Entity↔document identity matches (M11.6). */
+  identities: identitiesRouter,
 });
 
 export type AppRouter = typeof appRouter;

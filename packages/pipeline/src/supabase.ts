@@ -135,10 +135,19 @@ export function supabaseExtractDb(client: SupabaseClient): ExtractDbPort {
     async getDealEntities(dealId: string) {
       const { data, error } = await client
         .from("entities")
-        .select("id, kind")
+        .select("id, kind, name")
         .eq("deal_id", dealId);
       if (error) throw new Error(`entities select: ${error.message}`);
-      return (data ?? []).map((e) => ({ id: e.id as string, kind: e.kind as string }));
+      return (data ?? []).map((e) => ({
+        id: e.id as string,
+        kind: e.kind as string,
+        name: (e.name as string | null) ?? "",
+      }));
+    },
+
+    async insertDocumentIdentity(row) {
+      const { error } = await client.from("document_identities").insert(row);
+      if (error) throw new Error(`document_identities insert: ${error.message}`);
     },
 
     async findOrCreatePeriod(row) {
