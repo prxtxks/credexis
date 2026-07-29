@@ -430,21 +430,8 @@
 }
 
 /* Glow effects */
-.glow-sm {
-  box-shadow: 0 0 15px oklch(0.6 0.17 162 / 15%);
-}
-
-.dark .glow-sm {
-  box-shadow: 0 0 15px oklch(0.65 0.17 162 / 12%);
-}
-
-.glow-md {
-  box-shadow: 0 0 30px oklch(0.6 0.17 162 / 20%);
-}
-
-.dark .glow-md {
-  box-shadow: 0 0 30px oklch(0.65 0.17 162 / 15%);
-}
+/* Glow utilities retired (ui-12, design language §2): elevation is carried
+   by opaque surfaces + hairlines + real shadows, never accent halos. */
 
 /* Shimmer effect for skeletons */
 .shimmer {

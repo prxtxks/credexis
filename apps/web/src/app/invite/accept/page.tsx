@@ -35,7 +35,7 @@ function AcceptInner() {
 
   return (
     <div className="gradient-mesh flex min-h-screen items-center justify-center">
-      <div className="glass-card glow-sm w-full max-w-md rounded-2xl border border-border/50 p-8 text-center">
+      <div className="glass-card w-full max-w-md rounded-2xl border border-border/50 p-8 text-center">
         <div className="mb-4 flex justify-center">
           <img src="/logo-credexis.svg" alt="Credexis" className="h-10 w-10" />
         </div>

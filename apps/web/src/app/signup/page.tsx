@@ -68,7 +68,7 @@ export default function SignupPage() {
           <span className="text-xl font-bold tracking-tight">Credexis</span>
         </div>
 
-        <div className="glass-card glow-sm rounded-2xl border border-border/50 p-8">
+        <div className="glass-card rounded-[20px] p-8">
           {confirmSent ? (
             <div className="flex flex-col items-center gap-3 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
