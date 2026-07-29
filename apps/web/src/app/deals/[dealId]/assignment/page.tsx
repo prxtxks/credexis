@@ -5,19 +5,20 @@
  * Stage-S made. Every save is one audited mutation; the client renders
  * server truth and edits labels — it never computes (Iron Law #3).
  *
- * V1 restyle (ui-3): mounted under the frosted AppHeader (back → workspace,
+ * V1 restyle (ui-3): mounted under the app shell top bar (back → workspace,
  * breadcrumb = deal name) over the gradient mesh; the picker table lives in a
  * glass Card using the shadcn Table primitives. Native <select>s keep the
  * draft/save behavior byte-for-byte and avoid Radix-portal test flakiness.
  */
 
 import { useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { AlertCircle, Check, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { ASSIGNABLE_FAMILIES } from "@/lib/form-families";
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -91,14 +92,14 @@ export default function AssignmentPage() {
   const rows = list.data ?? [];
 
   return (
-    <div className="gradient-mesh min-h-screen">
-      <AppHeader
-        backHref={`/deals/${dealId}/workspace`}
-        backLabel="Back to workspace"
-        breadcrumb={deal.data?.name ?? "Deal"}
-        badges={["Assignment"]}
-      />
-
+    <AppShell
+      breadcrumb={deal.data?.name ?? "Deal"}
+      actions={
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/deals/${dealId}/workspace`}>Back to workspace</Link>
+        </Button>
+      }
+    >
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <h1 className="flex items-center gap-2 text-xl font-semibold text-foreground">
@@ -273,6 +274,6 @@ export default function AssignmentPage() {
           </div>
         )}
       </main>
-    </div>
+    </AppShell>
   );
 }

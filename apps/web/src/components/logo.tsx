@@ -16,11 +16,14 @@ export function Logo({
   tagline,
   href = "/",
   onColor = false,
+  iconOnly = false,
 }: {
   size?: "sm" | "md" | undefined;
   tagline?: string | undefined;
   href?: string | null | undefined;
   onColor?: boolean | undefined;
+  /** Mark only (collapsed sidebar): image without the wordmark. */
+  iconOnly?: boolean | undefined;
 }) {
   const mark = (
     <>
@@ -29,27 +32,29 @@ export function Logo({
         alt="Credexis"
         className={cn(size === "sm" ? "h-6 w-6" : "h-7 w-7", onColor && "brightness-0 invert")}
       />
-      <div>
-        <span
-          className={cn(
-            "font-bold tracking-tight",
-            size === "sm" ? "text-lg" : "text-xl",
-            onColor && "text-white",
-          )}
-        >
-          Credexis
-        </span>
-        {tagline ? (
+      {iconOnly ? null : (
+        <div>
           <span
             className={cn(
-              "ml-2 hidden text-xs sm:inline",
-              onColor ? "text-white/70" : "text-muted-foreground",
+              "font-bold tracking-tight",
+              size === "sm" ? "text-lg" : "text-xl",
+              onColor && "text-white",
             )}
           >
-            {tagline}
+            Credexis
           </span>
-        ) : null}
-      </div>
+          {tagline ? (
+            <span
+              className={cn(
+                "ml-2 hidden text-xs sm:inline",
+                onColor ? "text-white/70" : "text-muted-foreground",
+              )}
+            >
+              {tagline}
+            </span>
+          ) : null}
+        </div>
+      )}
     </>
   );
 

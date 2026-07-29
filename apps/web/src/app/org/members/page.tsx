@@ -11,7 +11,7 @@ import { useState } from "react";
 import { Copy, ShieldCheck, UserPlus, UserX } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -76,8 +76,7 @@ export default function MembersPage() {
   const pending = (invites.data ?? []).filter((i) => !i.acceptedAt && !i.revokedAt);
 
   return (
-    <div className="gradient-mesh min-h-screen">
-      <AppHeader backHref="/" backLabel="Back to deals" tagline="Organization" />
+    <AppShell breadcrumb="Organization">
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <PageHeader
           title="Members & invites"
@@ -240,6 +239,6 @@ export default function MembersPage() {
           </section>
         ) : null}
       </main>
-    </div>
+    </AppShell>
   );
 }

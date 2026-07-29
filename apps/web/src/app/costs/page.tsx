@@ -10,7 +10,7 @@
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { formatMicroUsd } from "@/lib/money-display";
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
 import {
   Table,
   TableBody,
@@ -24,9 +24,7 @@ export default function CostsPage() {
   const costs = trpc.pipeline.costs.useQuery(undefined, { refetchInterval: 30_000 });
 
   return (
-    <div className="gradient-mesh min-h-screen">
-      <AppHeader backHref="/" backLabel="Back to deals" breadcrumb="Extraction costs" />
-
+    <AppShell breadcrumb="Extraction costs">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-5">
           <h1 className="text-xl font-bold tracking-tight">Extraction costs</h1>
@@ -104,6 +102,6 @@ export default function CostsPage() {
           </div>
         )}
       </main>
-    </div>
+    </AppShell>
   );
 }

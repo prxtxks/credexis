@@ -13,11 +13,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Activity, Briefcase, CheckCircle2, Coins, Plus, X } from "lucide-react";
+import { Activity, Briefcase, CheckCircle2, Plus, X } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { checklistFor } from "@/lib/doc-checklist";
 import { formatRatio } from "@/components/workspace/metrics-strip";
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -169,16 +169,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="gradient-mesh min-h-screen">
-      <AppHeader tagline="SBA 7(a) Underwriting">
-        <Button asChild variant="ghost" size="sm" className="rounded-full text-muted-foreground">
-          <Link href="/costs">
-            <Coins className="mr-1.5 h-4 w-4" />
-            costs
-          </Link>
-        </Button>
-      </AppHeader>
-
+    <AppShell breadcrumb="SBA 7(a) Underwriting">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Stat tiles */}
         <motion.div
@@ -316,6 +307,6 @@ export default function DashboardPage() {
           })}
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }
