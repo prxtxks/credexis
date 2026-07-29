@@ -37,7 +37,7 @@ export const dealsRouter = router({
     const [dealsRes, ldRes, dscrRes, issuesRes] = await Promise.all([
       ctx.supabase
         .from("deals")
-        .select("id, name, type, status, created_at")
+        .select("id, name, type, status, created_at, updated_at")
         .order("created_at", { ascending: false }),
       ctx.supabase.from("logical_documents").select("document_id, form_family, documents(deal_id)"),
       ctx.supabase
@@ -86,6 +86,9 @@ export const dealsRouter = router({
       type: d.type as string,
       status: d.status as string,
       createdAt: d.created_at as string,
+      // The row says "Updated …"; it must be the real mtime, not created_at
+      // wearing a different label.
+      updatedAt: (d.updated_at as string | null) ?? (d.created_at as string),
       formFamilies: [...(familiesByDeal.get(d.id as string) ?? [])],
       dscr: dscrByDeal.get(d.id as string) ?? null,
       openIssues: issuesByDeal.get(d.id as string) ?? 0,

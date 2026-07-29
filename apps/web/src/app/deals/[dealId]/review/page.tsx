@@ -32,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const SEVERITY_CLASS: Record<string, string> = {
   critical: "bg-severity-critical text-white",
@@ -132,17 +133,7 @@ export default function ReviewPage() {
   if (queue.isLoading) {
     return shell(
       <main className="mx-auto flex max-w-4xl flex-col items-center gap-4 px-4 py-24 sm:px-6 lg:px-8">
-        <div className="grid-loader">
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-        </div>
+        <PageLoading />
         <p className="text-sm text-muted-foreground">Loading review queue…</p>
       </main>,
     );

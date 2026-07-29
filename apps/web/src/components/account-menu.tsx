@@ -19,8 +19,7 @@
  * dead-UI sweep (step 1) only on the condition that this step consume it.
  */
 
-import Link from "next/link";
-import { LogOut, Moon, Settings, Sun, UserRound } from "lucide-react";
+import { LogOut, Moon, Sun, UserRound } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { useIsDark } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -124,13 +123,6 @@ export function AccountMenu() {
           ) : null}
 
           <DropdownMenuSeparator />
-
-          <DropdownMenuItem asChild className="rounded-lg text-[13px]">
-            <Link href="/settings">
-              <Settings />
-              <span>Settings</span>
-            </Link>
-          </DropdownMenuItem>
 
           <DropdownMenuItem
             className="rounded-lg text-[13px]"

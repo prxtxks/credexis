@@ -97,13 +97,15 @@ export function AppShell({
       {/* ── Main column ── */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="frosted-toolbar sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 px-4">
-          {/* Mobile: breadcrumb IS the page title; the wordmark appears only
-              where there is no context to show (design language §3). */}
-          <span className={cn("md:hidden", breadcrumb && "max-md:hidden")}>
-            <Logo size="sm" />
+          {/* The brand mark is ALWAYS present on mobile — hiding it whenever a
+              breadcrumb existed meant the logo appeared on no real page at all.
+              Mark only (not the wordmark) so it costs 28px and the breadcrumb
+              still reads as the page title. */}
+          <span className="md:hidden">
+            <Logo size="sm" href="/" iconOnly />
           </span>
           {breadcrumb ? (
-            <span className="truncate text-sm text-muted-foreground max-md:text-[15px] max-md:font-semibold max-md:text-foreground">
+            <span className="text-muted-foreground truncate text-sm max-md:text-[15px] max-md:font-semibold max-md:text-foreground">
               {breadcrumb}
             </span>
           ) : null}
