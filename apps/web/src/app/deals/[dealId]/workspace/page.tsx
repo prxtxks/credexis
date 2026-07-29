@@ -115,9 +115,10 @@ function WorkspaceInner() {
           </p>
           <p className="mt-1 text-lg font-bold">{deal.data?.status ?? "…"}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {(docs.data ?? []).length} documents ·{" "}
+            {(docs.data ?? []).length} {(docs.data ?? []).length === 1 ? "document" : "documents"} ·{" "}
             {(docs.data ?? []).filter((d) => d.status === "processed").length} processed ·{" "}
-            {(issues.data ?? []).length} open issues
+            {(issues.data ?? []).length} open{" "}
+            {(issues.data ?? []).length === 1 ? "issue" : "issues"}
           </p>
         </div>
         {progress.data ? (

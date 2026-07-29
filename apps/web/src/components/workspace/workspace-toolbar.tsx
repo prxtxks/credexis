@@ -66,9 +66,13 @@ export function WorkspaceToolbar({
           <ArrowLeft className="h-4 w-4" />
         </Link>
       </Button>
-      <Logo size="sm" />
-      <div className="mx-1 h-6 w-px bg-border" />
-      <h1 className="truncate text-sm font-semibold">{dealName}</h1>
+      {/* Phones: the deal name IS the title — wordmark and the rail/panel
+          toggles (which control desktop-only zones) get out of the way. */}
+      <span className="max-md:hidden">
+        <Logo size="sm" />
+      </span>
+      <div className="mx-1 h-6 w-px bg-border max-md:hidden" />
+      <h1 className="truncate text-sm font-semibold max-md:text-[15px]">{dealName}</h1>
       <Badge variant="secondary" className="rounded-full font-normal shrink-0">
         {dealType.replaceAll("_", " ")}
       </Badge>
@@ -77,7 +81,7 @@ export function WorkspaceToolbar({
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 rounded-full"
+          className="h-9 w-9 rounded-full max-md:hidden"
           aria-label={railOpen ? "Collapse rail" : "Expand rail"}
           onClick={onToggleRail}
         >
@@ -120,7 +124,7 @@ export function WorkspaceToolbar({
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 rounded-full"
+          className="h-9 w-9 rounded-full max-md:hidden"
           aria-label={panelOpen ? "Collapse inspector" : "Expand inspector"}
           onClick={onTogglePanel}
         >
