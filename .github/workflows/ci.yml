@@ -113,6 +113,25 @@ jobs:
       - run: pnpm exec turbo run build --filter='./packages/*'
       - run: pnpm --filter @credexis/web exec playwright install --with-deps chromium
       - run: pnpm test:e2e
+      # 2026-07-29 outage gate. Every browser check above drives the DEV
+      # server, which renders every route dynamically and ships a relaxed
+      # CSP. Both defects that reached production that day
+      # (a route Suspense fallback that never resolved; a CSP that blocked
+      # every script) existed ONLY in the production path and let `next build`
+      # exit 0. So build for real, serve it with `next start`, and assert in a
+      # browser that the app renders and hydrates — see e2e/prod-smoke.spec.ts.
+      #
+      # Bolted onto this job instead of a sixth job on purpose: checkout, pnpm
+      # install and the Chromium download are already paid for here, so the
+      # gate costs one `next build` rather than a whole job's setup.
+      - name: Production build (apps/web)
+        run: pnpm --filter @credexis/web build
+      # Writes over the dev-server report on purpose: the step only runs when
+      # the dev run passed, so the surviving report is always the failing one.
+      - name: Production smoke (next start)
+        env:
+          E2E_PROD: "1"
+        run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
