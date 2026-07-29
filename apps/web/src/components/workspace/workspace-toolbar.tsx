@@ -23,6 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
+import { NotificationsBell } from "@/components/notifications-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
@@ -125,6 +126,7 @@ export function WorkspaceToolbar({
         >
           {panelOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRight className="h-4 w-4" />}
         </Button>
+        <NotificationsBell />
         <ThemeToggle />
       </div>
     </header>
