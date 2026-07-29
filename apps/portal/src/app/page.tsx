@@ -9,6 +9,7 @@ import {
   type PortalUpload,
 } from "@/lib/portal-state";
 import { createClient } from "@/lib/supabase/server";
+import { UploadPanel } from "@/components/upload-panel";
 
 /**
  * The borrower's only screen. Per-user and authenticated, so it must never be
@@ -171,12 +172,9 @@ function InviteSection({ invite, asH1 }: { invite: PortalState; asH1: boolean })
             ))}
           </ul>
         )}
-        {/* Uploading from this page arrives in the next PR (design 05 §12,
-            PR 6). Saying so beats a disabled button the borrower will poke. */}
-        <p className="text-muted-foreground mt-4 text-xs leading-relaxed">
-          Sending files from this page isn&apos;t available yet — reply to your loan officer&apos;s
-          email to send documents.
-        </p>
+        <div className="mt-6 border-t pt-6">
+          <UploadPanel />
+        </div>
       </Card>
     </section>
   );
