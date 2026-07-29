@@ -19,6 +19,27 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export async function prepareDatabase(sql: Sql): Promise<void> {
   await sql.unsafe(readFileSync(join(HERE, "shim.sql"), "utf8"));
   await migrate(drizzle(sql), { migrationsFolder: join(HERE, "../../drizzle") });
+  // Reconcile grants to the live Supabase END-STATE. On a real project the
+  // platform's default privileges grant API roles access to every new
+  // table/function and the migrations then revoke selectively; default
+  // privileges proved unreliable under the harness runner, so the same
+  // end-state is (re)applied explicitly: authenticated gets blanket table
+  // + function access (RLS does the gating), anon gets nothing, and the
+  // migrations' explicit revokes are re-run LAST so they win, exactly as
+  // they do in production.
+  await sql.unsafe(`
+    grant all on all tables in schema public to authenticated, service_role;
+    grant usage, select on all sequences in schema public to authenticated, service_role;
+    grant execute on all functions in schema public to authenticated;
+    revoke all on all tables in schema public from anon;
+    revoke update, delete on public.audit_log from anon, authenticated, service_role;
+    revoke all on function public.create_organization(text, org_kind) from public, anon;
+    revoke execute on function public.current_tenant_id() from public, anon;
+    revoke execute on function public.current_user_role() from public, anon;
+    revoke all on function public.accept_invite(text) from public, anon;
+    revoke all on function public.notify_tier(uuid,int,notification_kind,text,text,text,uuid,text) from public, anon, authenticated;
+    revoke all on function public.update_own_profile(text, boolean) from public, anon;
+  `);
 }
 
 /**

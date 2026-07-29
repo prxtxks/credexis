@@ -86,9 +86,8 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
       expect(rows.length).toBe(0);
     });
 
-    it("anon sees no deals at all", async () => {
-      const rows = await asUser(sql, null, (tx) => tx`select id from deals`);
-      expect(rows.length).toBe(0);
+    it("anon cannot even SELECT deals — no grant, not just no rows", async () => {
+      await expectDenied(() => asUser(sql, null, (tx) => tx`select id from deals`));
     });
   });
 
