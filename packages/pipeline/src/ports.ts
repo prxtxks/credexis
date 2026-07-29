@@ -20,6 +20,12 @@ export interface DocumentRow {
   sha256: string;
   bytes: number;
   mimeType: string;
+  /**
+   * Set when the bytes arrived through the borrower portal. The worker MUST
+   * read it: without it, a borrower-originated row is indistinguishable from
+   * a staff one and the path assertion below has nothing to pin against.
+   */
+  uploadedViaInviteId: string | null;
 }
 
 export interface LogicalDocumentInsert {
