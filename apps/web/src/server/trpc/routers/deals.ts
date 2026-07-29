@@ -7,6 +7,9 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure, router, underwriterProcedure } from "../init";
 
+/** The board's vocabulary, in funnel order (deal_status enum, migration 0000). */
+const DEAL_STATUSES = ["intake", "parsing", "review", "complete"] as const;
+
 export const dealsRouter = router({
   get: protectedProcedure
     .input(z.object({ dealId: z.string().uuid() }))
@@ -141,5 +144,33 @@ export const dealsRouter = router({
       );
       if (entErr) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: entErr.message });
       return { dealId: deal.id as string };
+    }),
+
+  /**
+   * m8-10: the explicit human transition on the pipeline board — notably
+   * review → complete, which no automation can decide.
+   *
+   * Deliberately NOT monotonic, unlike the pipeline writer
+   * (packages/pipeline/src/trigger/ingest-document.ts): the worker only
+   * ever moves a deal forward, so a human hand is the ONLY way back out of
+   * a stage entered by mistake, or into review again after late documents
+   * land. Take that away and a wrongly-completed deal is stuck forever.
+   *
+   * Runs as the caller: RLS (`deals_update`, 0001_rls-v1.sql:102) supplies
+   * the tenant predicate and the admin/underwriter role check, so a missing
+   * row here means "not yours or not visible", not "no such deal".
+   */
+  setStatus: underwriterProcedure
+    .input(z.object({ dealId: z.string().uuid(), status: z.enum(DEAL_STATUSES) }))
+    .mutation(async ({ ctx, input }) => {
+      const { data, error } = await ctx.supabase
+        .from("deals")
+        .update({ status: input.status, updated_at: new Date().toISOString() })
+        .eq("id", input.dealId)
+        .select("id, status")
+        .maybeSingle();
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+      if (!data) throw new TRPCError({ code: "NOT_FOUND", message: "deal not found" });
+      return { dealId: data.id as string, status: data.status as string };
     }),
 });

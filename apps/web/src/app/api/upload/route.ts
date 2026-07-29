@@ -148,6 +148,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   // Kick the pipeline (no-op with a logged reason until Trigger is deployed).
+  // Intake → Parsing on the deal's FIRST document. Done here, in the request
+  // path, rather than only in the worker: triggerIngest is best-effort and
+  // returns {triggered:false} whenever the queue is unconfigured or answers
+  // non-2xx, so a worker-only transition would leave the board frozen in
+  // exactly the environments where nothing else reveals it.
+  //
+  // Monotonic by construction — the WHERE clause only matches 'intake', so a
+  // concurrent upload cannot drag a deal already in review backwards, and a
+  // re-upload is a no-op. Best-effort: a deal whose status did not move is a
+  // cosmetic problem, never a reason to fail an accepted document.
+  const { error: statusErr } = await supabase
+    .from("deals")
+    .update({ status: "parsing" })
+    .eq("id", dealId)
+    .eq("status", "intake");
+  if (statusErr) {
+    console.warn(`deal status intake→parsing failed for ${dealId}: ${statusErr.message}`);
+  }
+
   const triggered = await triggerIngest({ documentId: doc.id as string, tenantId, dealId });
 
   return NextResponse.json(
