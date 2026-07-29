@@ -35,6 +35,9 @@ export default defineConfig({
           // Absolute base for links in email (emails cannot use app-relative
           // URLs the way in-app action_url does).
           "NEXT_PUBLIC_APP_URL",
+          // Borrower reminders link here; without it the chase task withholds
+          // sends rather than pointing borrowers at the staff app.
+          "NEXT_PUBLIC_PORTAL_URL",
         ];
         return [
           ...Object.entries(required).map(([name, value]) => ({ name, value })),

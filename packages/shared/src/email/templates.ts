@@ -136,6 +136,44 @@ export function borrowerInviteEmail(opts: {
 }
 
 /**
+ * Borrower reminder (M12.1 §10.5) — sent AT MOST ONCE per invite by the
+ * `chase-borrowers` worker, so it carries everything still outstanding in one
+ * message rather than assuming a follow-up will come.
+ *
+ * Same curation rule as the invite: the broker's snapshot label only, never
+ * `deals.name`, never a metric, never another party's documents. Item labels
+ * are broker-authored and therefore escaped like any untrusted string.
+ */
+export function borrowerReminderEmail(opts: {
+  dealLabel: string;
+  /** Checklist labels the borrower still owes. */
+  outstandingItems: string[];
+  /** Absolute portal URL — emails cannot use the app-relative convention. */
+  portalUrl: string;
+  expiresAtLabel: string;
+}): RenderedEmail {
+  const label = escapeHtml(opts.dealLabel);
+  const rows = opts.outstandingItems
+    .map((i) => `<li style="padding:2px 0;">${escapeHtml(i)}</li>`)
+    .join("");
+  const list = rows === "" ? "" : `<ul style="margin:12px 0 0 0;padding-left:20px;">${rows}</ul>`;
+  return {
+    subject: `Still needed for ${opts.dealLabel}`,
+    html: layout({
+      heading: `A reminder about ${label}`,
+      bodyHtml:
+        `Your loan file <strong>${label}</strong> is still waiting on a few documents. ` +
+        `Your personal link expires ${escapeHtml(opts.expiresAtLabel)}.${list}`,
+      cta: { label: "Send your documents", url: opts.portalUrl },
+    }),
+    text:
+      `Your loan file ${opts.dealLabel} is still waiting on:\n\n` +
+      opts.outstandingItems.map((i) => `• ${i}`).join("\n") +
+      `\n\nYour personal link expires ${opts.expiresAtLabel}.\n\n${opts.portalUrl}`,
+  };
+}
+
+/**
  * Daily digest (M11.7): everything that did NOT warrant an immediate email.
  * Approval-class events (identity_review) mail on the spot and are excluded
  * here on purpose — a digest must never be the first time someone learns an
