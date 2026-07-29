@@ -175,15 +175,17 @@ export default function DashboardPage() {
             <motion.div
               key={s.label}
               variants={fadeInUp}
-              transition={{ duration: 0.4 }}
-              className="glass-card flex items-center gap-4 rounded-xl p-5"
+              transition={{ duration: 0.25 }}
+              className="glass-card flex items-center gap-4 rounded-[14px] p-5"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
-                <s.icon className={`h-5 w-5 ${s.tint}`} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                <s.icon className={`h-[18px] w-[18px] ${s.tint}`} />
               </div>
               <div>
-                <div className="text-2xl font-bold tabular-nums">{s.value}</div>
-                <div className="text-xs text-muted-foreground">{s.label}</div>
+                <div className="text-[26px] font-semibold leading-8 tabular-nums">{s.value}</div>
+                <div className="text-[11px] tracking-wide text-muted-foreground uppercase">
+                  {s.label}
+                </div>
               </div>
             </motion.div>
           ))}
@@ -229,8 +231,11 @@ export default function DashboardPage() {
             const colDeals = deals.filter((d) => d.status === col.status);
             return (
               <section key={col.status}>
-                <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {col.label} ({colDeals.length})
+                <h2 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {col.label}
+                  <span className="rounded-full border border-border/60 px-1.5 py-px text-[10px] font-semibold tabular-nums text-foreground/70">
+                    {colDeals.length}
+                  </span>
                 </h2>
                 <motion.div
                   className="space-y-3"
@@ -244,38 +249,49 @@ export default function DashboardPage() {
                       c.formFamilies.some((f) => d.formFamilies.includes(f)),
                     );
                     return (
-                      <motion.div key={d.id} variants={fadeInUp} transition={{ duration: 0.4 }}>
+                      <motion.div key={d.id} variants={fadeInUp} transition={{ duration: 0.25 }}>
                         <Link href={`/deals/${d.id}/workspace`} className="group block">
-                          <div className="glass-card rounded-xl p-4 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
+                          <div className="glass-card rounded-[14px] p-4 transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
                             <div className="flex items-start justify-between gap-2">
-                              <span className="font-semibold leading-tight transition-colors group-hover:text-primary">
+                              <span className="text-[15px] font-semibold leading-tight transition-colors duration-150 group-hover:text-primary">
                                 {d.name}
                               </span>
                               {d.dscr && (
                                 <span
-                                  className="shrink-0 rounded-full bg-muted px-2 py-0.5 font-mono text-xs font-semibold tabular-nums"
+                                  className="shrink-0 rounded-md border border-border/60 bg-muted/60 px-2 py-0.5 text-xs font-semibold tabular-nums"
                                   title={`DSCR ${d.dscr.period}`}
                                 >
                                   {formatRatio(d.dscr.mantissa, d.dscr.scale)}×
                                 </span>
                               )}
                             </div>
-                            <div className="mt-2 flex flex-wrap gap-1.5">
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
                               <Badge
                                 variant="secondary"
-                                className="rounded-full px-2.5 text-xs font-normal"
+                                className="rounded-full px-2.5 text-[11px] font-normal"
                               >
                                 {d.type.replaceAll("_", " ")}
                               </Badge>
+                              {d.openIssues > 0 && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-severity-warning/10 px-2 py-0.5 text-[11px] font-medium text-severity-warning">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-severity-warning" />
+                                  {d.openIssues} open {d.openIssues === 1 ? "issue" : "issues"}
+                                </span>
+                              )}
                             </div>
-                            <div className="mt-3 border-t border-border pt-2.5 text-xs text-muted-foreground">
-                              docs {have.length}/{checklist.length}
-                              <span className="ml-2 inline-flex gap-0.5 align-middle">
+                            <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-2.5">
+                              <span className="text-[11px] tracking-wide text-muted-foreground">
+                                DOCUMENTS{" "}
+                                <span className="ml-0.5 font-semibold tabular-nums text-foreground/80">
+                                  {have.length}/{checklist.length}
+                                </span>
+                              </span>
+                              <span className="inline-flex gap-0.5">
                                 {checklist.map((c) => (
                                   <span
                                     key={c.label}
                                     title={c.label}
-                                    className={`inline-block h-1.5 w-3 rounded-sm ${
+                                    className={`inline-block h-1.5 w-3.5 rounded-full transition-colors duration-150 ${
                                       c.formFamilies.some((f) => d.formFamilies.includes(f))
                                         ? "bg-primary"
                                         : "bg-border"
@@ -290,8 +306,8 @@ export default function DashboardPage() {
                     );
                   })}
                   {colDeals.length === 0 && (
-                    <div className="glass-card rounded-xl border-dashed p-4 text-center text-xs text-muted-foreground">
-                      —
+                    <div className="rounded-[14px] border border-dashed border-border/60 p-4 text-center text-[11px] text-muted-foreground/70">
+                      No deals
                     </div>
                   )}
                 </motion.div>

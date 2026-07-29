@@ -31,7 +31,7 @@ export const dealsRouter = router({
 
   /** Pipeline board (M8.7): deals + form families present + headline DSCR. */
   board: protectedProcedure.query(async ({ ctx }) => {
-    const [dealsRes, ldRes, dscrRes] = await Promise.all([
+    const [dealsRes, ldRes, dscrRes, issuesRes] = await Promise.all([
       ctx.supabase
         .from("deals")
         .select("id, name, type, status, created_at")
@@ -42,9 +42,16 @@ export const dealsRouter = router({
         .select("deal_id, metric, period_label, ratio_mantissa, ratio_scale")
         .eq("metric", "dscr_business")
         .is("scenario_id", null),
+      // ui-10: open blocking issues are first-class on the board card.
+      ctx.supabase.from("issues").select("deal_id").eq("status", "open"),
     ]);
-    for (const r of [dealsRes, ldRes, dscrRes]) {
+    for (const r of [dealsRes, ldRes, dscrRes, issuesRes]) {
       if (r.error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: r.error.message });
+    }
+    const issuesByDeal = new Map<string, number>();
+    for (const i of issuesRes.data ?? []) {
+      const id = i.deal_id as string;
+      issuesByDeal.set(id, (issuesByDeal.get(id) ?? 0) + 1);
     }
 
     const familiesByDeal = new Map<string, Set<string>>();
@@ -78,6 +85,7 @@ export const dealsRouter = router({
       createdAt: d.created_at as string,
       formFamilies: [...(familiesByDeal.get(d.id as string) ?? [])],
       dscr: dscrByDeal.get(d.id as string) ?? null,
+      openIssues: issuesByDeal.get(d.id as string) ?? 0,
     }));
   }),
 
