@@ -85,7 +85,7 @@ export function WorkspaceToolbar({
         </Button>
 
         {/* Inspector segmented pills (V1 panel-toggle language) */}
-        <div className="flex items-center gap-0.5 rounded-full bg-muted/60 p-0.5">
+        <div className="flex items-center gap-0.5 rounded-full bg-muted/60 p-0.5 max-md:hidden">
           {INSPECTOR_TABS.map((t) => (
             <button
               key={t.key}
@@ -108,7 +108,7 @@ export function WorkspaceToolbar({
           asChild
           variant="outline"
           size="sm"
-          className="rounded-full"
+          className="rounded-full max-md:hidden"
           title="Download banker workbook (.xlsx)"
         >
           <a href={exportHref}>

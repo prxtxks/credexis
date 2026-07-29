@@ -98,7 +98,9 @@ export function AppShell({
             <Logo size="sm" />
           </span>
           {breadcrumb ? (
-            <span className="truncate text-sm text-muted-foreground">{breadcrumb}</span>
+            <span className="truncate text-sm text-muted-foreground max-sm:hidden">
+              {breadcrumb}
+            </span>
           ) : null}
           <div className="ml-auto flex items-center gap-2">
             {actions}
@@ -117,8 +119,31 @@ export function AppShell({
             </form>
           </div>
         </header>
-        <div className="gradient-mesh min-w-0 flex-1">{children}</div>
+        <div className="gradient-mesh min-w-0 flex-1 max-md:pb-20">{children}</div>
       </div>
+
+      {/* ── Mobile bottom tabs (iOS pattern, M11.8) — phones only ── */}
+      <nav
+        aria-label="mobile navigation"
+        className="frosted-toolbar fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-border pb-[env(safe-area-inset-bottom)] md:hidden"
+      >
+        {NAV.map(({ href, label, icon: Icon, exact }) => {
+          const active = exact ? pathname === href : pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors duration-200",
+                active ? "text-primary" : "text-muted-foreground",
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
