@@ -54,6 +54,16 @@ describe("tRPC mutation tier matrix (M10.3)", () => {
     "org.ts": ["create", "accept"],
   };
 
+  /**
+   * Self-scoped writes (M11.5): notification state changes touch ONLY the
+   * caller's own rows (RLS recipient_id = auth.uid()) — legitimately
+   * viewer-safe, so protectedProcedure is correct. Nothing here mutates
+   * deal data.
+   */
+  const SELF_SCOPED_EXCEPTIONS: Record<string, readonly string[]> = {
+    "notifications.ts": ["setState", "markAllRead"],
+  };
+
   for (const file of files) {
     it(`${file}: every mutation is underwriter+ (viewers never write)`, () => {
       const source = readFileSync(join(ROUTERS_DIR, file), "utf8");
@@ -61,6 +71,12 @@ describe("tRPC mutation tier matrix (M10.3)", () => {
         if (
           SESSION_TIER_EXCEPTIONS[file]?.includes(mutation.name) &&
           mutation.builder === "sessionProcedure"
+        ) {
+          continue;
+        }
+        if (
+          SELF_SCOPED_EXCEPTIONS[file]?.includes(mutation.name) &&
+          mutation.builder === "protectedProcedure"
         ) {
           continue;
         }

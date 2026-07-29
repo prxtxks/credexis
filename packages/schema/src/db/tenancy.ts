@@ -6,6 +6,7 @@
 
 import { jsonb, pgTable, text, timestamp, uuid, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { orgKind, profileStatus, userRole } from "./enums.js";
+import { pgEnum } from "drizzle-orm/pg-core";
 
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -57,5 +58,48 @@ export const invites = pgTable("invites", {
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   acceptedAt: timestamp("accepted_at", { withTimezone: true }),
   revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Notification center (M11.5, design 02 §2 — B1/B4/X3 fixes binding):
+ * INSERT is never client-reachable (no insert policy; rows are born in
+ * SECURITY DEFINER triggers/helpers or the pipeline's service-role writer
+ * with explicit tenant checks). Recipients are capability-derived at
+ * fan-out time, never "all admins". State is the only client-writable
+ * column, on own rows.
+ */
+export const notificationKind = pgEnum("notification_kind", [
+  "member_joined",
+  "document_processed",
+  "document_failed",
+  "identity_review",
+  "review_backlog",
+]);
+
+export const notificationState = pgEnum("notification_state", [
+  "unread",
+  "read",
+  "actioned",
+  "dismissed",
+]);
+
+export const notifications = pgTable("notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id")
+    .notNull()
+    .references(() => tenants.id),
+  recipientId: uuid("recipient_id")
+    .notNull()
+    .references(() => profiles.id),
+  kind: notificationKind("kind").notNull(),
+  title: text("title").notNull(),
+  body: text("body"),
+  /** App-relative only — validated at write time (B1). */
+  actionUrl: text("action_url"),
+  dealId: uuid("deal_id"),
+  state: notificationState("state").notNull().default("unread"),
+  /** Collapses repeat events (e.g. one per doc per stage). */
+  dedupeKey: text("dedupe_key"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

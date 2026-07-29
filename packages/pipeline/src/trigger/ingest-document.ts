@@ -144,6 +144,37 @@ export const ingestDocument = task({
               documents: extract.perDocument.length,
               skipped: extract.perDocument.filter((d) => d.skipped).length,
             });
+
+            // M11.5 notification fan-out (B4 honest posture: service-role
+            // writer + EXPLICIT tenant scoping in code; recipients =
+            // underwriter tier and above, active only — X3 fix).
+            try {
+              const { data: recips } = await client
+                .from("profiles")
+                .select("id, role, status")
+                .eq("tenant_id", payload.tenantId)
+                .eq("status", "active")
+                .in("role", ["org_owner", "admin", "underwriter"]);
+              if (recips && recips.length > 0) {
+                await client.from("notifications").upsert(
+                  recips.map((r) => ({
+                    tenant_id: payload.tenantId,
+                    recipient_id: r.id as string,
+                    kind: "document_processed",
+                    title: `Document processed — ${extract.factsInserted} facts extracted`,
+                    body: null,
+                    action_url: `/deals/${payload.dealId}/workspace`,
+                    deal_id: payload.dealId,
+                    state: "unread",
+                    dedupe_key: `doc_processed:${payload.documentId}`,
+                  })),
+                  { onConflict: "recipient_id,dedupe_key", ignoreDuplicates: true },
+                );
+              }
+            } catch (e) {
+              // Notifications are best-effort: never fail the pipeline.
+              logEvent(log, "notify-errored", { error: (e as Error).message.slice(0, 200) });
+            }
           }
         }
       } catch (e) {

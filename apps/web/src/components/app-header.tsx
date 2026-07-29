@@ -4,6 +4,7 @@ import { ArrowLeft, LogOut } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
+import { NotificationsBell } from "@/components/notifications-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 /**
@@ -57,6 +58,7 @@ export function AppHeader({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {children}
+          <NotificationsBell />
           <ThemeToggle />
           {showSignOut ? (
             <form action="/auth/signout" method="post">
