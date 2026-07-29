@@ -6,8 +6,17 @@
 
 import { pgEnum } from "drizzle-orm/pg-core";
 
-/** Roles enforced server-side in tRPC context (M2.3). */
-export const userRole = pgEnum("user_role", ["admin", "underwriter", "viewer"]);
+/** Roles enforced server-side in tRPC context (M2.3; org_owner M11.2 —
+ *  remaining platform roles land with M12 per the pre-pilot cut). */
+export const userRole = pgEnum("user_role", ["admin", "underwriter", "viewer", "org_owner"]);
+
+/** Organization types (M11.2) — advisory metadata, never an RLS predicate.
+ *  A solo broker is an org of one; upgrade path = invite a member. */
+export const orgKind = pgEnum("org_kind", ["lender", "broker_firm", "solo_broker"]);
+
+/** Profile lifecycle (M11.2): deactivation kills access via the RLS
+ *  helpers without deleting the row (audit attribution survives). */
+export const profileStatus = pgEnum("profile_status", ["active", "deactivated"]);
 
 /** MVP deal types (Blueprint §1). */
 export const dealType = pgEnum("deal_type", [

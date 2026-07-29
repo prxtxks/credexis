@@ -42,10 +42,28 @@ describe("tRPC mutation tier matrix (M10.3)", () => {
     expect(files.length).toBeGreaterThanOrEqual(9);
   });
 
+  /**
+   * The ONE designed exception (M11.2, design 01 §4.1): org.create runs
+   * pre-profile — the caller cannot hold a role because the mutation
+   * creates the first profile. It is sessionProcedure by necessity; every
+   * invariant (authenticated, profile-less, atomic, caller→org_owner) is
+   * enforced inside the create_organization SECURITY DEFINER function.
+   * Anything else appearing here must be treated as a regression.
+   */
+  const SESSION_TIER_EXCEPTIONS: Record<string, readonly string[]> = {
+    "org.ts": ["create"],
+  };
+
   for (const file of files) {
     it(`${file}: every mutation is underwriter+ (viewers never write)`, () => {
       const source = readFileSync(join(ROUTERS_DIR, file), "utf8");
       for (const mutation of mutationTiers(source)) {
+        if (
+          SESSION_TIER_EXCEPTIONS[file]?.includes(mutation.name) &&
+          mutation.builder === "sessionProcedure"
+        ) {
+          continue;
+        }
         expect(
           ["underwriterProcedure", "adminProcedure"],
           `${file} → ${mutation.name} is a mutation built from ${mutation.builder}`,

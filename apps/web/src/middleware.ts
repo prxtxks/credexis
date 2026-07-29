@@ -6,7 +6,7 @@ import { API_WRITE_LIMIT, RateLimiter } from "@/lib/rate-limit";
 const apiWriteLimiter = new RateLimiter(API_WRITE_LIMIT);
 
 /** Routes reachable without a session. Everything else requires sign-in. */
-const PUBLIC_PATHS = ["/login", "/auth"];
+const PUBLIC_PATHS = ["/login", "/signup", "/auth"];
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
