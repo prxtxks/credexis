@@ -109,3 +109,44 @@ export function identityReviewEmail(opts: {
     text: `${opts.title}\n\nA document on ${opts.dealName} is printed with the name "${opts.extractedName}", which doesn't fully match the deal's entities. Approve or reject the match:\n${opts.reviewUrl}\n\nYou can turn email notifications off in Settings.`,
   };
 }
+
+/**
+ * Daily digest (M11.7): everything that did NOT warrant an immediate email.
+ * Approval-class events (identity_review) mail on the spot and are excluded
+ * here on purpose — a digest must never be the first time someone learns an
+ * approval is waiting, and nobody should get the same event twice.
+ */
+export function digestEmail(opts: {
+  items: { title: string; body?: string | null; dealName?: string | null }[];
+  appUrl: string;
+}): RenderedEmail {
+  const n = opts.items.length;
+  const rows = opts.items
+    .map((i) => {
+      const where = i.dealName
+        ? ` <span style="color:#6b7280;">· ${escapeHtml(i.dealName)}</span>`
+        : "";
+      const body = i.body
+        ? `<div style="color:#6b7280;font-size:13px;">${escapeHtml(i.body)}</div>`
+        : "";
+      return `<tr><td style="padding:8px 0;border-bottom:1px solid #eef1f0;"><div style="font-weight:500;">${escapeHtml(i.title)}${where}</div>${body}</td></tr>`;
+    })
+    .join("");
+  return {
+    subject: `Credexis digest — ${n} update${n === 1 ? "" : "s"}`,
+    html: layout({
+      heading: `${n} update${n === 1 ? "" : "s"} in the last day`,
+      bodyHtml: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>`,
+      cta: { label: "Open Credexis", url: opts.appUrl },
+    }),
+    text:
+      `${n} update${n === 1 ? "" : "s"} in the last day:\n\n` +
+      opts.items
+        .map(
+          (i) =>
+            `• ${i.title}${i.dealName ? ` (${i.dealName})` : ""}${i.body ? `\n  ${i.body}` : ""}`,
+        )
+        .join("\n") +
+      `\n\n${opts.appUrl}\n\nYou can turn email notifications off in Settings.`,
+  };
+}
