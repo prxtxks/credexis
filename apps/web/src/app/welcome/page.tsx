@@ -83,8 +83,8 @@ export default function WelcomePage() {
           <span className="text-xl font-bold tracking-tight">Credexis</span>
         </div>
 
-        <div className="glass-card glow-sm rounded-2xl border border-border/50 p-8">
-          <h1 className="mb-1 text-2xl font-bold">Set up your workspace</h1>
+        <div className="glass-card rounded-[20px] p-8">
+          <h1 className="mb-1 text-2xl font-semibold tracking-tight">Set up your workspace</h1>
           <p className="mb-6 text-sm text-muted-foreground">
             One workspace per organization — you&apos;ll be its owner and can invite your team.
           </p>

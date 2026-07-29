@@ -204,7 +204,7 @@ export default function ReviewPage() {
         </section>
       ) : (
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="glass-card glow-sm rounded-2xl p-6">
+          <div className="glass-card rounded-[20px] p-6">
             <div className="flex flex-wrap items-center gap-2">
               {current.topSeverity && (
                 <Badge

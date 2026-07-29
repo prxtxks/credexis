@@ -34,7 +34,7 @@ export default function GlobalError({
       </head>
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}>
         <main className="gradient-mesh flex min-h-screen items-center justify-center p-6">
-          <div className="glass-card glow-sm w-full max-w-md rounded-2xl p-8 text-center">
+          <div className="glass-card w-full max-w-md rounded-2xl p-8 text-center">
             <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-severity-critical/10">
               <AlertTriangle className="h-7 w-7 text-severity-critical" />
             </div>

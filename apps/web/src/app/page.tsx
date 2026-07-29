@@ -48,7 +48,7 @@ function NewDealWizard({ onDone }: { onDone: (dealId: string) => void }) {
   const create = trpc.deals.create.useMutation({ onSuccess: (r) => onDone(r.dealId) });
 
   return (
-    <div className="glass-card rounded-2xl glow-sm space-y-4 p-6 text-sm">
+    <div className="glass-card rounded-2xl space-y-4 p-6 text-sm">
       <h2 className="text-base font-semibold">New deal</h2>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
