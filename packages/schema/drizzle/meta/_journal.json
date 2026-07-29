@@ -211,6 +211,13 @@
       "when": 1785334441931,
       "tag": "0029_borrower-access-path",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1785334442931,
+      "tag": "0030_borrower-definers",
+      "breakpoints": true
     }
   ]
 }
