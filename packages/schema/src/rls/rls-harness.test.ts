@@ -991,6 +991,93 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
     });
   });
 
+  describe("documents path guard (M12.1 — B2, migration 0031)", () => {
+    // A TRIGGER, not a policy, so it binds every writer identically. These
+    // run as SUPERUSER on purpose: that is the writer RLS cannot stop, and
+    // the whole point of the guard is that it stops them too.
+    const GUARD_BORROWER = "00000000-0000-4000-8000-0000000000c1";
+    let inviteId = "";
+    const sha = "f".repeat(64);
+
+    beforeAll(async () => {
+      await sql`insert into auth.users (id, email) values (${GUARD_BORROWER}, 'guard@borrower-test.dev')
+                on conflict (id) do nothing`;
+      const [b] = await sql`insert into borrowers (tenant_id, full_name, email, created_by)
+        values (${TENANT_A}, 'Guard Borrower', 'guard@borrower-test.dev', ${U.underwriterA}) returning id`;
+      const [inv] = await sql`insert into borrower_invites
+        (tenant_id, deal_id, borrower_id, email, token_hash, display_label, invited_by,
+         expires_at, status, auth_user_id, claimed_at)
+        values (${TENANT_A}, ${DEAL_A}, ${(b as { id: string }).id}, 'guard@borrower-test.dev',
+                'hash-guard', 'Alpha Deal', ${U.underwriterA}, now() + interval '30 days',
+                'active', ${GUARD_BORROWER}, now()) returning id`;
+      inviteId = (inv as { id: string }).id;
+    });
+
+    afterAll(async () => {
+      await sql`delete from documents where uploaded_via_invite_id = ${inviteId}`;
+      await sql`delete from borrower_invites where id = ${inviteId}`;
+    });
+
+    const insertDoc = (path: string, opts: { invite?: string | null; by?: string | null } = {}) =>
+      sql`insert into documents
+            (tenant_id, deal_id, file_name, storage_path, sha256, bytes, mime_type,
+             uploaded_by, uploaded_via_invite_id)
+          values (${TENANT_A}, ${DEAL_A}, 'x.pdf', ${path}, ${sha}, 100, 'application/pdf',
+                  ${opts.by === undefined ? GUARD_BORROWER : opts.by},
+                  ${opts.invite === undefined ? inviteId : opts.invite})
+          returning id`;
+
+    const goodPath = () => `${TENANT_A}/deals/${DEAL_A}/borrower-uploads/${inviteId}/${sha}.pdf`;
+
+    it("accepts a correctly pinned borrower document", async () => {
+      const rows = await insertDoc(goodPath());
+      expect(rows.length).toBe(1);
+      await sql`delete from documents where id = ${(rows[0] as { id: string }).id}`;
+    });
+
+    it("rejects a path pointing at ANOTHER invite's folder", async () => {
+      const other = `${TENANT_A}/deals/${DEAL_A}/borrower-uploads/${DEAL_B}/${sha}.pdf`;
+      const err = await expectDenied(() => insertDoc(other));
+      expect(err.message).toContain("pinned");
+    });
+
+    it("rejects path traversal — the canonical rebuild leaves no room for ..", async () => {
+      const traversal = `${TENANT_A}/deals/${DEAL_A}/borrower-uploads/${inviteId}/../../../${sha}.pdf`;
+      await expectDenied(() => insertDoc(traversal));
+    });
+
+    it("rejects a borrower row whose uploader is not the invite holder", async () => {
+      const err = await expectDenied(() => insertDoc(goodPath(), { by: U.underwriterA }));
+      expect(err.message).toContain("uploader is not the invite holder");
+    });
+
+    it("rejects a STAFF row parked in the borrower prefix", async () => {
+      // That prefix is the only place the borrower storage policies grant, so
+      // a staff row there would be readable by whoever owns the folder.
+      const err = await expectDenied(() =>
+        insertDoc(goodPath(), { invite: null, by: U.underwriterA }),
+      );
+      expect(err.message).toContain("requires uploaded_via_invite_id");
+    });
+
+    it("lineage columns are immutable after insert — for the superuser too", async () => {
+      const [row] = await insertDoc(goodPath());
+      const id = (row as { id: string }).id;
+      try {
+        for (const stmt of [
+          sql`update documents set storage_path = 'elsewhere.pdf' where id = ${id}`,
+          sql`update documents set sha256 = ${"a".repeat(64)} where id = ${id}`,
+          sql`update documents set uploaded_via_invite_id = null where id = ${id}`,
+        ]) {
+          const err = await expectDenied(() => stmt);
+          expect(err.message).toContain("immutable");
+        }
+      } finally {
+        await sql`delete from documents where id = ${id}`;
+      }
+    });
+  });
+
   describe("definer EXECUTE surface", () => {
     it("anon cannot execute create_organization", async () => {
       const [row] = await sql`select has_function_privilege('anon',
