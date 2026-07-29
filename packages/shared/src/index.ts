@@ -9,3 +9,4 @@ export * from "./money/index.js";
 export * from "./normalize/number.js";
 export * from "./match/name-match.js";
 export * from "./email/index.js";
+export * from "./limits.js";

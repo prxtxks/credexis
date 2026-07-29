@@ -86,7 +86,7 @@ export async function runIngest(deps: IngestDeps, payload: IngestPayload): Promi
     }
 
     if (deps.scanner) {
-      const scan = await deps.scanner.scan(bytes);
+      const scan = await deps.scanner.scan(bytes, doc.mimeType);
       virusScan = scan.status;
       await deps.db.setVirusScan(doc.id, scan.status);
       if (scan.status !== "clean") {

@@ -148,6 +148,20 @@
       "when": 1785300137390,
       "tag": "0020_audit-tenants-fix",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1785300138390,
+      "tag": "0021_deal-upload-limits",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1785300139390,
+      "tag": "0022_quota-av-review-fixes",
+      "breakpoints": true
     }
   ]
 }

@@ -14,9 +14,10 @@ import {
   AnthropicVisionAdapter,
   ReductoAdapter,
 } from "@credexis/extraction";
-import { createEmailSender, identityReviewEmail } from "@credexis/shared";
+import { createEmailSender, identityReviewEmail, resolveDealLimits } from "@credexis/shared";
+import { StructuralScanner } from "../scan/structural.js";
 import { runIngest, type IngestResult } from "../ingest.js";
-import { logEvent } from "../log.js";
+import { logEvent, type LogContext } from "../log.js";
 import { runExtractStage } from "../extract-stage.js";
 import {
   serviceClient,
@@ -25,6 +26,53 @@ import {
   supabaseMappingsStore,
   supabaseStorage,
 } from "../supabase.js";
+
+/**
+ * `document_failed` fan-out (M12.1). B4 posture: service-role writer with
+ * EXPLICIT tenant scoping in code. Best-effort — a notification outage
+ * must never fail the pipeline — but errors are surfaced, not swallowed:
+ * supabase-js RETURNS errors rather than throwing, so the earlier
+ * try/catch-only version logged nothing when the write failed (that is
+ * exactly how the partial-index 42P10 bug stayed invisible; index fixed
+ * in migration 0022).
+ */
+async function notifyDocumentFailed(
+  client: ReturnType<typeof serviceClient>,
+  log: LogContext,
+  payload: { tenantId: string; dealId: string; documentId: string },
+  reason: string,
+): Promise<void> {
+  try {
+    const { data: recips, error: recipErr } = await client
+      .from("profiles")
+      .select("id")
+      .eq("tenant_id", payload.tenantId)
+      .eq("status", "active")
+      .in("role", ["org_owner", "admin", "underwriter"]);
+    if (recipErr) {
+      logEvent(log, "notify-errored", { error: recipErr.message.slice(0, 200) });
+      return;
+    }
+    if (!recips || recips.length === 0) return;
+    const { error } = await client.from("notifications").upsert(
+      recips.map((r) => ({
+        tenant_id: payload.tenantId,
+        recipient_id: r.id as string,
+        kind: "document_failed",
+        title: "Document failed processing",
+        body: reason.slice(0, 140),
+        action_url: `/deals/${payload.dealId}/documents`,
+        deal_id: payload.dealId,
+        state: "unread",
+        dedupe_key: `doc_failed:${payload.documentId}`,
+      })),
+      { onConflict: "recipient_id,dedupe_key", ignoreDuplicates: true },
+    );
+    if (error) logEvent(log, "notify-errored", { error: error.message.slice(0, 200) });
+  } catch (e) {
+    logEvent(log, "notify-errored", { error: (e as Error).message.slice(0, 200) });
+  }
+}
 
 const payloadSchema = z.object({
   documentId: z.string().uuid(),
@@ -62,13 +110,63 @@ export const ingestDocument = task({
       : null;
 
     try {
+      // ── M12.1 cost ceiling — FIRST, before any LLM touches this file. ──
+      // Page classification inside runIngest calls Anthropic per page, so
+      // checking after ingest (as the first cut did) still burned tokens on
+      // every upload to an already-over-budget deal. Over the ceiling, the
+      // document is failed without a single vendor call. The sum is a SQL
+      // aggregate (definer): a client-side row sum silently stopped
+      // counting past PostgREST's 1000-row cap — weakest on the biggest
+      // deals, which is backwards for a ceiling.
+      const { data: tenantRow } = await client
+        .from("tenants")
+        .select("settings")
+        .eq("id", payload.tenantId)
+        .single();
+      const limits = resolveDealLimits(tenantRow?.settings);
+      const { data: spendRaw, error: spendErr } = await client.rpc("deal_extraction_spend", {
+        p_deal: payload.dealId,
+      });
+      // A failed spend query must not silently disable the ceiling.
+      if (spendErr) throw new Error(`cost ceiling unavailable: ${spendErr.message}`);
+      const spent = BigInt(String(spendRaw ?? 0));
+      if (spent >= limits.maxCostMicroUsdPerDeal) {
+        const reason = `deal spend ${spent.toString()}µ$ ≥ ceiling ${limits.maxCostMicroUsdPerDeal.toString()}µ$`;
+        logEvent(log, "cost-ceiling-blocked", { reason });
+        await client.from("documents").update({ status: "failed" }).eq("id", payload.documentId);
+        await client.from("extraction_runs").insert({
+          tenant_id: payload.tenantId,
+          deal_id: payload.dealId,
+          document_id: payload.documentId,
+          stage: "ingest",
+          extractor_name: "cost-ceiling",
+          extractor_version: "m12-1",
+          status: "failed",
+          error: `processing withheld: ${reason}`,
+          cost_micro_usd: "0",
+          finished_at: new Date().toISOString(),
+        });
+        await notifyDocumentFailed(client, log, payload, reason);
+        return {
+          documentId: payload.documentId,
+          status: "failed",
+          // Nothing was downloaded or scanned — the column keeps its
+          // honest default rather than implying a verdict we never made.
+          virusScan: "pending",
+          logicalDocuments: [],
+          reason,
+        } satisfies IngestResult;
+      }
+
       const result = await runIngest(
         {
           db: supabaseDb(client),
           storage: supabaseStorage(client),
-          // Virus-scan engine not wired yet: virus_scan stays "pending"
-          // (ports.ts documents the seam; stamping "clean" would be a lie).
-          scanner: null,
+          // M12.1: structural validation is the wired engine — magic bytes
+          // must match the declared type, PDFs must carry no active
+          // content (object streams inflated, hex escapes normalized).
+          // Non-clean verdicts fail the document before any vendor call.
+          scanner: new StructuralScanner(),
           classifier,
           takeLlmUsage: () => llmUsage.splice(0),
         },
@@ -80,7 +178,12 @@ export const ingestDocument = task({
         virusScan: result.virusScan,
         ...(result.reason ? { reason: result.reason } : {}),
       });
-      if (result.status === "failed") Sentry.captureMessage(`ingest failed: ${result.reason}`);
+      if (result.status === "failed") {
+        Sentry.captureMessage(`ingest failed: ${result.reason}`);
+        // A failed document (integrity, AV verdict, corrupt PDF) gets a
+        // card — underwriters must see it without opening the deal.
+        await notifyDocumentFailed(client, log, payload, result.reason ?? "processing failed");
+      }
 
       // ── Extraction stage (M4.5/M5.5): logical documents → facts. ──
       try {
@@ -97,11 +200,37 @@ export const ingestDocument = task({
             .eq("document_id", payload.documentId);
           const { data: doc } = await client
             .from("documents")
-            .select("storage_path, mime_type")
+            .select("storage_path, mime_type, virus_scan")
             .eq("id", payload.documentId)
+            .eq("tenant_id", payload.tenantId)
             .single();
 
-          if (doc && (doc.mime_type as string) === "application/pdf") {
+          // M12.1 AV lock #2: extraction ships bytes to vendors and spends
+          // money, so it demands an explicit "clean" verdict on the ROW —
+          // independent of the ingest-stage throw path, so a future caller
+          // that reaches extraction another way still cannot skip it.
+          // (The cost ceiling is checked at task entry, before any LLM.)
+          let extractionBlocked: string | null = null;
+          if (doc && (doc.virus_scan as string) !== "clean") {
+            extractionBlocked = `av verdict "${(doc.virus_scan as string) ?? "unknown"}" — extraction requires clean`;
+            // Withheld work must never look like completed work.
+            await client.from("extraction_runs").insert({
+              tenant_id: payload.tenantId,
+              deal_id: payload.dealId,
+              document_id: payload.documentId,
+              stage: "extract_consensus",
+              extractor_name: "av-gate",
+              extractor_version: "m12-1",
+              status: "failed",
+              error: `extraction withheld: ${extractionBlocked}`,
+              cost_micro_usd: "0",
+              finished_at: new Date().toISOString(),
+            });
+          }
+
+          if (extractionBlocked) {
+            logEvent(log, "extract-blocked", { reason: extractionBlocked.slice(0, 200) });
+          } else if (doc && (doc.mime_type as string) === "application/pdf") {
             const bytes = await supabaseStorage(client).download(doc.storage_path as string);
             const extract = await runExtractStage(
               {
