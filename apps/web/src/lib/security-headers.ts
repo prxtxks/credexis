@@ -1,11 +1,9 @@
 /**
  * Security headers (M12.3 GAP list — "CSP/security headers").
  *
- * The CSP is NONCE-based, not `unsafe-inline`: Next.js stamps the nonce onto
- * its own hydration scripts when the request carries one, and
- * `strict-dynamic` lets those scripts load the chunks they need without us
- * enumerating hashes. `unsafe-inline` in script-src would defeat the point —
- * it is exactly what a bank's security review flags.
+ * script-src is HOST-based (see the note in buildCsp): a nonce cannot be
+ * stamped onto statically prerendered HTML, and `strict-dynamic` without a
+ * nonce blocks every script. Everything else here is strict.
  *
  * Connect/img origins are derived from configured env, never hardcoded, so
  * a project swap can't silently break the app or quietly widen the policy.
@@ -20,7 +18,7 @@ function originOf(rawUrl: string | undefined): string | null {
   }
 }
 
-export function buildCsp(nonce: string, isDev: boolean): string {
+export function buildCsp(isDev: boolean): string {
   const supabase = originOf(process.env["NEXT_PUBLIC_SUPABASE_URL"]);
   const supabaseWs = supabase ? supabase.replace(/^https:/, "wss:") : null;
   const sentry = originOf(process.env["NEXT_PUBLIC_SENTRY_DSN"]);
@@ -29,10 +27,24 @@ export function buildCsp(nonce: string, isDev: boolean): string {
   // Signed storage URLs (page renders, document previews) come from Supabase.
   const img = ["'self'", "blob:", "data:", supabase].filter(Boolean).join(" ");
 
+  // WHY NOT nonce + strict-dynamic (it broke production, 2026-07-29):
+  // `strict-dynamic` makes browsers IGNORE the `'self'` allowlist — only
+  // nonced scripts may run. Next.js can only stamp a per-request nonce onto
+  // pages it renders per request; our pages are statically prerendered at
+  // build time, so the shipped HTML carried 24 script tags and zero nonces.
+  // Every script was blocked: the server HTML painted, nothing hydrated, and
+  // the app sat on "Loading your deals…" forever. Dev never showed it
+  // because dev renders dynamically.
+  //
+  // So script-src is host-based. That still blocks the main third-party
+  // injection vector (loading script from another origin) while allowing
+  // Next's own same-origin chunks and its inline hydration bootstrap.
+  // Upgrading to nonces requires forcing dynamic rendering app-wide — a real
+  // cost for a real gain, and a deliberate decision, not a silent default.
   const scriptSrc = isDev
     ? // Dev only: HMR/react-refresh evaluate generated code. Never in prod.
-      `'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`
-    : `'self' 'nonce-${nonce}' 'strict-dynamic'`;
+      `'self' 'unsafe-inline' 'unsafe-eval'`
+    : `'self' 'unsafe-inline'`;
 
   return [
     "default-src 'self'",
