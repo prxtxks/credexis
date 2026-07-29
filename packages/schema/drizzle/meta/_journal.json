@@ -141,6 +141,13 @@
       "when": 1785300136390,
       "tag": "0019_own-profile-settings",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1785300137390,
+      "tag": "0020_audit-tenants-fix",
+      "breakpoints": true
     }
   ]
 }
