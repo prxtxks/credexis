@@ -39,8 +39,8 @@ live until recorded here.
 | Sentry                      | ☐ DSN NOT set     | M10.2 wiring is live but DSN-gated → currently inert. Paste `SENTRY_DSN` (+ `NEXT_PUBLIC_SENTRY_DSN`) to enable ([PRATIK]).           |
 | Anthropic API               | ✅ Live           | Key verified (2026-07-18). ⚠️ Confirm org ZDR status before REAL tax docs ([PRATIK]).                                                 |
 | Reducto                     | ✅ Live           | Key verified (2026-07-18). Primary extractor candidate (M3.4).                                                                        |
-| Extend                      | ☐ Key NOT set     | `.env.local` line is an empty placeholder (audit 2026-07-19). Optional third bake-off contender.                                      |
-| Azure Document Intelligence | ✅ Live           | Resource `credexis-docintel`; endpoint+key verified (2026-07-18). Prebuilt-tax for 1040.                                              |
+| Extend                      | ✖ Dropped        | Never built (no adapter/config). Optional 3rd bake-off contender not pursued — Reducto+Claude consensus is sufficient (2026-07-24).   |
+| Azure Document Intelligence | ⚠ Eval-only      | Removed from the production path (2026-07-24): lost the bake-off (misread CPA bundles). Adapter kept as a bench-only eval contender.  |
 | Transcript provider (M9)    | ☐ Not provisioned | TaxStatus / Halcyon-class.                                                                                                            |
 
 **[PRATIK] pending review (M2.6):** policy pack `sop-50-10-8-2026-03` is

@@ -12,7 +12,6 @@ import {
   AnthropicLabelClassifier,
   AnthropicPageClassifier,
   AnthropicVisionAdapter,
-  AzureDocumentIntelligenceAdapter,
   ReductoAdapter,
 } from "@credexis/extraction";
 import { runIngest, type IngestResult } from "../ingest.js";
@@ -88,14 +87,6 @@ export const ingestDocument = task({
           const reducto = process.env["REDUCTO_API_KEY"]
             ? new ReductoAdapter({ apiKey: process.env["REDUCTO_API_KEY"] })
             : null;
-          const azure =
-            process.env["AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"] &&
-            process.env["AZURE_DOCUMENT_INTELLIGENCE_KEY"]
-              ? new AzureDocumentIntelligenceAdapter({
-                  endpoint: process.env["AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"],
-                  apiKey: process.env["AZURE_DOCUMENT_INTELLIGENCE_KEY"],
-                })
-              : null;
           const vision = anthropicKey ? new AnthropicVisionAdapter({ apiKey: anthropicKey }) : null;
 
           // Fetch the persisted logical docs (entity assignments included).
@@ -115,13 +106,18 @@ export const ingestDocument = task({
               {
                 db: supabaseExtractDb(client),
                 // ADR-0002 (bake-off, 2026-07-20): Reducto is Path 1 for
-                // ALL families — Azure prebuilt-tax misread real CPA
-                // bundles (hallucinated 1099s) and rate-limits on the free
-                // tier. Azure remains the fallback only when Reducto is
-                // unconfigured; re-evaluate on a paid tier.
-                path1ForFamily: () => reducto ?? azure,
+                // ALL families. Azure prebuilt-tax misread real CPA bundles
+                // (hallucinated 1099s), so it is NOT a production fallback
+                // (2026-07-24): a reader known to misread these documents
+                // must never stand in for Reducto. If Reducto is
+                // unavailable, Path 1 is null and reconciliation degrades to
+                // the Claude-vision reader (path2) alone — a real, accurate
+                // reader whose single-source values route to review — never
+                // to a bad reader. Azure stays a bench-only eval contender;
+                // re-promote only with data.
+                path1ForFamily: () => reducto,
                 path2: vision,
-                statementLayout: reducto ?? azure,
+                statementLayout: reducto,
                 labelClassifier: anthropicKey
                   ? new AnthropicLabelClassifier({ apiKey: anthropicKey })
                   : null,
