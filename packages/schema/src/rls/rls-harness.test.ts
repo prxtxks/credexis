@@ -750,19 +750,32 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
       }
     });
 
-    it("REVOKING the invite cuts access on the very next statement", async () => {
-      await sql`update borrower_invites set status = 'revoked', revoked_at = now() where id = ${inviteId}`;
-      try {
-        await expectDenied(() => upload(BORROWER, key(prefix, 20)));
-        const seen = await asUser(
-          sql,
-          BORROWER,
-          (tx) => tx`select name from storage.objects where bucket_id = 'deal-documents'`,
-        );
-        expect(seen.length).toBe(0);
-      } finally {
-        await sql`update borrower_invites set status = 'active', revoked_at = null where id = ${inviteId}`;
-      }
+    it("REVOKING cuts access on the very next statement — and cannot be undone", async () => {
+      // Uses the OTHER borrower's invite and leaves it revoked: revocation is
+      // terminal by design (0026's guard), so a test that "restores" it would
+      // be asserting something the database must refuse.
+      const otherPrefix = `${TENANT_A}/deals/${DEAL_A}/borrower-uploads/${otherInviteId}/`;
+      const before = await upload(OTHER_BORROWER, key(otherPrefix, 40));
+      expect(before.length).toBe(1);
+
+      await sql`update borrower_invites set status = 'revoked', revoked_at = now()
+                where id = ${otherInviteId}`;
+
+      await expectDenied(() => upload(OTHER_BORROWER, key(otherPrefix, 41)));
+      const seen = await asUser(
+        sql,
+        OTHER_BORROWER,
+        (tx) => tx`select name from storage.objects where bucket_id = 'deal-documents'`,
+      );
+      expect(seen.length).toBe(0); // their own uploads become unreadable too
+
+      // Revocation is one-way: nobody un-revokes an invite, staff included.
+      const err = await expectDenied(
+        () =>
+          sql`update borrower_invites set status = 'active', revoked_at = null
+               where id = ${otherInviteId}`,
+      );
+      expect(err.message).toContain("terminal");
     });
 
     it("an EXPIRED invite is dead without anyone revoking it", async () => {
@@ -770,6 +783,7 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
       try {
         await expectDenied(() => upload(BORROWER, key(prefix, 21)));
       } finally {
+        // expires_at is not terminal — extending is a legitimate staff action.
         await sql`update borrower_invites set expires_at = now() + interval '30 days' where id = ${inviteId}`;
       }
     });
@@ -786,10 +800,18 @@ describe.skipIf(!URL)("RLS harness (live policies)", () => {
       }
     });
 
-    it("org users are unaffected — staff storage access is byte-identical", async () => {
+    it("staff see their own AND their borrowers' uploads — never another tenant's", async () => {
+      // Borrower objects live under the tenant prefix, so the EXISTING staff
+      // policy already covers them: the lender reads what was uploaded for
+      // them, which is the point of the portal. Asserted by predicate, not
+      // by an exact count, so earlier scenarios can add objects freely.
       const rows = await asUser(sql, U.underwriterA, (tx) => tx`select name from storage.objects`);
-      expect(rows.length).toBe(1);
-      expect((rows[0] as { name: string }).name.startsWith(TENANT_A)).toBe(true);
+      const names = rows.map((r) => (r as { name: string }).name);
+      expect(names.every((n) => n.startsWith(`${TENANT_A}/`))).toBe(true);
+      expect(names.some((n) => n.startsWith(`${TENANT_A}/deals/${DEAL_A}/uploads/`))).toBe(true);
+      expect(names.some((n) => n.includes("/borrower-uploads/"))).toBe(true);
+      expect(names.some((n) => n.startsWith(`${TENANT_B}/`))).toBe(false);
+
       // …and an org user matches NEITHER borrower policy (disjointness).
       const [row] = await asUser(
         sql,
