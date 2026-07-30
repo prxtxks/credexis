@@ -216,7 +216,13 @@ export default function MembersPage() {
                 >
                   {t.label}
                   <span className="text-muted-foreground ml-1.5 text-[13px] tabular-nums">
-                    {t.key === "members" ? (members.data?.length ?? 0) : pending.length}
+                    {t.key === "members"
+                      ? members.data
+                        ? members.data.length
+                        : "…"
+                      : invites.isLoading
+                        ? "…"
+                        : pending.length}
                   </span>
                 </button>
               ))}
