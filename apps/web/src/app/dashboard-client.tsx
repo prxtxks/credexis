@@ -45,7 +45,6 @@ import { formatMicroUsd, formatRatio } from "@/lib/money-display";
 import { AppShell } from "@/components/app-shell";
 import { Pill, PillDot } from "@/components/ui/pill";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -109,182 +108,285 @@ function usePinnedDeals() {
 const ENTITY_KINDS = ["applicant", "target", "guarantor", "spouse", "epc", "oc"] as const;
 const DEAL_TYPES = ["business_acquisition", "working_capital", "real_estate", "refinance"] as const;
 
-function NewDealWizard({ onDone }: { onDone: (dealId: string) => void }) {
+const TYPE_META: Record<(typeof DEAL_TYPES)[number], { label: string; hint: string }> = {
+  business_acquisition: { label: "Business acquisition", hint: "Buying an operating company" },
+  working_capital: { label: "Working capital", hint: "Operating liquidity" },
+  real_estate: { label: "Real estate", hint: "Owner-occupied CRE" },
+  refinance: { label: "Refinance", hint: "Restructure existing debt" },
+};
+
+const WIZARD_STEPS = ["Loan type", "Deal & parties", "Review"] as const;
+
+/**
+ * In-page New-deal wizard (ui-23, Pratik: "we want a moving form in the
+ * dashboard space itself"). The board animates out, this panel animates in,
+ * and steps slide by direction. Same mutation, same fields - split across
+ * three slides with a Next button instead of one dialog.
+ */
+function NewDealWizard({ onCancel, onDone }: { onCancel: () => void; onDone: () => void }) {
+  const [step, setStep] = useState(0);
+  const [dir, setDir] = useState<1 | -1>(1);
   const [name, setName] = useState("");
   const [type, setType] = useState<(typeof DEAL_TYPES)[number]>("business_acquisition");
   const [entities, setEntities] = useState<{ name: string; kind: (typeof ENTITY_KINDS)[number] }[]>(
     [{ name: "", kind: "applicant" }],
   );
-  const create = trpc.deals.create.useMutation({ onSuccess: (r) => onDone(r.dealId) });
+  const create = trpc.deals.create.useMutation({ onSuccess: () => onDone() });
 
-  const TYPE_META: Record<(typeof DEAL_TYPES)[number], { label: string; hint: string }> = {
-    business_acquisition: { label: "Business acquisition", hint: "Buying an operating company" },
-    working_capital: { label: "Working capital", hint: "Operating liquidity" },
-    real_estate: { label: "Real estate", hint: "Owner-occupied CRE" },
-    refinance: { label: "Refinance", hint: "Restructure existing debt" },
+  const go = (d: 1 | -1) => {
+    setDir(d);
+    setStep((s) => Math.min(WIZARD_STEPS.length - 1, Math.max(0, s + d)));
   };
-  const TYPE_CARDS = DEAL_TYPES.map((value) => ({ value, ...TYPE_META[value] }));
+  const nameOk = name.trim() !== "";
+  const named = entities.filter((e) => e.name.trim() !== "");
 
   return (
-    <div className="space-y-5 text-sm">
-      <p className="text-muted-foreground -mt-2 text-[13px]">
-        Name the file, pick the loan type, and add the entities on it - the document checklist
-        follows the type.
-      </p>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="deal-name">Deal name</Label>
-        <Input
-          id="deal-name"
-          autoFocus
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Acme Holdings acquisition"
-        />
-      </div>
-
-      {/* ── Loan type: radio cards, not a dropdown ── */}
-      <fieldset>
-        <legend className="mb-1.5 text-sm font-medium">Loan type</legend>
-        <div role="radiogroup" aria-label="Deal type" className="grid grid-cols-2 gap-2">
-          {TYPE_CARDS.map((t) => {
-            const active = type === t.value;
-            return (
-              <button
-                key={t.value}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                onClick={() => setType(t.value)}
-                className={cn(
-                  "rounded-lg border p-3 text-left transition-colors duration-150",
-                  active
-                    ? "border-primary/60 bg-primary/10"
-                    : "border-border hover:border-primary/30 hover:bg-accent/40",
-                )}
-              >
-                <span className="flex items-center gap-2">
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "flex size-3.5 items-center justify-center rounded-full border",
-                      active ? "border-primary" : "border-border",
-                    )}
-                  >
-                    {active ? <span className="bg-primary size-2 rounded-full" /> : null}
-                  </span>
-                  <span className="text-[13px] font-semibold">{t.label}</span>
-                </span>
-                <span className="text-muted-foreground mt-1 block pl-5.5 text-[11px]">
-                  {t.hint}
-                </span>
-              </button>
-            );
-          })}
+    <section className="anim-panel-in mx-auto max-w-2xl">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-title">New deal</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Step {step + 1} of {WIZARD_STEPS.length} - {WIZARD_STEPS[step]}
+          </p>
         </div>
-      </fieldset>
-
-      {/* ── Entities ── */}
-      <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-sm font-medium">
-            Entities
-            <span className="text-muted-foreground ml-1.5 text-[13px] tabular-nums">
-              {entities.length}
-            </span>
-          </span>
-          <Button
-            size="xs"
-            variant="ghost"
-            className="text-muted-foreground gap-1"
-            onClick={() => setEntities([...entities, { name: "", kind: "guarantor" }])}
-          >
-            <Plus className="h-3 w-3" />
-            Add entity
-          </Button>
-        </div>
-        <div className="border-border divide-border/70 divide-y rounded-lg border">
-          {entities.map((e, i) => (
-            <div key={i} className="flex items-center gap-2 p-2">
-              <Input
-                value={e.name}
-                aria-label={`Entity ${i + 1} legal name`}
-                onChange={(ev) =>
-                  setEntities(
-                    entities.map((x, j) => (j === i ? { ...x, name: ev.target.value } : x)),
-                  )
-                }
-                placeholder={i === 0 ? "Applicant legal name" : "Entity legal name"}
-                className="border-0 bg-transparent shadow-none"
-              />
-              <FieldSelect
-                ariaLabel="Entity kind"
-                value={e.kind}
-                onChange={(v) =>
-                  setEntities(
-                    entities.map((x, j) =>
-                      j === i ? { ...x, kind: v as (typeof ENTITY_KINDS)[number] } : x,
-                    ),
-                  )
-                }
-                options={ENTITY_KINDS.map((k) => ({ value: k, label: k }))}
-              />
-              <button
-                type="button"
-                aria-label={`Remove entity ${i + 1}`}
-                disabled={entities.length === 1}
-                onClick={() => setEntities(entities.filter((_, j) => j !== i))}
-                className="hover:bg-accent text-muted-foreground rounded-md p-1.5 transition-colors duration-150 disabled:opacity-30"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Checklist preview as chips ── */}
-      <div className="bg-accent/30 rounded-lg p-3">
-        <p className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
-          This type expects
-        </p>
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {checklistFor(type).map((c) => (
-            <Pill key={c.label}>{c.label}</Pill>
-          ))}
-        </div>
-      </div>
-
-      {create.error && (
-        <p role="alert" className="text-destructive text-xs">
-          {create.error.message}
-        </p>
-      )}
-      <div className="border-border -mx-6 -mb-6 mt-4 flex items-center justify-end gap-2 border-t px-6 py-4">
-        <DialogClose asChild>
-          <Button variant="outline" size="sm">
-            Cancel
-          </Button>
-        </DialogClose>
-        <Button
-          size="sm"
-          variant="brand"
-          onClick={() =>
-            create.mutate({ name, type, entities: entities.filter((e) => e.name.trim() !== "") })
-          }
-          disabled={create.isPending || name.trim() === ""}
-        >
-          Create deal
+        <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={onCancel}>
+          Cancel
         </Button>
       </div>
-    </div>
+
+      {/* ── Step progress ── */}
+      <div className="mt-4 grid grid-cols-3 gap-2" aria-hidden="true">
+        {WIZARD_STEPS.map((label, i) => (
+          <div key={label}>
+            <div
+              className={cn(
+                "h-1 rounded-full transition-colors duration-300",
+                i <= step ? "bg-primary" : "bg-border",
+              )}
+            />
+            <p
+              className={cn(
+                "mt-1.5 text-[11px] font-medium",
+                i === step ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
+              {label}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="glass-card mt-5 overflow-hidden rounded-xl p-6">
+        <div key={step} className={cn("text-sm", dir === 1 ? "anim-step-fwd" : "anim-step-back")}>
+          {step === 0 ? (
+            <fieldset>
+              <legend className="text-sm font-medium">
+                What kind of loan is this? The document checklist follows the type.
+              </legend>
+              <div
+                role="radiogroup"
+                aria-label="Deal type"
+                className="mt-3 grid gap-2 sm:grid-cols-2"
+              >
+                {DEAL_TYPES.map((value) => {
+                  const t = TYPE_META[value];
+                  const active = type === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setType(value)}
+                      className={cn(
+                        "rounded-lg border p-4 text-left transition-colors duration-150",
+                        active
+                          ? "border-primary/60 bg-primary/10"
+                          : "border-border hover:border-primary/30 hover:bg-accent/40",
+                      )}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            "flex size-3.5 items-center justify-center rounded-full border",
+                            active ? "border-primary" : "border-border",
+                          )}
+                        >
+                          {active ? <span className="bg-primary size-2 rounded-full" /> : null}
+                        </span>
+                        <span className="text-[13px] font-semibold">{t.label}</span>
+                      </span>
+                      <span className="text-muted-foreground mt-1 block pl-5.5 text-[11px]">
+                        {t.hint}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="bg-accent/30 mt-4 rounded-lg p-3">
+                <p className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
+                  This type expects
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {checklistFor(type).map((c) => (
+                    <Pill key={c.label}>{c.label}</Pill>
+                  ))}
+                </div>
+              </div>
+            </fieldset>
+          ) : step === 1 ? (
+            <div className="space-y-5">
+              <div className="space-y-1.5">
+                <Label htmlFor="deal-name">Deal name</Label>
+                <Input
+                  id="deal-name"
+                  autoFocus
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Acme Holdings acquisition"
+                />
+              </div>
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    Entities
+                    <span className="text-muted-foreground ml-1.5 text-[13px] tabular-nums">
+                      {entities.length}
+                    </span>
+                  </span>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    className="text-muted-foreground gap-1"
+                    onClick={() => setEntities([...entities, { name: "", kind: "guarantor" }])}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add entity
+                  </Button>
+                </div>
+                <div className="border-border divide-border/70 divide-y rounded-lg border">
+                  {entities.map((e, i) => (
+                    <div key={i} className="flex items-center gap-2 p-2">
+                      <Input
+                        value={e.name}
+                        aria-label={`Entity ${i + 1} legal name`}
+                        onChange={(ev) =>
+                          setEntities(
+                            entities.map((x, j) => (j === i ? { ...x, name: ev.target.value } : x)),
+                          )
+                        }
+                        placeholder={i === 0 ? "Applicant legal name" : "Entity legal name"}
+                        className="border-0 bg-transparent shadow-none"
+                      />
+                      <FieldSelect
+                        ariaLabel="Entity kind"
+                        value={e.kind}
+                        onChange={(v) =>
+                          setEntities(
+                            entities.map((x, j) =>
+                              j === i ? { ...x, kind: v as (typeof ENTITY_KINDS)[number] } : x,
+                            ),
+                          )
+                        }
+                        options={ENTITY_KINDS.map((k) => ({ value: k, label: k }))}
+                      />
+                      <button
+                        type="button"
+                        aria-label={`Remove entity ${i + 1}`}
+                        disabled={entities.length === 1}
+                        onClick={() => setEntities(entities.filter((_, j) => j !== i))}
+                        className="hover:bg-accent text-muted-foreground rounded-md p-1.5 transition-colors duration-150 disabled:opacity-30"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <dl className="space-y-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-muted-foreground text-[13px]">Deal name</dt>
+                  <dd className="text-right font-medium">{name.trim() === "" ? "-" : name}</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-muted-foreground text-[13px]">Loan type</dt>
+                  <dd className="text-right font-medium">{TYPE_META[type].label}</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-muted-foreground text-[13px]">Entities</dt>
+                  <dd className="text-right">
+                    {named.length === 0 ? (
+                      <span className="text-muted-foreground">None named yet</span>
+                    ) : (
+                      named.map((e) => (
+                        <span key={e.name + e.kind} className="block font-medium">
+                          {e.name} <span className="text-muted-foreground">({e.kind})</span>
+                        </span>
+                      ))
+                    )}
+                  </dd>
+                </div>
+              </dl>
+              <div className="bg-accent/30 rounded-lg p-3">
+                <p className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
+                  Document checklist to collect
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {checklistFor(type).map((c) => (
+                    <Pill key={c.label}>{c.label}</Pill>
+                  ))}
+                </div>
+              </div>
+              {create.error && (
+                <p role="alert" className="text-destructive text-xs">
+                  {create.error.message}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="border-border -mx-6 -mb-6 mt-6 flex items-center justify-between border-t px-6 py-4">
+          <Button variant="outline" size="sm" disabled={step === 0} onClick={() => go(-1)}>
+            Back
+          </Button>
+          {step < WIZARD_STEPS.length - 1 ? (
+            <Button
+              size="sm"
+              variant="brand"
+              disabled={step === 1 && !nameOk}
+              onClick={() => go(1)}
+            >
+              Next
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="brand"
+              onClick={() => create.mutate({ name, type, entities: named })}
+              disabled={create.isPending || !nameOk}
+            >
+              {create.isPending ? "Creating…" : "Create deal"}
+            </Button>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
 export default function DashboardClient() {
   const router = useRouter();
   const board = trpc.deals.board.useQuery(undefined, { refetchInterval: 15_000 });
-  const [showWizard, setShowWizard] = useState(false);
+  // "leaving" is the one-render window where the board plays its exit
+  // animation; animationend flips to "wizard" (globals.css keeps the
+  // animation 1ms under reduced motion so the handoff always fires).
+  const [mode, setMode] = useState<"board" | "leaving" | "wizard">("board");
+  const openWizard = () => setMode("leaving");
   const [filter, setFilter] = useState<BoardFilter>("all");
   const [sort, setSort] = useState<BoardSort>("activity");
   const [view, setView] = useState<BoardView>("grid");
@@ -338,9 +440,34 @@ export default function DashboardClient() {
 
   const filterActive = filter !== "all" || sort !== "activity";
 
+  if (mode === "wizard") {
+    return (
+      <AppShell breadcrumb="Deals">
+        <main className="mx-auto max-w-[1400px] px-4 py-4 sm:px-6 md:py-6 lg:px-8">
+          <NewDealWizard
+            onCancel={() => setMode("board")}
+            onDone={() => {
+              setMode("board");
+              void utils.deals.board.invalidate();
+            }}
+          />
+        </main>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell breadcrumb="Deals">
-      <main className="mx-auto max-w-[1400px] px-4 py-4 sm:px-6 md:py-6 lg:px-8">
+      <main
+        className={cn(
+          "mx-auto max-w-[1400px] px-4 py-4 sm:px-6 md:py-6 lg:px-8",
+          mode === "leaving" && "anim-board-out",
+          mode === "board" && "anim-panel-in",
+        )}
+        onAnimationEnd={(e) => {
+          if (e.animationName === "board-out") setMode("wizard");
+        }}
+      >
         {/* ── Toolbar: search · filter/sort · view · New deal ── */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -449,9 +576,9 @@ export default function DashboardClient() {
             <DropdownMenuContent align="end" sideOffset={8} className="w-56 rounded-xl p-1.5">
               <DropdownMenuItem
                 className="rounded-lg text-[13px]"
-                // Deferred a tick: Radix returns focus on menu close, which
-                // would immediately dismiss a dialog opened synchronously.
-                onSelect={() => setTimeout(() => setShowWizard(true), 0)}
+                // Deferred a tick so Radix's focus-return on menu close lands
+                // before the board starts its exit animation.
+                onSelect={() => setTimeout(openWizard, 0)}
               >
                 New deal
               </DropdownMenuItem>
@@ -500,18 +627,6 @@ export default function DashboardClient() {
           })}
         </div>
 
-        <Dialog open={showWizard} onOpenChange={setShowWizard}>
-          <DialogContent className="rounded-2xl p-6 sm:max-w-xl">
-            <DialogTitle className="text-title">New deal</DialogTitle>
-            <NewDealWizard
-              onDone={() => {
-                setShowWizard(false);
-                void utils.deals.board.invalidate();
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-
         {/* ── Desktop: rail + deals ── */}
         <div className="mt-6 gap-8 max-md:hidden xl:grid xl:grid-cols-[300px_1fr]">
           <div className="space-y-6 max-xl:hidden">
@@ -524,7 +639,7 @@ export default function DashboardClient() {
             {board.isLoading ? (
               <DealsSkeleton view={view} />
             ) : matched.length === 0 ? (
-              <FirstRun hasAnyDeal={deals.length > 0} onNew={() => setShowWizard(true)} />
+              <FirstRun hasAnyDeal={deals.length > 0} onNew={openWizard} />
             ) : view === "grid" ? (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                 {matched.map((d) => (
@@ -560,7 +675,7 @@ export default function DashboardClient() {
               ))}
             </div>
           ) : matched.length === 0 ? (
-            <FirstRun hasAnyDeal={deals.length > 0} onNew={() => setShowWizard(true)} />
+            <FirstRun hasAnyDeal={deals.length > 0} onNew={openWizard} />
           ) : (
             MOBILE_GROUPS.map((group) => {
               const rows = matched.filter((d) => d.status === group.status);
