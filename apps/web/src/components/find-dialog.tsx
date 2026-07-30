@@ -40,10 +40,11 @@ export function FindDialog({
 
   // Find is NAVIGATION search (Pratik 2026-07-30): pages first, then deal
   // destinations from the cached board. Deal *content* search lives in the
-  // toolbar's "Search deals" input, not here.
+  // toolbar's "Search deals" input, not here. Deal rows carry BOTH landings
+  // (Pratik: overview dashboard or straight to the workspace).
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const nav: { label: string; meta: string; href: string }[] = [
+    const nav: { label: string; meta: string; href: string; altHref?: string }[] = [
       { label: "Deals", meta: "Page", href: "/" },
       { label: "Logs", meta: "Page", href: "/logs" },
       { label: "Usage", meta: "Page", href: "/costs" },
@@ -59,6 +60,7 @@ export function FindDialog({
       label: d.name,
       meta: STATUS_LABEL[d.status] ?? d.status,
       href: `/deals/${d.id}/overview`,
+      altHref: `/deals/${d.id}/workspace`,
     }));
     const all = [...nav, ...deals];
     return (q === "" ? all : all.filter((i) => i.label.toLowerCase().includes(q))).slice(0, 7);
@@ -104,7 +106,7 @@ export function FindDialog({
                 setActive((a) => Math.max(a - 1, 0));
               } else if (e.key === "Enter") {
                 const hit = matches[active];
-                if (hit) go(hit.href);
+                if (hit) go(e.metaKey || e.ctrlKey ? (hit.altHref ?? hit.href) : hit.href);
               }
             }}
             placeholder="Find a page or deal…"
@@ -134,7 +136,7 @@ export function FindDialog({
           ) : (
             <ul>
               {matches.map((d, i) => (
-                <li key={d.href + d.label}>
+                <li key={d.href + d.label} className="relative">
                   <button
                     type="button"
                     onClick={() => go(d.href)}
@@ -142,11 +144,27 @@ export function FindDialog({
                     className={cn(
                       "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors duration-150",
                       i === active ? "bg-accent text-foreground" : "text-foreground/80",
+                      d.altHref !== undefined && i === active && "pr-24",
                     )}
                   >
                     <span className="min-w-0 flex-1 truncate font-medium">{d.label}</span>
-                    <span className="shrink-0 text-[11px] text-muted-foreground">{d.meta}</span>
+                    {d.altHref === undefined || i !== active ? (
+                      <span className="shrink-0 text-[11px] text-muted-foreground">{d.meta}</span>
+                    ) : null}
                   </button>
+                  {/* Deal rows land on the overview by default; the active row
+                      offers the workspace as a one-click (or ⌘Enter) second
+                      destination. Sits outside the row button - nested buttons
+                      are invalid DOM. */}
+                  {d.altHref !== undefined && i === active ? (
+                    <button
+                      type="button"
+                      onClick={() => go(d.altHref!)}
+                      className="border-border bg-popover hover:border-primary/40 hover:text-foreground text-muted-foreground absolute top-1/2 right-2 -translate-y-1/2 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors duration-150"
+                    >
+                      Workspace ⌘↵
+                    </button>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -154,8 +172,8 @@ export function FindDialog({
         </div>
 
         <p className="border-t border-border px-4 py-2 text-[11px] text-muted-foreground">
-          Jumps to pages and deals. Deal search also lives in the toolbar; documents and facts join
-          when server search lands.
+          Enter opens a deal&apos;s overview, ⌘Enter its workspace. Documents and facts join when
+          server search lands.
         </p>
       </DialogContent>
     </Dialog>
