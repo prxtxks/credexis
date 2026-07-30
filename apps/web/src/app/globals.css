@@ -299,6 +299,57 @@
   }
 }
 
+/* ── Dashboard wizard transitions (ui-23) ──
+   The deals board animates out, the in-page New-deal wizard animates in,
+   and step changes slide by direction. Classes (not inline keyframes) so
+   the board's onAnimationEnd handoff has a single source of truth.
+   Reduced motion: durations collapse to 1ms instead of removing the
+   animation - the mode switch relies on animationend firing. */
+@keyframes board-out {
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+}
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.99);
+  }
+}
+@keyframes step-fwd {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+@keyframes step-back {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+.anim-board-out {
+  animation: board-out 200ms ease forwards;
+}
+.anim-panel-in {
+  animation: panel-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.anim-step-fwd {
+  animation: step-fwd 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.anim-step-back {
+  animation: step-back 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anim-board-out,
+  .anim-panel-in,
+  .anim-step-fwd,
+  .anim-step-back {
+    animation-duration: 1ms;
+  }
+}
+
 /* ── Type scale (02-VERCEL-DERIVATION §2: 28/20/16/14/13/11) ──
    Named steps so a size is a decision, not a guess. New off-scale
    sizes are banned (plan 01 step 15 gate). */
