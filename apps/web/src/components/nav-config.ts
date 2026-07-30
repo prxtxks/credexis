@@ -1,4 +1,12 @@
-import { Briefcase, Coins, LifeBuoy, Settings, Users, type LucideIcon } from "lucide-react";
+import {
+  Briefcase,
+  Coins,
+  LifeBuoy,
+  ScrollText,
+  Settings,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
 /**
  * One nav vocabulary for the sidebar and the mobile sheet (ui-17). Grouped
@@ -14,7 +22,8 @@ export interface NavItem {
 
 export const NAV_MAIN: NavItem[] = [
   { href: "/", label: "Deals", icon: Briefcase, exact: true },
-  { href: "/costs", label: "Costs", icon: Coins, exact: false },
+  { href: "/logs", label: "Logs", icon: ScrollText, exact: false },
+  { href: "/costs", label: "Usage", icon: Coins, exact: false },
 ];
 
 export const NAV_ORG: NavItem[] = [
