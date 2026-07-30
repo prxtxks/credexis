@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Search, X } from "lucide-react";
-import { NAV_MAIN, NAV_ORG, isActive } from "@/components/nav-config";
+import { NAV_MAIN, NAV_ORG, NAV_SETTINGS, isActive } from "@/components/nav-config";
 import { cn } from "@/lib/utils";
 
 export function MobileNav({ onFind }: { onFind: () => void }) {
@@ -49,6 +49,33 @@ export function MobileNav({ onFind }: { onFind: () => void }) {
           aria-label="mobile navigation"
           className="fixed inset-x-3 top-16 bottom-20 z-40 overflow-y-auto rounded-2xl border border-border bg-popover p-2 shadow-lg"
         >
+          {pathname.startsWith("/settings") ? (
+            <>
+              <p className="text-muted-foreground px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wider uppercase">
+                Settings
+              </p>
+              {NAV_SETTINGS.map((item) => {
+                const active =
+                  item.href === "/settings"
+                    ? pathname === "/settings"
+                    : pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "flex min-h-12 items-center rounded-xl px-3 text-[15px] font-medium transition-colors duration-150",
+                      active ? "bg-accent text-foreground" : "text-foreground/75",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+              <div className="my-2 border-t border-border" />
+            </>
+          ) : null}
           {NAV_MAIN.map((item) => {
             const active = isActive(item, pathname);
             return (

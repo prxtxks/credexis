@@ -18,8 +18,21 @@ export const NAV_MAIN: NavItem[] = [
 ];
 
 export const NAV_ORG: NavItem[] = [
-  { href: "/org/members", label: "Members", icon: Users, exact: false },
-  { href: "/settings", label: "Settings", icon: Settings, exact: false },
+  { href: "/settings/members", label: "Members", icon: Users, exact: false },
+  { href: "/settings", label: "Settings", icon: Settings, exact: true },
+];
+
+/**
+ * Settings sub-nav (ui-17-settings, plan 01 step 11 in the reference's
+ * sidebar-takeover idiom). Members lives here now; /org/members redirects.
+ */
+export const NAV_SETTINGS: { href: string; label: string }[] = [
+  { href: "/settings", label: "General" },
+  { href: "/settings/members", label: "Members" },
+  { href: "/settings/notifications", label: "Notifications" },
+  { href: "/settings/security", label: "Security" },
+  { href: "/settings/audit", label: "Audit log" },
+  { href: "/settings/plan", label: "Plan & Usage" },
 ];
 
 export function isActive(item: NavItem, pathname: string): boolean {

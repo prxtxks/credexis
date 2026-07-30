@@ -45,7 +45,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FieldSelect } from "@/components/ui/field-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -217,18 +216,18 @@ export default function BorrowerInvitesPage() {
         />
 
         {canWrite ? (
-          <Card className="glass-card mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+          <section className="glass-card mb-6 rounded-xl p-5">
+            <div className="mb-4">
+              <h2 className="flex items-center gap-2 text-base font-semibold">
                 <UserPlus className="h-4 w-4 text-primary" />
                 Invite a borrower
-              </CardTitle>
-              <CardDescription>
+              </h2>
+              <p className="text-muted-foreground mt-1 text-sm">
                 Pick someone you have invited before, or add a new borrower — they are saved to your
                 address book and reused on later deals.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+              </p>
+            </div>
+            <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="borrower-picker">Borrower</Label>
                 <FieldSelect
@@ -340,8 +339,8 @@ export default function BorrowerInvitesPage() {
                   </div>
                 </div>
               ) : null}
-            </CardContent>
-          </Card>
+            </div>
+          </section>
         ) : null}
 
         <section aria-labelledby="invitations-heading" className="space-y-3">
