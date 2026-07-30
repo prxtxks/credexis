@@ -5,8 +5,8 @@ import { Slot } from "radix-ui";
 import { cn } from "@/lib/utils";
 
 /**
- * Button v3 (ui-17, 02-VERCEL-DERIVATION §2): flat INVERSE primary — white
- * on dark, near-black on light — Vercel's signature button, in our tokens.
+ * Button v3 (ui-17, 02-VERCEL-DERIVATION §2): flat INVERSE primary - white
+ * on dark, near-black on light - Vercel's signature button, in our tokens.
  * The 135° emerald gradient is retired (emerald is the accent, not the
  * button). Geist medium 14px · rounded-lg (8px = --radius) · 150ms color
  * transitions. Do NOT re-round buttons to pills per-page.

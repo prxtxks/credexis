@@ -1,9 +1,9 @@
 /**
- * Trigger.dev scheduled task `chase-borrowers` (M12.1 — design 05 §10.5).
+ * Trigger.dev scheduled task `chase-borrowers` (M12.1 - design 05 §10.5).
  * Once a day: ONE reminder to borrowers who still owe documents, and a sweep
  * flipping past-`expires_at` invites to `expired`.
  *
- * Thin by design — every rule lives in `../borrower-chase.js` as pure
+ * Thin by design - every rule lives in `../borrower-chase.js` as pure
  * functions over plain data, unit-tested without a database. This file
  * queries, calls them, and acts.
  *
@@ -12,15 +12,15 @@
  *   (email is a copy, the portal is the record), so no send failure may cost
  *   the lifecycle work.
  * - Every failure is LOGGED, including the ones we recover from. A swallowed
- *   error here is an invisible outage — the exact class of bug the M11.5
+ *   error here is an invisible outage - the exact class of bug the M11.5
  *   notification postmortem records.
  * - Env-gated: with no RESEND_API_KEY the run logs what it WOULD send, sends
- *   nothing, and does NOT stamp `last_reminded_at` — the single reminder each
+ *   nothing, and does NOT stamp `last_reminded_at` - the single reminder each
  *   borrower gets must survive an unconfigured environment.
  * - Cadence comes from `tenants.settings` via `resolveChaseCadence`, never a
  *   literal in this file (Advisory 5).
  * - B4 posture: the service-role client is used with EXPLICIT scoping in code
- *   — every follow-up query is keyed by ids taken from the invite rows
+ *   - every follow-up query is keyed by ids taken from the invite rows
  *   themselves, and the recipient address is read off the invite, never
  *   supplied by a caller. This is a worker, never a request path.
  */
@@ -49,7 +49,7 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
   return out;
 }
 
-/** Relative, locale-free expiry wording — the `in N days` convention used by the invite mail. */
+/** Relative, locale-free expiry wording - the `in N days` convention used by the invite mail. */
 function expiresLabel(expiresAt: string, now: Date): string {
   const days = Math.ceil((Date.parse(expiresAt) - now.getTime()) / 86_400_000);
   if (!Number.isFinite(days)) return "soon";
@@ -212,7 +212,7 @@ export const chaseBorrowers = schedules.task({
     }
     if (!satisfactionKnown) {
       // With no satisfaction data every checklist looks untouched, so this run
-      // would mail borrowers who already sent everything — and burn the one
+      // would mail borrowers who already sent everything - and burn the one
       // reminder they get doing it. The sweep above still stands.
       logEvent(log, "chase-reminders-aborted", {
         reason: "satisfaction query failed",
@@ -239,7 +239,7 @@ export const chaseBorrowers = schedules.task({
         detail:
           "NEXT_PUBLIC_PORTAL_URL unset; reminders withheld rather than linking to the staff app",
       });
-      Sentry.captureMessage("chase-borrowers: NEXT_PUBLIC_PORTAL_URL unset — reminders withheld");
+      Sentry.captureMessage("chase-borrowers: NEXT_PUBLIC_PORTAL_URL unset - reminders withheld");
     }
 
     let sent = 0;

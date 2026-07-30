@@ -4,14 +4,14 @@
  * The borrower's upload control (design 05 §10.4/§10.6).
  *
  * Deliberately small and dumb: it POSTs each file to /api/upload and reports
- * what came back. Every real check — invite liveness, path pinning, quotas,
- * the virus gate — happens server-side and in the database, so nothing here is
+ * what came back. Every real check - invite liveness, path pinning, quotas,
+ * the virus gate - happens server-side and in the database, so nothing here is
  * load-bearing for security and nothing here needs to know a tenant, deal or
  * invite id.
  *
  * Copy rules for this surface: the reader is a small-business owner sending
  * tax returns, not a user of our product. No jargon, no status codes, and
- * never a hint about what the lender already holds — the route answers
+ * never a hint about what the lender already holds - the route answers
  * "received" for a duplicate for exactly that reason.
  */
 
@@ -72,7 +72,7 @@ export function UploadPanel() {
     setBusy(false);
     if (inputRef.current) inputRef.current.value = "";
     // Re-render the server component so "What we need" and "What you've sent"
-    // reflect what actually landed — the page is the record, not this list.
+    // reflect what actually landed - the page is the record, not this list.
     if (results.some((r) => r.ok)) startTransition(() => router.refresh());
   }
 
@@ -89,7 +89,7 @@ export function UploadPanel() {
         className="sr-only"
       />
       <div className="flex flex-wrap items-center gap-3">
-        {/* One text node, so the accessible name is exactly "Upload" — the e2e
+        {/* One text node, so the accessible name is exactly "Upload" - the e2e
             contract in design 05 §10.6 asserts that string. */}
         <button
           type="button"

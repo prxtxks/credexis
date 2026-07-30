@@ -3,7 +3,7 @@
 /**
  * Notification bell + panel (M11.5): unread badge, popover list, mark
  * read / mark all read, action links. Self-scoped data only (RLS: own
- * rows). Poll-based (30s) — realtime is a later upgrade, per design 02.
+ * rows). Poll-based (30s) - realtime is a later upgrade, per design 02.
  */
 
 import { useState } from "react";
@@ -64,13 +64,13 @@ export function NotificationsBell({ side = "down" }: { side?: "up" | "down" } = 
             onClick={() => setOpen(false)}
           />
           {/* Overlay = surface-2 (design language §2): OPAQUE bg-popover +
-              hairline + shadow — text never sits on transparency. Phones:
+              hairline + shadow - text never sits on transparency. Phones:
               fixed full-width sheet under the top bar (an absolute panel
               anchored to the bell overflows the viewport edge). */}
           <div
             className={cn(
               "border-border bg-popover fixed inset-x-3 top-16 z-50 rounded-xl border p-2 shadow-xl md:absolute md:inset-x-auto md:top-auto md:w-96",
-              // The bell lives in the sidebar FOOTER on desktop — the panel
+              // The bell lives in the sidebar FOOTER on desktop - the panel
               // must open upward or it renders below the viewport (Pratik).
               side === "up" ? "md:bottom-full md:left-0 md:mb-2" : "md:right-0 md:mt-2",
             )}
@@ -109,7 +109,7 @@ export function NotificationsBell({ side = "down" }: { side?: "up" | "down" } = 
                 <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
                   <Inbox className="h-6 w-6 text-muted-foreground/60" />
                   <p className="text-xs text-muted-foreground">
-                    Nothing yet — document events and approvals land here.
+                    Nothing yet - document events and approvals land here.
                   </p>
                 </div>
               ) : (

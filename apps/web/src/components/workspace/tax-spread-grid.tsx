@@ -3,7 +3,7 @@
 /**
  * Tax Spread grid (M8.3 tax tab, ADR-0002 follow-up): registry-line rows
  * grouped by form family × period columns. Renders integer-cent strings
- * only (Iron Law #3 — zero client math). Derived registry-only lines
+ * only (Iron Law #3 - zero client math). Derived registry-only lines
  * (AGI, taxable income) carry a "derived" chip: they exist for G4/G5
  * verification and never aggregate into statements.
  */
@@ -126,7 +126,7 @@ export function TaxSpreadGrid({
           tooltipValueGetter: (params) => {
             const cell = params.data?.cells[p];
             if (!cell) return "";
-            const base = `${cell.status} · confidence ${cell.confidence ?? "—"}`;
+            const base = `${cell.status} · confidence ${cell.confidence ?? "-"}`;
             return cell.verified ? `${base} · verified by IRS transcript` : base;
           },
         }),
@@ -148,7 +148,7 @@ export function TaxSpreadGrid({
   if (rowData.length === 0) {
     return (
       <div className="glass-card flex h-full items-center justify-center rounded-xl text-sm text-muted-foreground">
-        No tax-form facts yet — upload a return and run the pipeline.
+        No tax-form facts yet - upload a return and run the pipeline.
       </div>
     );
   }
@@ -159,7 +159,7 @@ export function TaxSpreadGrid({
         rowData={rowData}
         columnDefs={columnDefs}
         getRowId={(p) => p.data.key}
-        overlayNoRowsTemplate={`<span style="color: var(--muted-foreground); font-size: 13px;">No tax-form facts yet — upload a return and run the pipeline.</span>`}
+        overlayNoRowsTemplate={`<span style="color: var(--muted-foreground); font-size: 13px;">No tax-form facts yet - upload a return and run the pipeline.</span>`}
         theme={credexisGridTheme}
         headerHeight={GRID_HEADER_HEIGHT}
         rowHeight={GRID_ROW_HEIGHT}

@@ -10,7 +10,7 @@
  * with a drag-over emerald/scale state, and each document a glass card with a
  * 3px type-colored left border, a status badge, and per-stage chips whose
  * stage NAME stays visible. Upload log stays a glass list keeping the ✓ text.
- * Presentation only — every query, mutation, route, and branch is unchanged.
+ * Presentation only - every query, mutation, route, and branch is unchanged.
  */
 
 import { useRef, useState } from "react";
@@ -38,7 +38,7 @@ function formatBytes(n: number): string {
   return `${n} B`;
 }
 
-/** File-type identity from the extension — drives the left border + icon. */
+/** File-type identity from the extension - drives the left border + icon. */
 function fileKind(name: string): "pdf" | "scanned" | "excel" | "image" | "other" {
   const ext = name.toLowerCase().split(".").pop() ?? "";
   if (ext === "pdf") return "pdf";
@@ -136,7 +136,7 @@ export default function DocumentsPage() {
           <div>
             <h1 className="text-xl font-bold tracking-tight">Deal documents</h1>
             <p className="text-sm text-muted-foreground">
-              Tax returns, financial statements, and scans — every value traces back to one of these
+              Tax returns, financial statements, and scans - every value traces back to one of these
               sources.
             </p>
           </div>
@@ -183,7 +183,7 @@ export default function DocumentsPage() {
               </div>
               <p className="text-sm font-medium">Drop files or click to browse</p>
               <p className="text-xs text-muted-foreground">
-                pdf · png · jpeg · tiff · xlsx — 50 MiB max each
+                pdf · png · jpeg · tiff · xlsx - 50 MiB max each
               </p>
             </div>
           )}
@@ -208,7 +208,7 @@ export default function DocumentsPage() {
             </div>
           ) : rows.length === 0 ? (
             <div className="glass-card rounded-lg px-6 py-12 text-center text-sm text-muted-foreground">
-              No documents yet — upload the deal&apos;s tax returns and statements above.
+              No documents yet - upload the deal&apos;s tax returns and statements above.
             </div>
           ) : (
             <div className="space-y-2">
@@ -237,11 +237,11 @@ export default function DocumentsPage() {
                             {d.status}
                           </Badge>
 
-                          {/* Per-stage chips — stage NAME text stays visible. */}
+                          {/* Per-stage chips - stage NAME text stays visible. */}
                           {stages.map((s, i) => (
                             <span
                               key={i}
-                              title={`${s.stage}: ${s.status}${s.error ? ` — ${s.error}` : ""}${s.model ? ` (${s.model})` : ""}`}
+                              title={`${s.stage}: ${s.status}${s.error ? ` - ${s.error}` : ""}${s.model ? ` (${s.model})` : ""}`}
                               className={cn(
                                 "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
                                 stageChipClass(s.status),

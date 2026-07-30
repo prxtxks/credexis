@@ -6,18 +6,18 @@
  * The broker's whole borrower-portal surface: who has been invited, the
  * one-time claim link, chasing (extend / request documents), and the curated
  * status the borrower sees. Every write is a tRPC mutation on the
- * underwriter tier; RLS and the 0026 guards are the real enforcement — this
+ * underwriter tier; RLS and the 0026 guards are the real enforcement - this
  * page is honest UX over them, so denials surface as errors, never as silent
  * no-ops.
  *
  * Three shapes are load-bearing:
  * - The raw claim URL comes back from `create` EXACTLY ONCE and is built
  *   server-side against the PORTAL origin (never window.location.origin, as
- *   /org/members does — that link is same-app). Lost links are re-minted.
+ *   /org/members does - that link is same-app). Lost links are re-minted.
  * - Revocation is ONE-WAY (0026): the confirm step says so in words before
  *   the button that does it, because nothing can undo it afterwards.
  * - Portal status is broker-curated and three-valued, deliberately NOT
- *   deals.status — internal pipeline state must never leak to a borrower.
+ *   deals.status - internal pipeline state must never leak to a borrower.
  *
  * This is a single "use client" module with no server wrapper, unlike `/`:
  * `/deals/[dealId]/*` is a dynamic segment with no generateStaticParams, so
@@ -120,15 +120,15 @@ export default function BorrowerInvitesPage() {
       void utils.borrowers.list.invalidate();
       toast.success(
         r.emailSent
-          ? "Invitation emailed — the link below works too"
-          : "Invitation created — copy the link below and send it",
+          ? "Invitation emailed - the link below works too"
+          : "Invitation created - copy the link below and send it",
       );
     },
   });
   const extend = trpc.borrowerInvites.extend.useMutation({
     onSuccess: (r) => {
       refreshInvites();
-      toast.success(`Extended — now expires ${shortDate(r.expiresAt)}`);
+      toast.success(`Extended - now expires ${shortDate(r.expiresAt)}`);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -136,7 +136,7 @@ export default function BorrowerInvitesPage() {
     onSuccess: () => {
       setRevokeArmed(null);
       refreshInvites();
-      toast.success("Invitation revoked — that link is dead for good");
+      toast.success("Invitation revoked - that link is dead for good");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -152,7 +152,7 @@ export default function BorrowerInvitesPage() {
       setNoteFor(null);
       setNote("");
       refreshRequests();
-      toast.success("Request sent — the borrower sees it in their portal");
+      toast.success("Request sent - the borrower sees it in their portal");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -173,7 +173,7 @@ export default function BorrowerInvitesPage() {
     : true;
 
   /**
-   * A borrower is a person the org knows, reused across deals — so a new one
+   * A borrower is a person the org knows, reused across deals - so a new one
    * is created first and the invite is minted against that id. Both mutations
    * report failure through this one catch; neither carries an onError.
    */
@@ -212,7 +212,7 @@ export default function BorrowerInvitesPage() {
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <PageHeader
           title="Borrower portal"
-          description="Invite the borrower to a private, single-purpose portal — documents come in, nothing about the deal goes out."
+          description="Invite the borrower to a private, single-purpose portal - documents come in, nothing about the deal goes out."
         />
 
         {canWrite ? (
@@ -223,7 +223,7 @@ export default function BorrowerInvitesPage() {
                 Invite a borrower
               </h2>
               <p className="text-muted-foreground mt-1 text-sm">
-                Pick someone you have invited before, or add a new borrower — they are saved to your
+                Pick someone you have invited before, or add a new borrower - they are saved to your
                 address book and reused on later deals.
               </p>
             </div>
@@ -234,7 +234,7 @@ export default function BorrowerInvitesPage() {
                   ariaLabel="Borrower to invite"
                   value={borrowerId}
                   onChange={setBorrowerId}
-                  placeholder="— add a new borrower —"
+                  placeholder="- add a new borrower -"
                   options={(borrowers.data ?? []).map((b) => ({
                     value: b.id,
                     label: `${b.fullName} · ${b.email}`,
@@ -279,7 +279,7 @@ export default function BorrowerInvitesPage() {
                     ariaLabel="Entity this borrower is sending documents for"
                     value={entityId}
                     onChange={setEntityId}
-                    placeholder="— not entity-specific —"
+                    placeholder="- not entity-specific -"
                     options={(entities.data ?? []).map((e) => ({
                       value: e.id,
                       label: `${e.name} (${e.kind})`,
@@ -320,7 +320,7 @@ export default function BorrowerInvitesPage() {
               {claimLink ? (
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
                   <p className="mb-2 text-xs font-medium text-foreground">
-                    This link is shown once. Copy it now — we only ever store its fingerprint, so a
+                    This link is shown once. Copy it now - we only ever store its fingerprint, so a
                     lost link has to be re-issued as a new invitation.
                   </p>
                   <div className="flex items-center gap-2 rounded-md bg-muted p-2.5">
@@ -381,7 +381,7 @@ export default function BorrowerInvitesPage() {
               );
               return (
                 /* One DOM per invitation that reflows from a row at md+ to a
-                   stack at 375px — a separate mobile card would duplicate every
+                   stack at 375px - a separate mobile card would duplicate every
                    button's accessible name. */
                 <article
                   key={i.id}
@@ -418,7 +418,7 @@ export default function BorrowerInvitesPage() {
                         {dead
                           ? i.revokedAt
                             ? shortDate(i.revokedAt)
-                            : "—"
+                            : "-"
                           : shortDate(i.expiresAt)}
                       </dd>
                     </div>
@@ -466,7 +466,7 @@ export default function BorrowerInvitesPage() {
                     <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
                       {/* Three-valued, not a one-shot "mark complete" button:
                           portal status is reversible (unlike revoke) and is the
-                          ONLY status a borrower ever sees — deals.status must
+                          ONLY status a borrower ever sees - deals.status must
                           never reach them. */}
                       <FieldSelect
                         ariaLabel={`What the borrower sees for ${i.email}`}
@@ -528,7 +528,7 @@ export default function BorrowerInvitesPage() {
                       />
                       <p className="text-xs text-muted-foreground">
                         The borrower reads this text exactly as you write it, in their portal. Keep
-                        it about the document — nothing internal.
+                        it about the document - nothing internal.
                       </p>
                       <div className="flex items-center gap-2">
                         <Button
@@ -561,7 +561,7 @@ export default function BorrowerInvitesPage() {
                     >
                       <p className="text-xs text-foreground">
                         Revoking is permanent and cannot be undone. The borrower&apos;s link stops
-                        working immediately, their portal access ends, and nothing restores it — you
+                        working immediately, their portal access ends, and nothing restores it - you
                         would have to send a brand-new invitation. Documents they already uploaded
                         stay on the deal.
                       </p>

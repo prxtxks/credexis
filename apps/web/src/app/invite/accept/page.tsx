@@ -24,7 +24,7 @@ function AcceptInner() {
 
   const accept = trpc.invites.accept.useMutation({
     onSuccess: () => {
-      toast.success("Welcome aboard — workspace joined");
+      toast.success("Welcome aboard - workspace joined");
       router.replace("/");
       router.refresh();
     },
@@ -50,7 +50,7 @@ function AcceptInner() {
           <>
             <h1 className="mb-2 text-xl font-bold">Already in a workspace</h1>
             <p className="mb-4 text-sm text-muted-foreground">
-              This account already belongs to an organization — invites can only be claimed by a new
+              This account already belongs to an organization - invites can only be claimed by a new
               account.
             </p>
             <Button asChild variant="outline">

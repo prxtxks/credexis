@@ -1,13 +1,13 @@
 /**
  * Ingest orchestration (M3.1/M3.5): download → integrity check → virus scan
  * → split/classify → logical_documents + pages, with one extraction_run per
- * attempted stage (M3.2). Pure orchestration over the ports — the Trigger.dev
+ * attempted stage (M3.2). Pure orchestration over the ports - the Trigger.dev
  * task in ./trigger is a thin binding, so this whole flow unit-tests without
  * a queue or a database.
  *
  * Failure posture: anything after the "processing" mark that goes wrong
  * lands the document in `failed` with the failing stage's run recording the
- * error — a document is never left stuck in `processing` by a handled error.
+ * error - a document is never left stuck in `processing` by a handled error.
  */
 
 import { sha256Hex } from "@credexis/shared";
@@ -25,7 +25,7 @@ import type { DbPort, DocumentRow, StoragePort, VirusScanner, VirusScanStatus } 
 export const PIPELINE_VERSION = "0.1.0";
 
 /**
- * Refuse any storage_path that is not pinned to the row's own tenant/deal —
+ * Refuse any storage_path that is not pinned to the row's own tenant/deal -
  * and, for borrower-originated rows, to its own invite.
  *
  * The DB trigger `documents_invite_path_guard` (migration 0031) already makes
@@ -44,7 +44,7 @@ export function assertStoragePathPinned(doc: DocumentRow): void {
     throw new Error("ingest: storage_path is outside the document's tenant/deal prefix");
   }
   // Reject traversal explicitly rather than relying on the equality below to
-  // catch it — a '..' that normalises to a legal-looking key must never even
+  // catch it - a '..' that normalises to a legal-looking key must never even
   // be considered.
   if (doc.storagePath.split("/").includes("..")) {
     throw new Error("ingest: storage_path contains a traversal segment");
@@ -64,7 +64,7 @@ export function assertStoragePathPinned(doc: DocumentRow): void {
   }
 
   // ONE equality against a canonically rebuilt key settles element count,
-  // literal segments and invite identity at once — the same shape both the SQL
+  // literal segments and invite identity at once - the same shape both the SQL
   // guard and the TS key builder produce, so the three cannot drift into
   // disagreeing about which paths are legal.
   const leaf = doc.storagePath.slice(doc.storagePath.lastIndexOf("/") + 1);
@@ -132,7 +132,7 @@ export async function runIngest(deps: IngestDeps, payload: IngestPayload): Promi
 
     const bytes = await deps.storage.download(doc.storagePath);
 
-    // The bytes we process must be the bytes that were uploaded — lineage
+    // The bytes we process must be the bytes that were uploaded - lineage
     // starts here (Iron Law #5: every fact will trace back to this hash).
     const digest = await sha256Hex(bytes);
     if (digest !== doc.sha256) {
@@ -232,7 +232,7 @@ export async function runIngest(deps: IngestDeps, payload: IngestPayload): Promi
         durationMs: now() - stageStartedAt,
       });
     } else {
-      // Images / spreadsheets: no page-level split yet — one UNKNOWN logical
+      // Images / spreadsheets: no page-level split yet - one UNKNOWN logical
       // document that the assignment UI (M6.5) resolves. Statement parsing
       // for XLSX enters in M5 with real cell access; never guessed here.
       const id = await deps.db.insertLogicalDocument({

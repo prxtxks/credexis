@@ -3,7 +3,7 @@
  *
  * Transcript facts are authoritative source data (Blueprint §6 precedence):
  * method=transcript, accepted on arrival, confidence 1, lineage on
- * source_transcript_line. They never REPLACE parsed facts — both coexist
+ * source_transcript_line. They never REPLACE parsed facts - both coexist
  * per registry field and the G5 gate flags any disagreement as a tamper
  * signal (critical, blocking).
  */

@@ -1,22 +1,22 @@
 "use client";
 
 /**
- * Review queue UI (M6.4, Blueprint §4.6/§8.2): keyboard-first —
+ * Review queue UI (M6.4, Blueprint §4.6/§8.2): keyboard-first -
  * [a]ccept · [c]orrect · [r]eject · [s]kip · Enter submits · Esc cancels.
  * Target: <5s median per field. The client RENDERS; it never computes
- * (Iron Law #3) — values arrive as integer-cent strings and are formatted
+ * (Iron Law #3) - values arrive as integer-cent strings and are formatted
  * with string operations only.
  *
  * V1 (UnderlyticsAI) restyle: app shell top bar with a workspace back link
  * and deal-name breadcrumb, a glass-card fact card (severity Badge, mono
  * field-key pill, large tabular-nums value), shadcn Buttons that keep the
  * underline-first-letter shortcut markup, and a glass lineage aside. All
- * behavior — tRPC queries/mutations, keyboard handling, parse logic — is
+ * behavior - tRPC queries/mutations, keyboard handling, parse logic - is
  * unchanged; only the presentation moved to the shared design system.
  *
  * The source-crop panel shows lineage (page, bbox, method, confidence)
  * today; the actual PDF crop image renders once the pipeline (M3.1) writes
- * page images — the bbox data it needs is already here.
+ * page images - the bbox data it needs is already here.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -95,7 +95,7 @@ export default function ReviewPage() {
       if (correcting) {
         if (e.key === "Escape") setCorrecting(false);
         if (e.key === "Enter") submitCorrection();
-        return; // typing in the input — no shortcuts
+        return; // typing in the input - no shortcuts
       }
       switch (e.key) {
         case "a":
@@ -213,7 +213,7 @@ export default function ReviewPage() {
             </div>
 
             {/* The number under review IS the screen (design language §2):
-                Geist tabular at display size — identifiers stay mono, money
+                Geist tabular at display size - identifiers stay mono, money
                 does not. */}
             <div className="my-6 text-[40px] font-semibold leading-none tabular-nums tracking-tight text-foreground">
               {formatCents(current.valueCents)}
@@ -237,7 +237,7 @@ export default function ReviewPage() {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {/* The label is wrapped in a single <span> so the button
-                      (inline-flex) has ONE flex-item child — otherwise
+                      (inline-flex) has ONE flex-item child - otherwise
                       Chromium's accessible-name joins the <u> and the text
                       as separate flex items with a space ("a ccept"), which
                       breaks the exact-name e2e contract. */}
@@ -299,18 +299,18 @@ export default function ReviewPage() {
               <dt className="font-medium text-muted-foreground">Method</dt>
               <dd className="m-0 text-foreground">{current.method}</dd>
               <dt className="font-medium text-muted-foreground">Confidence</dt>
-              <dd className="m-0 text-foreground">{current.confidence ?? "—"}</dd>
+              <dd className="m-0 text-foreground">{current.confidence ?? "-"}</dd>
               <dt className="font-medium text-muted-foreground">Page</dt>
-              <dd className="m-0 text-foreground">{current.sourcePage ?? "—"}</dd>
+              <dd className="m-0 text-foreground">{current.sourcePage ?? "-"}</dd>
               <dt className="font-medium text-muted-foreground">Bounding box</dt>
               <dd className="m-0 font-mono text-foreground">
                 {current.sourceBbox
                   ? `x ${current.sourceBbox.x.toFixed(3)} · y ${current.sourceBbox.y.toFixed(3)}`
-                  : "—"}
+                  : "-"}
               </dd>
             </dl>
             <div className="mt-4 rounded-xl border border-dashed border-border px-6 py-8 text-center text-xs text-muted-foreground">
-              source crop renders here once the pipeline (M3.1) writes page images — bbox lineage
+              source crop renders here once the pipeline (M3.1) writes page images - bbox lineage
               above is live
             </div>
           </aside>

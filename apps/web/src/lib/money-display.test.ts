@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatCents, formatMicroUsd, parseDollarsInput } from "./money-display";
 
-describe("formatCents — string ops only (the client never computes)", () => {
+describe("formatCents - string ops only (the client never computes)", () => {
   it.each<[string, string]>([
     ["123456", "$1,234.56"],
     ["-123456", "-$1,234.56"],
@@ -14,14 +14,14 @@ describe("formatCents — string ops only (the client never computes)", () => {
   });
 });
 
-describe("parseDollarsInput — human input → integer-cent string", () => {
+describe("parseDollarsInput - human input → integer-cent string", () => {
   it.each<[string, string | null]>([
     ["36,500.00", "3650000"],
     ["$36,500", "3650000"],
     ["36500.5", "3650050"],
     ["-1,234.56", "-123456"],
     ["0", "0"],
-    ["1.234", null], // 3 decimals — reject
+    ["1.234", null], // 3 decimals - reject
     ["abc", null],
     ["", null],
   ])("%j → %j", (input, want) => {

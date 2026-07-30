@@ -5,7 +5,7 @@
  * card idiom). Self-scoped profile writes go through profile.update (the
  * update_own_profile definer). The organization card is UI-first per
  * Pratik's 2026-07-30 directive: the fields exist and say plainly that the
- * owner write path (update_org_settings, plan step 16) has not shipped —
+ * owner write path (update_org_settings, plan step 16) has not shipped -
  * they never pretend to save.
  */
 
@@ -81,7 +81,7 @@ export default function SettingsGeneralPage() {
 
           <SettingsCard
             title="Identity"
-            description="Assigned by your organization — role and workspace changes happen on the Members page."
+            description="Assigned by your organization - role and workspace changes happen on the Members page."
           >
             <dl className="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
               <div>
@@ -100,7 +100,7 @@ export default function SettingsGeneralPage() {
           <SettingsCard
             title="Organization"
             description="The workspace name your team and borrowers see."
-            footer="Editing ships with the owner write path (update_org_settings) — these fields are a preview, not a save."
+            footer="Editing ships with the owner write path (update_org_settings) - these fields are a preview, not a save."
             footerAction={
               <Button size="sm" variant="brand" disabled>
                 Save

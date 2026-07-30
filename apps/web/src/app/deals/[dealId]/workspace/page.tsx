@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Underwriting workspace shell (M8.2, Blueprint §8.2): three-zone cockpit —
+ * Underwriting workspace shell (M8.2, Blueprint §8.2): three-zone cockpit -
  * left rail (deal nav, collapsible) · center spread (tabs) · right
- * inspector — over a persistent metrics strip. Panel state lives in the
+ * inspector - over a persistent metrics strip. Panel state lives in the
  * URL (?rail=0&panel=0&tab=bs) so layouts are shareable and survive
  * reload. V1 chrome (ui-3): frosted toolbar, segmented pill tabs, glass
  * panels over the gradient mesh.
@@ -124,7 +124,7 @@ function WorkspaceInner() {
         }}
       />
 
-      {/* ── Mobile deal summary (M11.8): the cockpit is desktop-grade —
+      {/* ── Mobile deal summary (M11.8): the cockpit is desktop-grade -
           phones get status, progress, and the actionable surfaces
           (documents, review), never a 13-column grid. ── */}
       <div className="scroll-pane flex-1 space-y-4 overflow-y-auto p-4 md:hidden">
@@ -133,7 +133,7 @@ function WorkspaceInner() {
             Deal status
           </p>
           {/* The DB enum is not a display string, and a loading query must
-              not read as a real zero — counts render only once both queries
+              not read as a real zero - counts render only once both queries
               have landed (a wrong number in an underwriting tool is a bug,
               not a placeholder). */}
           <p className="mt-1 text-lg font-bold">
@@ -177,7 +177,7 @@ function WorkspaceInner() {
           </Link>
         </div>
         <p className="px-1 text-xs text-muted-foreground">
-          The full underwriting workspace — spread grid, source viewer, and exports — is designed
+          The full underwriting workspace - spread grid, source viewer, and exports - is designed
           for desktop. Open Credexis on a larger screen for the complete cockpit.
         </p>
       </div>
@@ -319,7 +319,7 @@ function WorkspaceInner() {
           </nav>
         )}
 
-        {/* Center — spread tabs */}
+        {/* Center - spread tabs */}
         <main className="flex min-w-0 flex-1 flex-col">
           <div role="tablist" className="flex items-center gap-1 px-3 py-2">
             <div className="flex items-center gap-0.5 rounded-full bg-muted/60 p-0.5">
@@ -363,7 +363,7 @@ function WorkspaceInner() {
               />
             ) : tab === "proforma" ? (
               <div className="glass-card flex h-full items-center justify-center rounded-xl text-sm text-muted-foreground">
-                Pro-forma — the post-acquisition projection view. Pick a loan scenario to populate
+                Pro-forma - the post-acquisition projection view. Pick a loan scenario to populate
                 it.
               </div>
             ) : (
@@ -374,7 +374,7 @@ function WorkspaceInner() {
           </div>
         </main>
 
-        {/* Right — inspector */}
+        {/* Right - inspector */}
         {panelOpen && (
           <aside
             aria-label="inspector"

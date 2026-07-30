@@ -1,5 +1,5 @@
 /**
- * Supabase bindings for the ports — WORKER-SIDE ONLY. This runs inside
+ * Supabase bindings for the ports - WORKER-SIDE ONLY. This runs inside
  * Trigger.dev tasks, which is a background context, not a request path:
  * the service-role key is legal here (Iron Law #7 forbids it in request
  * paths). Every write still stamps tenant_id, and the payload/document

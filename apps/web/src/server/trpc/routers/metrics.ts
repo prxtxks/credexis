@@ -1,6 +1,6 @@
 /**
  * Metrics + scenarios API (M7.7). The client reads rendered values (cents
- * and mantissas as strings) and NEVER computes — the CI client-math grep
+ * and mantissas as strings) and NEVER computes - the CI client-math grep
  * enforces it. Every scenario mutation triggers a synchronous recompute so
  * what the UI invalidates into is always current engine output.
  */

@@ -28,7 +28,7 @@ const requestedItemSchema = z.object({
   formFamilies: z.array(z.string().min(1).max(40)).max(12),
 });
 
-/** Portal link for a raw token — the portal origin, never the app origin. */
+/** Portal link for a raw token - the portal origin, never the app origin. */
 function claimUrl(token: string): string {
   const base = process.env["NEXT_PUBLIC_PORTAL_URL"] ?? `${appBaseUrl()}/portal`;
   return `${base.replace(/\/$/, "")}/claim?token=${token}`;
@@ -72,7 +72,7 @@ export const borrowersRouter = router({
         .select("id")
         .maybeSingle();
       if (error) {
-        // Unique (tenant, lower(email)) — the borrower already exists HERE.
+        // Unique (tenant, lower(email)) - the borrower already exists HERE.
         // The message never implies anything about other tenants.
         if (error.code === "23505") {
           throw new TRPCError({
@@ -208,7 +208,7 @@ export const borrowerInvitesRouter = router({
       return { inviteId: data?.id as string, token, claimUrl: claimUrl(token), emailSent };
     }),
 
-  /** Extend a live invite. Expiry is not terminal — this is routine chasing. */
+  /** Extend a live invite. Expiry is not terminal - this is routine chasing. */
   extend: underwriterProcedure
     .input(
       z.object({
@@ -244,7 +244,7 @@ export const borrowerInvitesRouter = router({
       return { ok: true };
     }),
 
-  /** Curated status the borrower sees — never the deal's internal status. */
+  /** Curated status the borrower sees - never the deal's internal status. */
   setPortalStatus: underwriterProcedure
     .input(
       z.object({
@@ -285,7 +285,7 @@ export const documentRequestsRouter = router({
       }));
     }),
 
-  /** The note is shown verbatim to the borrower — the UI says so plainly. */
+  /** The note is shown verbatim to the borrower - the UI says so plainly. */
   create: underwriterProcedure
     .input(
       z.object({

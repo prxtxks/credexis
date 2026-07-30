@@ -1,11 +1,11 @@
 /**
- * M8.9 — the workspace demo flow against the LIVE stack: upload → spread →
+ * M8.9 - the workspace demo flow against the LIVE stack: upload → spread →
  * override in the source viewer → in-request recompute → policy chips.
  * The deal pins the REAL seeded SOP pack (draft → advisory chips + badge).
  *
  * Gated on RUN_LIVE_E2E=1; CI always skips. Upload exercises the real
  * storage path; document PROCESSING stays pending until the Trigger.dev
- * task deploys (TRIGGER_ACCESS_TOKEN, [PRATIK]) — facts are seeded, as in
+ * task deploys (TRIGGER_ACCESS_TOKEN, [PRATIK]) - facts are seeded, as in
  * the M6.6 spec.
  */
 
@@ -13,7 +13,7 @@ import { expect, test } from "@playwright/test";
 import { adminCreateUser, adminDeleteUser, live, runSql } from "./support/live-env";
 
 const T = {
-  // The REAL seeded pack (M2.6) — never deleted by this spec.
+  // The REAL seeded pack (M2.6) - never deleted by this spec.
   packId: "00000000-0000-4000-9000-000000000001",
   tenantId: "00000000-0000-4000-c000-00000000000a",
   dealId: "00000000-0000-4000-c000-0000000000da",
@@ -34,7 +34,7 @@ const CLEANUP = `
   delete from public.facts where deal_id = '${T.dealId}';
   delete from public.loan_scenarios where deal_id = '${T.dealId}';
   delete from public.extraction_runs where deal_id = '${T.dealId}';
-  -- pages before logical_documents (FK) — the extraction stage writes
+  -- pages before logical_documents (FK) - the extraction stage writes
   -- them for uploaded docs; missing here left the DB dirty and broke
   -- the NEXT run's seed (tenants_pkey duplicate, 2026-07-22).
   delete from public.pages where tenant_id = '${T.tenantId}';
@@ -154,7 +154,7 @@ test.describe("M8.9 workspace flow (live)", () => {
 
     // Policy chips render from the pinned (draft) pack: advisory badge + rules.
     await expect(page.getByLabel("policy compliance")).toBeVisible();
-    await expect(page.getByText("DRAFT PACK — advisory only")).toBeVisible();
+    await expect(page.getByText("DRAFT PACK - advisory only")).toBeVisible();
 
     // Spread: open the NI cell and override $120,000 → $200,000.
     const cell = page.getByRole("gridcell", { name: "$120,000.00" });

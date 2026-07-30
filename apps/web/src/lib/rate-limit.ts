@@ -1,6 +1,6 @@
 /**
  * API rate limiting (M10.3): fixed-window counter per client key. Pure
- * and instance-local — on serverless this bounds per-instance abuse and
+ * and instance-local - on serverless this bounds per-instance abuse and
  * is honest about it (a shared store upgrade slots in behind the same
  * interface when scale demands one). Applied to /api/* writes only; page
  * loads and tRPC reads stay unthrottled.

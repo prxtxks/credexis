@@ -85,7 +85,7 @@ const baseDeps = (over: Partial<Parameters<typeof runExtractStage>[0]>) => ({
 
 /* ── tests ────────────────────────────────────────────────────────────── */
 
-describe("runExtractStage — tax forms", () => {
+describe("runExtractStage - tax forms", () => {
   it("agreeing paths → consensus fact, auto-accepted, with vendor geometry", async () => {
     const db = new FakeDb();
     const deps = baseDeps({
@@ -151,8 +151,8 @@ describe("runExtractStage — tax forms", () => {
 
   it("derived registry lines without taxonomy placement land as registry-only facts", async () => {
     // f1040.line11 (AGI) deliberately has no taxonomyNodeKey in the registry
-    // (ADR-0002: derived lines never aggregate). It must still become a fact —
-    // keyed by registry_field_id alone — for G4/G5 and the Tax Spread.
+    // (ADR-0002: derived lines never aggregate). It must still become a fact -
+    // keyed by registry_field_id alone - for G4/G5 and the Tax Spread.
     const agree = [
       cand("f1040.line9", "100,000."),
       cand("f1040.line10", "5,000."),
@@ -228,7 +228,7 @@ describe("runExtractStage — tax forms", () => {
   });
 });
 
-describe("runExtractStage — statements", () => {
+describe("runExtractStage - statements", () => {
   it("maps a layout grid into suggested facts through the taxonomy chain", async () => {
     const db = new FakeDb();
     const layout: LayoutParseResult = {
@@ -315,7 +315,7 @@ describe("runExtractStage — statements", () => {
 });
 
 describe("statement extraction resilience (bake-off finding, 2026-07-20)", () => {
-  it("a throwing label classifier degrades to learned-mappings-only — never aborts", async () => {
+  it("a throwing label classifier degrades to learned-mappings-only - never aborts", async () => {
     const db = new FakeDb();
     const layout: LayoutParseResult = {
       pages: [

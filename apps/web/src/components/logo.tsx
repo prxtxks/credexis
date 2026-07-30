@@ -2,13 +2,13 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
- * Credexis brand lockup — the real mark from www.credexis.co
+ * Credexis brand lockup - the real mark from www.credexis.co
  * (public/logo-credexis.svg, native brand green #00b06a) + the "Credexis"
  * wordmark in Geist bold. One component so the brand is decided once and
  * matches the marketing site everywhere it appears.
  *
  * `onColor` renders the mark white (brightness-0 invert) and the wordmark
- * white, for use on a colored/dark surface (e.g. the login brand panel) —
+ * white, for use on a colored/dark surface (e.g. the login brand panel) -
  * exactly how the site shows it on its dark-green nav.
  */
 export function Logo({

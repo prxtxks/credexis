@@ -1,5 +1,5 @@
 /**
- * Money display helpers (M6.4) — pure STRING operations, no arithmetic
+ * Money display helpers (M6.4) - pure STRING operations, no arithmetic
  * (Iron Law #3: the client renders, it never computes). Exact at any
  * magnitude because no value ever becomes a float.
  */

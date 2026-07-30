@@ -4,7 +4,7 @@
  * overrides (legacy CSS imports conflict with v36's generated styles).
  *
  * Every color is a var() reference into the design tokens, so dark mode
- * flips with the `.dark` class for free — no JS wiring. If derived-shade
+ * flips with the `.dark` class for free - no JS wiring. If derived-shade
  * mixing ever misbehaves, the fallback is per-mode withParams(params,
  * "light"|"dark") + data-ag-theme-mode synced in the theme toggle.
  */

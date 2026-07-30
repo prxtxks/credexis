@@ -2,7 +2,7 @@
 
 /**
  * Support → New case (ui-19): the reference's "How can we help you today?"
- * hero — both title lines at display size, second muted — cards, and the
+ * hero - both title lines at display size, second muted - cards, and the
  * agent conversation. Creating a case stores it in this browser
  * (localStorage) and returns to /support; the agent stays an honest stub
  * until it is wired.
@@ -28,7 +28,7 @@ const TOPICS = [
 ] as const;
 
 const AGENT_REPLY =
-  "The support agent isn't connected yet — this chat is the surface it will live in. " +
+  "The support agent isn't connected yet - this chat is the surface it will live in. " +
   "Create the case below and a human reads it, or email " +
   SUPPORT_EMAIL +
   " directly.";
@@ -76,7 +76,7 @@ export default function SupportNewCasePage() {
               Documentation
             </p>
             <p className="text-muted-foreground mt-1 text-[13px]">
-              Guides for underwriting, the borrower portal, and exports — being written alongside
+              Guides for underwriting, the borrower portal, and exports - being written alongside
               the pilot.
             </p>
           </div>
@@ -89,7 +89,7 @@ export default function SupportNewCasePage() {
               Email us
             </p>
             <p className="text-muted-foreground mt-1 text-[13px]">
-              {SUPPORT_EMAIL} — a human reads every message during the pilot.
+              {SUPPORT_EMAIL} - a human reads every message during the pilot.
             </p>
           </a>
         </div>
@@ -100,7 +100,7 @@ export default function SupportNewCasePage() {
             Credexis Agent
           </h2>
           <p className="text-muted-foreground mt-2 text-sm">
-            Hello — describe the problem. If the agent can&apos;t solve it, it helps you open a
+            Hello - describe the problem. If the agent can&apos;t solve it, it helps you open a
             support case.
           </p>
 
@@ -175,7 +175,7 @@ export default function SupportNewCasePage() {
             </Button>
           </div>
           <p className="text-muted-foreground mt-2 text-[11px]">
-            The agent may make mistakes — today it only hands off. Cases are stored in this browser
+            The agent may make mistakes - today it only hands off. Cases are stored in this browser
             until the case backend lands.
           </p>
         </section>

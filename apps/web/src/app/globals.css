@@ -2,12 +2,12 @@
 @import "tw-animate-css";
 
 /* ============================================================
-   Credexis — Global Design System (V1 port, M8.1 / UI-1)
+   Credexis - Global Design System (V1 port, M8.1 / UI-1)
    Emerald/Teal palette · Glassmorphism · Dark mode ready
    Ported verbatim from V1 (UnderlyticsAI) globals.css with the two
    V2 fixes kept: scrollbars scoped to .scroll-pane (V1 hid them
    globally) and consistent :focus-visible rings. AG Grid styling
-   moved to the v36 Theming API (src/lib/ag-grid-theme.ts) — only
+   moved to the v36 Theming API (src/lib/ag-grid-theme.ts) - only
    the .credexis-grid helper classes remain here.
    DSCR traffic-light COLORS live here; the THRESHOLDS that pick a
    color come from the policy pack at render time (Iron Law #8).
@@ -60,7 +60,7 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* Inverse button pair (02-VERCEL-DERIVATION §2 — flat primary buttons) */
+  /* Inverse button pair (02-VERCEL-DERIVATION §2 - flat primary buttons) */
   --color-inverse: var(--inverse);
   --color-inverse-foreground: var(--inverse-foreground);
 
@@ -86,10 +86,10 @@
   --animate-border-spin: border-spin 4s linear infinite;
 }
 
-/* ── Light Theme (Emerald accent on neutral paper — 02-VERCEL-DERIVATION) ── */
+/* ── Light Theme (Emerald accent on neutral paper - 02-VERCEL-DERIVATION) ── */
 :root {
   /* 8px control radius; rounded-xl resolves to 12 (cards), 2xl to 16 (modals),
-     3xl to 20 (sheets) — the measured Vercel ladder. */
+     3xl to 20 (sheets) - the measured Vercel ladder. */
   --radius: 0.5rem;
   /* Core */
   --background: oklch(0.985 0.001 166);
@@ -100,11 +100,11 @@
   /* Popovers */
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.17 0.01 166);
-  /* Primary — Emerald (the ACCENT role: what blue is to Vercel). Buttons use
+  /* Primary - Emerald (the ACCENT role: what blue is to Vercel). Buttons use
      the inverse pair below, never this. */
   --primary: oklch(0.52 0.17 162);
   --primary-foreground: oklch(0.99 0 0);
-  /* Inverse — flat primary buttons (near-black on light, white on dark) */
+  /* Inverse - flat primary buttons (near-black on light, white on dark) */
   --inverse: oklch(0.17 0.005 166);
   --inverse-foreground: oklch(0.99 0 0);
   /* Secondary */
@@ -118,7 +118,7 @@
   --accent-foreground: oklch(0.25 0.04 166);
   /* Destructive */
   --destructive: oklch(0.577 0.245 27.325);
-  /* Borders & Inputs — hairlines, never solid greys (02 §2) */
+  /* Borders & Inputs - hairlines, never solid greys (02 §2) */
   --border: oklch(0 0 0 / 8%);
   --input: oklch(0 0 0 / 10%);
   --ring: oklch(0.6 0.17 162);
@@ -128,7 +128,7 @@
   --chart-3: oklch(0.45 0.12 190);
   --chart-4: oklch(0.7 0.14 152);
   --chart-5: oklch(0.75 0.1 140);
-  /* Sidebar — same canvas as the page, separated by hairline only (02 §3.1) */
+  /* Sidebar - same canvas as the page, separated by hairline only (02 §3.1) */
   --sidebar: oklch(0.985 0.001 166);
   --sidebar-foreground: oklch(0.17 0.01 166);
   --sidebar-primary: oklch(0.52 0.17 162);
@@ -148,20 +148,20 @@
   --severity-info: oklch(0.55 0.05 240);
 }
 
-/* ── Dark Theme (near-black canvas, hairline edges — 02-VERCEL-DERIVATION) ── */
+/* ── Dark Theme (near-black canvas, hairline edges - 02-VERCEL-DERIVATION) ── */
 .dark {
   --background: oklch(0.09 0.004 166);
   --foreground: oklch(0.94 0.003 166);
-  /* Cards — surface-1: barely above canvas; the hairline does the work */
+  /* Cards - surface-1: barely above canvas; the hairline does the work */
   --card: oklch(0.145 0.006 166);
   --card-foreground: oklch(0.94 0.003 166);
-  /* Popovers — surface-2 */
+  /* Popovers - surface-2 */
   --popover: oklch(0.16 0.006 166);
   --popover-foreground: oklch(0.94 0.003 166);
-  /* Primary — Bright Emerald (accent role only; buttons use inverse) */
+  /* Primary - Bright Emerald (accent role only; buttons use inverse) */
   --primary: oklch(0.7 0.18 162);
   --primary-foreground: oklch(0.13 0.02 166);
-  /* Inverse — the flat white primary button */
+  /* Inverse - the flat white primary button */
   --inverse: oklch(0.99 0 0);
   --inverse-foreground: oklch(0.13 0.005 166);
   /* Secondary */
@@ -175,7 +175,7 @@
   --accent-foreground: oklch(0.94 0.003 166);
   /* Destructive */
   --destructive: oklch(0.704 0.191 22.216);
-  /* Borders & Inputs — white hairlines at Vercel weights */
+  /* Borders & Inputs - white hairlines at Vercel weights */
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.65 0.17 162);
@@ -185,7 +185,7 @@
   --chart-3: oklch(0.55 0.12 190);
   --chart-4: oklch(0.75 0.14 152);
   --chart-5: oklch(0.8 0.1 140);
-  /* Sidebar — same canvas as the page, hairline-separated (02 §3.1) */
+  /* Sidebar - same canvas as the page, hairline-separated (02 §3.1) */
   --sidebar: oklch(0.09 0.004 166);
   --sidebar-foreground: oklch(0.94 0.003 166);
   --sidebar-primary: oklch(0.7 0.18 162);
@@ -335,7 +335,7 @@
   letter-spacing: 0.05em;
 }
 
-/* Grid loader — 9-dot sequential snake (restored ui-18: the brand moment
+/* Grid loader - 9-dot sequential snake (restored ui-18: the brand moment
    for the deal workspace; consumed by components/ui/grid-loader.tsx). */
 @keyframes grid-loader {
   0%,
@@ -392,7 +392,7 @@
 /* ── Utility Classes ── */
 
 /* Glassmorphism card */
-/* surface-1 (design language §2): content cards are OPAQUE — hairline +
+/* surface-1 (design language §2): content cards are OPAQUE - hairline +
    soft shadow carry the elevation, never transparency. The class keeps its
    historical name so every existing page upgrades in place. */
 .glass-card {
@@ -407,7 +407,7 @@
   box-shadow: 0 1px 3px oklch(0 0 0 / 30%);
 }
 
-/* Gradient mesh: surface-0 texture only (design language §2) — felt, not
+/* Gradient mesh: surface-0 texture only (design language §2) - felt, not
    seen. Anything stronger reads as template decor. */
 .gradient-mesh {
   background:
@@ -497,7 +497,7 @@
 }
 
 /* Frosted glass toolbar */
-/* Chrome (top bar / tab bar) may blur — it floats over content — but at
+/* Chrome (top bar / tab bar) may blur - it floats over content - but at
    high opacity so text on it never fights the page underneath. */
 .frosted-toolbar {
   background: oklch(0.985 0.001 166 / 88%);
@@ -510,7 +510,7 @@
   border-bottom: 1px solid oklch(1 0 0 / 10%);
 }
 
-/* Mobile tab bar: RETIRED (ui-17, 02 §1.4) — replaced by the floating
+/* Mobile tab bar: RETIRED (ui-17, 02 §1.4) - replaced by the floating
    Find/menu pill in components/mobile-nav.tsx. Class deleted the day its
    consumer died (Iron Law #10). */
 
@@ -605,7 +605,7 @@
   border-radius: 4px;
 }
 
-/* Inside an open dialog the surface itself is the focus context — the
+/* Inside an open dialog the surface itself is the focus context - the
    brand ring on the palette input read as a stray green box (Pratik). */
 [data-slot="dialog-content"] :where(input, [tabindex]):focus-visible {
   outline: none;

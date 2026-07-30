@@ -1,6 +1,6 @@
 /**
  * IRS transcripts API (M9.2/M9.3/M9.5): per-deal feature flag, consent
- * tracking, and transcript ingest. Fully functional with no provider —
+ * tracking, and transcript ingest. Fully functional with no provider -
  * requestConsent explains itself instead of failing the deal.
  */
 
@@ -64,7 +64,7 @@ export const transcriptsRouter = router({
       return { enabled: input.enabled };
     }),
 
-  /** 8821 consent request — provider-backed once M9.1 selects one. */
+  /** 8821 consent request - provider-backed once M9.1 selects one. */
   requestConsent: underwriterProcedure
     .input(z.object({ dealId: z.string().uuid(), entityId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
@@ -76,7 +76,7 @@ export const transcriptsRouter = router({
         return {
           requested: false as const,
           reason:
-            "No transcript provider configured yet — provider selection is M9.1 ([PRATIK], ADR-0003).",
+            "No transcript provider configured yet - provider selection is M9.1 ([PRATIK], ADR-0003).",
         };
       }
       // Adapter path (unreachable until a provider registers): create the
@@ -127,7 +127,7 @@ export const transcriptsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       // Registry field → taxonomy node placement (bind by identity, never
-      // ordinal — Iron Law #4).
+      // ordinal - Iron Law #4).
       const { data: registry, error: regErr } = await ctx.supabase
         .from("form_registry")
         .select("field_id, taxonomy_node_key")

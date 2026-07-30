@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Workspace toolbar (ui-3): V1's frosted app chrome — back arrow, mini
- * logo, deal identity, segmented panel controls, export, theme — over
+ * Workspace toolbar (ui-3): V1's frosted app chrome - back arrow, mini
+ * logo, deal identity, segmented panel controls, export, theme - over
  * the V2 three-zone layout (all zones stay simultaneously visible; V1's
  * mutually-exclusive panel was a postmortem finding).
  */
@@ -66,7 +66,7 @@ export function WorkspaceToolbar({
           <ArrowLeft className="h-4 w-4" />
         </Link>
       </Button>
-      {/* Phones: the deal name IS the title — wordmark and the rail/panel
+      {/* Phones: the deal name IS the title - wordmark and the rail/panel
           toggles (which control desktop-only zones) get out of the way. */}
       <span className="max-md:hidden">
         <Logo size="sm" />

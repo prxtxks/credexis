@@ -49,9 +49,9 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel — brand */}
+      {/* Left panel - brand */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        {/* Deep brand field + faint dot texture — no floating decor (ui-12). */}
+        {/* Deep brand field + faint dot texture - no floating decor (ui-12). */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary to-[oklch(0.32_0.09_168)]" />
         <div className="absolute inset-0 dot-pattern opacity-15" />
 
@@ -63,16 +63,16 @@ function LoginForm() {
 
           <div className="max-w-md">
             <h2 className="text-4xl font-bold text-white leading-tight mb-5">
-              SBA 7(a) underwriting — documents in, pro-forma out
+              SBA 7(a) underwriting - documents in, pro-forma out
             </h2>
             <p className="text-white/70 text-lg leading-relaxed mb-8">
               Upload a borrower&apos;s financial documents and get banker-grade analysis in minutes
-              — every number traceable to its source page.
+              - every number traceable to its source page.
             </p>
             <div className="space-y-4">
               {[
                 { icon: Zap, text: "Tax returns and statements read in minutes" },
-                { icon: Shield, text: "Dual-reader consensus — no silent errors" },
+                { icon: Shield, text: "Dual-reader consensus - no silent errors" },
                 { icon: FileSearch, text: "Click any number to see its source" },
                 { icon: Layers, text: "Blocking validation gates before sign-off" },
               ].map(({ icon: Icon, text }) => (
@@ -90,7 +90,7 @@ function LoginForm() {
         </div>
       </div>
 
-      {/* Right panel — sign-in */}
+      {/* Right panel - sign-in */}
       <div className="w-full lg:w-1/2 flex items-center justify-center relative">
         <div className="absolute inset-0 gradient-mesh opacity-30" />
 

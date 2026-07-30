@@ -3,15 +3,15 @@
 /**
  * Account menu (ui-14-2, design 01 §1.4 + §5 step 2). Before this, the
  * signed-in user existed nowhere in the product except the text input on
- * /settings that sets their name — which is why the shell read as
+ * /settings that sets their name - which is why the shell read as
  * scaffolding rather than software. Top-right identity is the anchor every
  * portal Pratik named (Vercel, Linear, Claude) puts there.
  *
  * Identity is READ, never derived: every field comes from profile.get, and
  * the initials are a substring of a string the server sent (Iron Law #1/#3
- * — the client renders, it never computes).
+ * - the client renders, it never computes).
  *
- * Avatars are INITIALS ONLY — Pratik decision D2 (design 01 §8): no upload,
+ * Avatars are INITIALS ONLY - Pratik decision D2 (design 01 §8): no upload,
  * no storage bucket, no image moderation, no extra PII, and indistinguishable
  * from a photo at 36px.
  *
@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 /** Mirrors the members page: the DB enum is not a display string.
- *  Exported — /settings prints the same identity line (ui-17). */
+ *  Exported - /settings prints the same identity line (ui-17). */
 export const ROLE_LABEL: Record<string, string> = {
   org_owner: "Owner",
   admin: "Admin",
@@ -45,7 +45,7 @@ export const ROLE_LABEL: Record<string, string> = {
  * Must stay byte-identical with theme-toggle.tsx's STORAGE_KEY. The flip is
  * re-implemented here instead of reusing <ThemeToggle/> because that
  * component is a <Button>, and a plain button nested in a Radix menu sits
- * outside the menu's roving focus — unreachable by keyboard. Reading the
+ * outside the menu's roving focus - unreachable by keyboard. Reading the
  * current theme still goes through the shared useIsDark().
  */
 const THEME_STORAGE_KEY = "credexis-theme";
@@ -63,13 +63,13 @@ function initialsOf(fullName: string | null | undefined, email: string | undefin
 export function AccountMenu({ variant = "avatar" }: { variant?: "avatar" | "row" } = {}) {
   const dark = useIsDark();
   // Identity changes about once a year and the shell mounts this on every
-  // route — a fresh fetch per navigation would be pure noise.
+  // route - a fresh fetch per navigation would be pure noise.
   const profile = trpc.profile.get.useQuery(undefined, { staleTime: 5 * 60_000 });
 
   const me = profile.data;
   const name = me?.fullName?.trim();
   const initials = me ? initialsOf(me.fullName, me.email) : "";
-  // Email is the identity when no name is set — never printed twice.
+  // Email is the identity when no name is set - never printed twice.
   const primary = name || me?.email;
   const secondary = name ? me?.email : undefined;
   // Before the query lands (and if it fails) an empty circle reads as broken;
@@ -87,7 +87,7 @@ export function AccountMenu({ variant = "avatar" }: { variant?: "avatar" | "row"
         <DropdownMenuTrigger
           // The accessible name must not flip once the query lands, so the
           // loading state carries the generic label rather than a stand-in.
-          aria-label={primary ? `Account — ${primary}` : "Account"}
+          aria-label={primary ? `Account - ${primary}` : "Account"}
           className={
             variant === "row"
               ? // Sidebar identity footer (ui-17): the reference anchors the
@@ -148,7 +148,7 @@ export function AccountMenu({ variant = "avatar" }: { variant?: "avatar" | "row"
           <DropdownMenuSeparator />
 
           {/* Plan 01 step 2 specified a Settings item; it was dropped in the
-              first build — the menu promised navigation it did not offer. */}
+              first build - the menu promised navigation it did not offer. */}
           <DropdownMenuItem asChild className="rounded-lg text-[13px]">
             <Link href="/settings">
               <Settings />

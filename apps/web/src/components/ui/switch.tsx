@@ -6,7 +6,7 @@ import { Switch as SwitchPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 
 /**
- * Switch (ui-8): the brand toggle — 150ms thumb, emerald when on,
+ * Switch (ui-8): the brand toggle - 150ms thumb, emerald when on,
  * hairline track when off. Replaces every raw checkbox used as a toggle.
  */
 function Switch({ className, ...props }: React.ComponentProps<typeof SwitchPrimitive.Root>) {

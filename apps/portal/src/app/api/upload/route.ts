@@ -3,8 +3,8 @@
  * accepts bytes.
  *
  * Runs AS THE BORROWER: the RLS-scoped anon-key client performs the storage
- * write, so `deal_documents_borrower_insert` — which validates every path
- * segment against the caller's own live invite — is the real boundary, not
+ * write, so `deal_documents_borrower_insert` - which validates every path
+ * segment against the caller's own live invite - is the real boundary, not
  * this file. The browser could call the Storage API directly and hit the same
  * wall (Iron Law #7: no service-role key in a request path).
  *
@@ -19,8 +19,8 @@ import { createClient } from "@/lib/supabase/server";
 
 /**
  * Local sha256 rather than @credexis/shared. The portal deliberately depends
- * on no workspace package — that is what keeps underwriting code out of the
- * borrower deployment — and this is four lines of WebCrypto. The digest must
+ * on no workspace package - that is what keeps underwriting code out of the
+ * borrower deployment - and this is four lines of WebCrypto. The digest must
  * agree with the staff app's, so both are plain lowercase hex of the raw
  * bytes; the SQL side only ever regex-checks that shape.
  */
@@ -32,7 +32,7 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
 }
 
 const BUCKET = "deal-documents";
-const MAX_UPLOAD_BYTES = 52_428_800; // 50 MiB — mirrors the bucket's own limit.
+const MAX_UPLOAD_BYTES = 52_428_800; // 50 MiB - mirrors the bucket's own limit.
 
 /** Mirrors the SQL validator's extension alternation (migration 0029). */
 const EXTENSION_BY_MIME: Record<string, string> = {
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // The KEY is derived in SQL (borrower_upload_key, migration 0033), not here.
   // A borrower has no SELECT policy on borrower_invites, so this app cannot
-  // read its own tenant/deal ids to build a path — and giving it those ids
+  // read its own tenant/deal ids to build a path - and giving it those ids
   // just to rebuild a string the database already knows how to build would
   // put two producers of a security-relevant path in the system. One producer
   // cannot drift from itself.

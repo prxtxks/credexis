@@ -26,7 +26,7 @@ const STATEMENT_PREFIX: Record<string, string> = {
 
 /**
  * Registry rows for the Tax Spread. The latest tax year wins a field's
- * display identity (line numbers can drift across years — the id is the
+ * display identity (line numbers can drift across years - the id is the
  * identity); family order and field order follow the registry data files.
  */
 function registryRowMeta(): RegistryRowMeta[] {
@@ -124,7 +124,7 @@ export const spreadRouter = router({
 
   /**
    * Tax Spread (M8.3 tax tab, ADR-0002 follow-up): registry-keyed rows per
-   * form family — the only spread that can show registry-only facts
+   * form family - the only spread that can show registry-only facts
    * (derived lines like AGI that carry no taxonomy placement).
    */
   taxForDeal: protectedProcedure
@@ -159,7 +159,7 @@ export const spreadRouter = router({
 
   /**
    * Inline label rename (M8.3): the reviewer saying "this source label
-   * means THAT taxonomy node" — recorded as a learned mapping so the
+   * means THAT taxonomy node" - recorded as a learned mapping so the
    * statement mapper improves (Blueprint §4.3 feedback loop).
    */
   renameLabel: underwriterProcedure

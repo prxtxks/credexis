@@ -3,7 +3,7 @@
 /**
  * Document assignment (M6.5): confirm/fix the split & entity suggestions
  * Stage-S made. Every save is one audited mutation; the client renders
- * server truth and edits labels — it never computes (Iron Law #3).
+ * server truth and edits labels - it never computes (Iron Law #3).
  *
  * V1 restyle (ui-3): mounted under the app shell top bar (back → workspace,
  * breadcrumb = deal name) over the gradient mesh; the picker table lives in a
@@ -165,7 +165,7 @@ export default function AssignmentPage() {
                                     : "text-severity-critical",
                               )}
                             >
-                              &ldquo;{i.extractedName}&rdquo; — matches{" "}
+                              &ldquo;{i.extractedName}&rdquo; - matches{" "}
                               {Math.round(i.scoreBps / 100)}%
                               <button
                                 className="underline underline-offset-2"
@@ -187,7 +187,7 @@ export default function AssignmentPage() {
                           ))}
                       </TableCell>
                       <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
-                        {row.pageStart}–{row.pageEnd}
+                        {row.pageStart}-{row.pageEnd}
                       </TableCell>
                       <TableCell>
                         <FieldSelect
@@ -205,7 +205,7 @@ export default function AssignmentPage() {
                         <Input
                           value={year}
                           onChange={(e) => setDraft(row.id, { taxYear: e.target.value })}
-                          placeholder="—"
+                          placeholder="-"
                           inputMode="numeric"
                           className="w-16"
                         />
@@ -216,7 +216,7 @@ export default function AssignmentPage() {
                             ariaLabel={`Entity for ${row.fileName}`}
                             value={entityId}
                             onChange={(v) => setDraft(row.id, { entityId: v })}
-                            placeholder="— unassigned —"
+                            placeholder="- unassigned -"
                             options={(entities.data ?? []).map((e) => ({
                               value: e.id,
                               label: `${e.name} (${e.kind})`,
@@ -250,7 +250,7 @@ export default function AssignmentPage() {
                 {rows.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                      No logical documents yet — they appear after uploads finish processing.
+                      No logical documents yet - they appear after uploads finish processing.
                     </TableCell>
                   </TableRow>
                 )}

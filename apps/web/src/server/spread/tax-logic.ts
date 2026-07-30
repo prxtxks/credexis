@@ -2,10 +2,10 @@
  * Tax Spread assembly (M8.3 tax tab, ADR-0002 follow-up): pivot tax-form
  * facts into registry-keyed rows × period columns, grouped by form family.
  * Where the statement spread pivots on taxonomy nodes, tax facts pivot on
- * registry field ids — which is what lets registry-only facts (derived
+ * registry field ids - which is what lets registry-only facts (derived
  * lines like AGI with no taxonomy placement) render at all.
  *
- * Pure reshaping — no arithmetic (Iron Law #3).
+ * Pure reshaping - no arithmetic (Iron Law #3).
  */
 
 export interface TaxFactRow {
@@ -50,7 +50,7 @@ export interface TaxSpreadRow {
   formFamily: string;
   lineNumber: string | null;
   label: string;
-  /** True when the line has no taxonomy placement (derived — AGI etc.). */
+  /** True when the line has no taxonomy placement (derived - AGI etc.). */
   registryOnly: boolean;
   cells: Record<string, TaxSpreadCell>;
 }
@@ -101,7 +101,7 @@ export function assembleTaxSpread(
   const rows: TaxSpreadRow[] = [];
   let currentFamily: string | null = null;
 
-  // meta arrives in registry order (form by form, line by line) — rows keep
+  // meta arrives in registry order (form by form, line by line) - rows keep
   // that order; only populated lines (and their family header) render.
   for (const m of meta) {
     const cells: Record<string, TaxSpreadCell> = {};

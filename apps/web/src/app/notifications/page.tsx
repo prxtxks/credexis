@@ -8,7 +8,7 @@
  * per-row actions on hover.
  *
  * Archive is REAL: the existing `dismissed` state is the archive
- * (setState/archiveAll — no migration). Restore = setState("read").
+ * (setState/archiveAll - no migration). Restore = setState("read").
  */
 
 import { useState } from "react";
@@ -64,7 +64,7 @@ export default function NotificationsPage() {
           <div>
             <h1 className="text-title">Notifications</h1>
             <p className="text-muted-foreground mt-1 text-sm">
-              Document events, approvals, and borrower activity — the in-app record is always on.
+              Document events, approvals, and borrower activity - the in-app record is always on.
             </p>
           </div>
           <Button asChild size="sm" variant="outline">

@@ -3,14 +3,14 @@
 /**
  * Audit log viewer (m12-3-audit-viewer, plan 01 §5 step 4).
  *
- * A DENSE TABLE, deliberately — not cards. Plan §1.10: a card is the shape
+ * A DENSE TABLE, deliberately - not cards. Plan §1.10: a card is the shape
  * the app reaches for when it has no other vocabulary, and an audit trail is
  * the canonical tabular object. Below `md` the same table scrolls
  * horizontally inside `<Table>`'s own container and drops two identifier
  * columns; there is no second mobile component tree (plan §7 rule 9).
  *
- * The client RENDERS (Iron Law #3): every value on this screen — including
- * everything inside `before`/`after` — arrives as a string from the server
+ * The client RENDERS (Iron Law #3): every value on this screen - including
+ * everything inside `before`/`after` - arrives as a string from the server
  * and is never re-formatted, re-scaled or re-computed here.
  */
 
@@ -46,7 +46,7 @@ const COLUMN_COUNT = 7;
  * the payload into a JS number (Iron Law #2), and re-serializing would
  * rewrite the exact record the log exists to preserve. This walks the text
  * and inserts newlines/indentation between structural tokens, dropping only
- * whitespace that sits OUTSIDE strings — so every value, money included,
+ * whitespace that sits OUTSIDE strings - so every value, money included,
  * renders precisely as Postgres stored it.
  */
 function indentJsonText(text: string): string {
@@ -91,7 +91,7 @@ function PayloadPane({
   text,
 }: {
   label: string;
-  /** What a null payload means on this side — an insert has no before, a delete no after. */
+  /** What a null payload means on this side - an insert has no before, a delete no after. */
   absent: string;
   text: string | null;
 }) {
@@ -101,7 +101,7 @@ function PayloadPane({
         {label}
       </p>
       {text === null ? (
-        <p className="text-[13px] text-muted-foreground">none — {absent}</p>
+        <p className="text-[13px] text-muted-foreground">none - {absent}</p>
       ) : (
         <pre className="max-h-80 overflow-auto rounded-lg bg-muted/60 p-2.5 font-mono text-[11px] leading-relaxed break-all whitespace-pre-wrap">
           {indentJsonText(text)}
@@ -113,7 +113,7 @@ function PayloadPane({
 
 function ChainBanner() {
   // verify_audit_chain() rehashes every row in the tenant, so this is a full
-  // table walk — cheap at pilot scale, but not something to refire on every
+  // table walk - cheap at pilot scale, but not something to refire on every
   // remount of this screen.
   const chain = trpc.audit.verifyChain.useQuery(undefined, { staleTime: 60_000 });
 
@@ -164,12 +164,12 @@ function ChainBanner() {
         */}
         <p className="text-[13px] text-foreground/80">
           Rows written before the chain was installed (migration 0024) were backfilled so the chain
-          is contiguous — but a backfilled hash attests to the row as it exists <em>now</em>, not to
+          is contiguous - but a backfilled hash attests to the row as it exists <em>now</em>, not to
           what was written then. Tamper evidence is meaningful only from that migration forward; the
           earlier period is <strong className="font-semibold">not verified</strong>.
         </p>
         <p className="text-[13px] text-muted-foreground">
-          Every member of this workspace can read this log — that is today&apos;s row-level security
+          Every member of this workspace can read this log - that is today&apos;s row-level security
           policy, not an oversight of this screen.
         </p>
       </div>
@@ -239,7 +239,7 @@ export default function AuditClient() {
   /**
    * Filter choices come from the rows this tenant has actually produced. A
    * hardcoded list would rot the day someone adds an audit trigger (there
-   * are twelve today), and the vocabulary only ever GROWS — otherwise
+   * are twelve today), and the vocabulary only ever GROWS - otherwise
    * picking "UPDATE" would collapse the menu to "UPDATE" and strand you.
    */
   const [vocabulary, setVocabulary] = useState<{ actions: string[]; tables: string[] }>({
@@ -354,7 +354,7 @@ export default function AuditClient() {
             ))}
           </div>
         ) : log.error ? (
-          // An unreadable log must never render as an empty one — "no entries"
+          // An unreadable log must never render as an empty one - "no entries"
           // and "we could not read the entries" are opposite claims.
           <section className="glass-card rounded-lg p-4">
             <p className="text-[15px] font-semibold text-severity-critical">
@@ -478,7 +478,7 @@ export default function AuditClient() {
                           {who ?? (
                             <span
                               className="text-muted-foreground"
-                              title="No signed-in actor — a pipeline worker or database connection wrote this row"
+                              title="No signed-in actor - a pipeline worker or database connection wrote this row"
                             >
                               System
                             </span>
@@ -494,7 +494,7 @@ export default function AuditClient() {
                           {e.rowId}
                         </TableCell>
                         <TableCell className="hidden font-mono text-[11px] text-muted-foreground md:table-cell">
-                          {e.rowHash === null ? "—" : `${e.rowHash.slice(0, 12)}…`}
+                          {e.rowHash === null ? "-" : `${e.rowHash.slice(0, 12)}…`}
                         </TableCell>
                       </TableRow>
                       {open ? (
@@ -523,11 +523,11 @@ export default function AuditClient() {
                               </div>
                               <div className="flex gap-2">
                                 <dt className="shrink-0">prev_hash</dt>
-                                <dd>{e.prevHash ?? "—"}</dd>
+                                <dd>{e.prevHash ?? "-"}</dd>
                               </div>
                               <div className="flex gap-2">
                                 <dt className="shrink-0">row_hash</dt>
-                                <dd>{e.rowHash ?? "—"}</dd>
+                                <dd>{e.rowHash ?? "-"}</dd>
                               </div>
                             </dl>
                           </TableCell>

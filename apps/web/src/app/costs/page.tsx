@@ -2,7 +2,7 @@
 
 /**
  * Cost dashboard (M10.2): per-deal extraction spend from extraction_runs
- * — cost per deal is a KPI (Blueprint §12: ~$5–10 COGS envelope). Deals
+ * - cost per deal is a KPI (Blueprint §12: ~$5-10 COGS envelope). Deals
  * over the envelope and failed runs are flagged; values render as
  * strings, aggregation happened server-side in exact integers.
  */
@@ -33,7 +33,7 @@ export default function CostsPage() {
         <div className="mb-5">
           <h1 className="text-title">Usage</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            What this workspace consumes — live series, plan, and per-deal spend.
+            What this workspace consumes - live series, plan, and per-deal spend.
           </p>
         </div>
 
@@ -93,7 +93,7 @@ export default function CostsPage() {
                 {(costs.data ?? []).length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="p-4 text-muted-foreground">
-                      No extraction runs yet — costs appear once the pipeline processes documents.
+                      No extraction runs yet - costs appear once the pipeline processes documents.
                     </TableCell>
                   </TableRow>
                 )}
@@ -109,7 +109,7 @@ export default function CostsPage() {
 /**
  * 30-day usage charts (ui-19, reference Observability card anatomy): the
  * server aggregates per-day buckets (pipeline.usageSeries); these bars are
- * pure geometry over that series — the client never sums.
+ * pure geometry over that series - the client never sums.
  */
 function UsageCharts() {
   const series = trpc.pipeline.usageSeries.useQuery(undefined, { staleTime: 60_000 });
@@ -211,12 +211,12 @@ function ChartCard({
   );
 }
 
-/** The Pilot plan card (moved from /settings/plan — feedback pass 3). */
+/** The Pilot plan card (moved from /settings/plan - feedback pass 3). */
 function PlanCard() {
   const INCLUDED = [
     "Unlimited team members",
     "Dual-reader consensus extraction",
-    "Blocking validation gates (G1–G6)",
+    "Blocking validation gates (G1-G6)",
     "Borrower portal with per-invite limits",
     "Tamper-evident audit trail",
     "Banker-grade XLSX exports",
@@ -226,7 +226,7 @@ function PlanCard() {
       <h2 className="text-heading">Pilot plan</h2>
       <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
         Every feature is included while Credexis is in pilot. Contract pricing arrives with billing
-        — there is nothing to pay here yet.
+        - there is nothing to pay here yet.
       </p>
       <ul className="mt-4 grid gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
         {INCLUDED.map((f) => (

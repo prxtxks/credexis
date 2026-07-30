@@ -4,7 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Credexis — Document portal",
+  title: "Credexis - Document portal",
   description: "Send your lender the documents they asked for.",
   // A borrower portal has nothing to gain from being indexed and plenty to
   // lose: invite links pasted into indexable pages, and a lender-branded
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 /**
  * The portal's root layout is intentionally bare: no providers, no toaster, no
- * theme script. Nothing here may pull in staff-app code — this deployment
+ * theme script. Nothing here may pull in staff-app code - this deployment
  * contains no engine, no tRPC root and no underwriting UI (design 05 §10.1).
  *
  * There is no root `loading.tsx` in this app and none may be added: a

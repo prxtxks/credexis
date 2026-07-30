@@ -5,8 +5,8 @@ import { STATIC_SECURITY_HEADERS, buildCsp } from "./security-headers";
  * REGRESSION TEST for the 2026-07-29 production outage.
  *
  * A CSP shipped with `script-src 'self' 'nonce-…' 'strict-dynamic'`. Browsers
- * IGNORE the `'self'` allowlist once `strict-dynamic` is present — only nonced
- * scripts may run — and Next.js can only stamp a per-request nonce onto pages
+ * IGNORE the `'self'` allowlist once `strict-dynamic` is present - only nonced
+ * scripts may run - and Next.js can only stamp a per-request nonce onto pages
  * it renders per request. Our pages are statically prerendered, so the shipped
  * HTML carried 24 script tags and zero nonces: every script was blocked, the
  * server HTML painted, nothing hydrated, and the app sat on a loading screen.
@@ -36,10 +36,10 @@ function directive(csp: string, name: string): string {
   return found ?? "";
 }
 
-describe("buildCsp — the outage that must not repeat", () => {
+describe("buildCsp - the outage that must not repeat", () => {
   it("script-src NEVER combines strict-dynamic with a host allowlist", () => {
     // The exact shape that broke production. 'strict-dynamic' silently voids
-    // 'self', so this pairing means "block everything unless nonced" — and
+    // 'self', so this pairing means "block everything unless nonced" - and
     // prerendered pages have no nonce to offer.
     for (const isDev of [true, false]) {
       const script = directive(buildCsp(isDev), "script-src");
@@ -57,7 +57,7 @@ describe("buildCsp — the outage that must not repeat", () => {
     }
   });
 
-  it("unsafe-eval is dev-only — never in production", () => {
+  it("unsafe-eval is dev-only - never in production", () => {
     expect(directive(buildCsp(true), "script-src")).toContain("'unsafe-eval'");
     expect(directive(buildCsp(false), "script-src")).not.toContain("'unsafe-eval'");
   });
@@ -69,7 +69,7 @@ describe("buildCsp — the outage that must not repeat", () => {
   });
 });
 
-describe("buildCsp — the directives a bank asks about", () => {
+describe("buildCsp - the directives a bank asks about", () => {
   it("clickjacking, base-tag and form hijacking are closed", () => {
     const csp = buildCsp(false);
     expect(directive(csp, "frame-ancestors")).toBe("frame-ancestors 'none'");
@@ -96,7 +96,7 @@ describe("buildCsp — the directives a bank asks about", () => {
     }
   });
 
-  it("origins are never hardcoded — swapping the project swaps the policy", () => {
+  it("origins are never hardcoded - swapping the project swaps the policy", () => {
     setEnv("NEXT_PUBLIC_SUPABASE_URL", "https://one.supabase.co");
     const first = buildCsp(false);
     setEnv("NEXT_PUBLIC_SUPABASE_URL", "https://two.supabase.co");
@@ -113,7 +113,7 @@ describe("buildCsp — the directives a bank asks about", () => {
     }
   });
 
-  it("fonts are self-hosted — no external font origin is permitted", () => {
+  it("fonts are self-hosted - no external font origin is permitted", () => {
     expect(directive(buildCsp(false), "font-src")).toBe("font-src 'self'");
   });
 });
@@ -134,7 +134,7 @@ describe("STATIC_SECURITY_HEADERS", () => {
     expect(hsts).toContain("preload");
   });
 
-  it("Referrer-Policy never leaks a full URL cross-origin — deal ids live in paths", () => {
+  it("Referrer-Policy never leaks a full URL cross-origin - deal ids live in paths", () => {
     expect(STATIC_SECURITY_HEADERS["Referrer-Policy"]).not.toMatch(
       /^(unsafe-url|no-referrer-when-downgrade|origin-when-cross-origin)$/,
     );

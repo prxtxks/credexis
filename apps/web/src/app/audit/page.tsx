@@ -5,7 +5,7 @@
  *
  * Why the split: `export const dynamic` is route-segment config and is
  * IGNORED inside a "use client" module, so a fully-client page silently gets
- * prerendered at build time — which for a per-user, per-tenant authenticated
+ * prerendered at build time - which for a per-user, per-tenant authenticated
  * surface bakes an anonymous shell into the build output. That is the shape
  * of the 2026-07-29 production outage; the deals home carries the same
  * wrapper for the same reason (`app/page.tsx`).

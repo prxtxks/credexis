@@ -5,7 +5,7 @@ import { z } from "zod";
  *
  * Everything on the portal's one screen comes from a single
  * `borrower_portal_state()` call. This module parses that payload and nothing
- * else — the client renders, it never computes (Iron Law #3). There is no
+ * else - the client renders, it never computes (Iron Law #3). There is no
  * metric, no money, no deal status here by construction: unknown keys are
  * stripped, so a future change to the definer cannot leak an internal field
  * into the UI just by adding it to the JSON.
@@ -66,7 +66,7 @@ export type PortalRequest = z.infer<typeof requestSchema>;
 
 export interface ParsedPortalState {
   invites: PortalState[];
-  /** Rows the definer returned that this app could not read — surfaced, not hidden. */
+  /** Rows the definer returned that this app could not read - surfaced, not hidden. */
   malformed: number;
 }
 
@@ -94,7 +94,7 @@ export const STATUS_COPY: Record<PortalStatus, { label: string; hint: string }> 
   },
   action_needed: {
     label: "Action needed",
-    hint: "Your loan officer has asked you for something specific — see the message below.",
+    hint: "Your loan officer has asked you for something specific - see the message below.",
   },
   received: {
     label: "Received",

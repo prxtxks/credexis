@@ -1,15 +1,15 @@
 /**
  * Extraction stage (M4.5/M5.5): logical documents → facts. The missing
- * middle of the product loop — after this stage a plain upload populates
+ * middle of the product loop - after this stage a plain upload populates
  * the spread, the review queue, and the engine.
  *
  * Tax forms: registry-schema extraction through BOTH independent paths
  * (vendor + vision LLM) → consensus reconciler → confidence scorer →
  * facts (auto-accepted only on agreement above the bar; everything else
- * is `suggested` for review — Iron Law #6 posture).
+ * is `suggested` for review - Iron Law #6 posture).
  *
  * Statements: vendor layout grid → period binding → row typing →
- * taxonomy label mapping (labels only — the LLM never sees a number) →
+ * taxonomy label mapping (labels only - the LLM never sees a number) →
  * structure validation → facts, ALWAYS `suggested` (statement mapping is
  * judgment; the review queue owns judgment).
  *
@@ -46,7 +46,7 @@ export interface FactInsert {
   deal_id: string;
   entity_id: string;
   period_id: string;
-  /** Null for registry-only facts (derived tax lines — AGI, taxable income). */
+  /** Null for registry-only facts (derived tax lines - AGI, taxable income). */
   taxonomy_node_key: string | null;
   registry_field_id: string | null;
   value_cents: string;
@@ -136,7 +136,7 @@ export async function runExtractStage(
 
   // Interleaved schedules fragment one form into several spans; adapters
   // read the WHOLE file anyway, so extract once per (family, year) via the
-  // primary (earliest) span — 4 fragments must not mean 4 vendor bills.
+  // primary (earliest) span - 4 fragments must not mean 4 vendor bills.
   const primaryByKey = new Map<string, string>();
   for (const ld of input.logicalDocuments) {
     if (STATEMENT_FAMILIES.has(ld.formFamily) || ld.formFamily === "UNKNOWN") continue;
@@ -155,7 +155,7 @@ export async function runExtractStage(
       result.perDocument.push({
         logicalDocumentId: ld.id,
         facts: 0,
-        skipped: "no entity assigned (multi-entity deal — assign in M6.5 UI)",
+        skipped: "no entity assigned (multi-entity deal - assign in M6.5 UI)",
       });
       continue;
     }
@@ -181,7 +181,7 @@ export async function runExtractStage(
         result.perDocument.push({ logicalDocumentId: ld.id, facts: 0, skipped: "UNKNOWN family" });
       }
     } catch (e) {
-      // One bad logical document must not lose the others' facts — and the
+      // One bad logical document must not lose the others' facts - and the
       // failure recorder itself is best-effort (a dead DB must not cascade).
       try {
         await deps.db.insertExtractionRun(
@@ -314,9 +314,9 @@ async function extractTaxForm(
   const reconciled = reconcile(p1?.candidates ?? [], p2?.candidates ?? [], entry);
 
   // ── M11.6 identity substage: the readers LOCATED the printed name
-  // (identity TEXT fields — never facts); the match math is deterministic
+  // (identity TEXT fields - never facts); the match math is deterministic
   // (packages/shared). Advisory: a failure here must never fail
-  // extraction. Auto-confirm stays OFF — even high bands are `suggested`.
+  // extraction. Auto-confirm stays OFF - even high bands are `suggested`.
   try {
     const identity = pickIdentity(p1?.candidates ?? [], p2?.candidates ?? []);
     if (identity) {
@@ -333,7 +333,7 @@ async function extractTaxForm(
       });
     }
   } catch {
-    // advisory substage — extraction result stands on its own
+    // advisory substage - extraction result stands on its own
   }
 
   // Confidence scorer decides auto-accept vs review (M6.2). A field
@@ -364,9 +364,9 @@ async function extractTaxForm(
     const score = scored.get(f.fieldId);
     if (!score || score.decision === "reject") continue;
     const value = f.valueCents ?? f.path1?.cents ?? f.path2?.cents ?? null;
-    if (value === null) continue; // both paths read "absent" — no fact (null-vs-zero)
+    if (value === null) continue; // both paths read "absent" - no fact (null-vs-zero)
     // Derived lines (AGI, taxable income) have no taxonomy placement by
-    // design — they insert as registry-only facts (null taxonomy) so G4/G5
+    // design - they insert as registry-only facts (null taxonomy) so G4/G5
     // and the Tax Spread see them; statement aggregation never does.
     const taxonomyNodeKey = fieldById.get(f.fieldId)?.taxonomyNodeKey ?? null;
     rows.push({
@@ -463,7 +463,7 @@ async function extractStatement(
     const typed = typeRows(grid);
     const labels = [...new Set(typed.map((r) => r.row.label).filter((l) => l.trim() !== ""))];
     // A dead classifier (rate limit, credits, outage) must DEGRADE, not
-    // abort the document: retry with learned mappings only — unmapped
+    // abort the document: retry with learned mappings only - unmapped
     // labels route to review instead of losing the whole statement.
     let mapped;
     try {
@@ -518,7 +518,7 @@ async function extractStatement(
         source_bbox: null, // grid-level geometry joins with the bake-off vendor work
         method: "vendor",
         confidence: mapping?.confidence ?? 0.5,
-        // Statement mapping is judgment — the review queue owns judgment.
+        // Statement mapping is judgment - the review queue owns judgment.
         status: "suggested",
       });
     }

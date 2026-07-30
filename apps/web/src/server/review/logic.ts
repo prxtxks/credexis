@@ -1,5 +1,5 @@
 /**
- * Review queue logic (M6.3, Blueprint §4.6) — the pure core of the queue.
+ * Review queue logic (M6.3, Blueprint §4.6) - the pure core of the queue.
  * Ordering, progress, and supersession construction live here (unit-tested);
  * the tRPC router is a thin audited wrapper. Corrections NEVER mutate the
  * original fact (Iron Law #5): they insert a new override fact and mark the
@@ -34,7 +34,7 @@ export type OrderedQueueItem<T extends QueueFact = QueueFact> = T & {
 
 /**
  * Next-item ordering (task M6.3): severity first (critical → …), then
- * document order (logical document, page, creation) — so a reviewer burns
+ * document order (logical document, page, creation) - so a reviewer burns
  * down the dangerous items before the merely-uncertain ones. Generic so
  * callers can enrich items with display fields that pass through untouched.
  */
@@ -98,7 +98,7 @@ const INT_RE = /^-?\d+$/;
 
 /**
  * Build the insert+patch pair for a correction. Throws on anything that
- * would corrupt lineage — the router turns these into BAD_REQUEST.
+ * would corrupt lineage - the router turns these into BAD_REQUEST.
  */
 export function buildSupersession(
   oldFact: SupersedableFact,

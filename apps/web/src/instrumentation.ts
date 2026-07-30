@@ -1,9 +1,9 @@
 /**
  * Server-side Sentry (M10.2). DSN-gated: absent DSN → no-op, the app runs
  * identically. Source-map upload (SENTRY_AUTH_TOKEN + org/project) is a
- * separate, optional step — runtime error capture works without it.
+ * separate, optional step - runtime error capture works without it.
  *
- * PII posture: tax documents carry SSNs/EINs — sendDefaultPii stays OFF
+ * PII posture: tax documents carry SSNs/EINs - sendDefaultPii stays OFF
  * and beforeSend strips request bodies; we report errors, never payloads.
  */
 

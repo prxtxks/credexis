@@ -1,10 +1,10 @@
 /**
  * Route × role matrix guard (M10.3): every tRPC MUTATION must be built
- * from underwriterProcedure or adminProcedure — viewers read, they never
+ * from underwriterProcedure or adminProcedure - viewers read, they never
  * write (Blueprint §11 roles). This scans the real router sources so a
  * new mutation on the wrong tier fails CI, not a pen test.
  *
- * (RLS is the second, DB-level enforcement layer — integration-tested in
+ * (RLS is the second, DB-level enforcement layer - integration-tested in
  * packages/schema. This test covers the API tier.)
  */
 
@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest";
 
 const ROUTERS_DIR = join(__dirname, "routers");
 
-/** procedure-name: builderProcedure ... .mutation( — per chain. */
+/** procedure-name: builderProcedure ... .mutation( - per chain. */
 function mutationTiers(source: string): { name: string; builder: string }[] {
   const out: { name: string; builder: string }[] = [];
   // Split on top-level procedure definitions: `name: builderProcedure`.
@@ -44,7 +44,7 @@ describe("tRPC mutation tier matrix (M10.3)", () => {
 
   /**
    * The designed exceptions (M11.2/M11.3, design 01 §4): org.create and
-   * invites.accept both run PRE-PROFILE — the caller cannot hold a role
+   * invites.accept both run PRE-PROFILE - the caller cannot hold a role
    * because the mutation is what creates their profile. They are
    * sessionProcedure by necessity; every invariant is enforced inside the
    * create_organization / accept_invite SECURITY DEFINER functions.
@@ -56,7 +56,7 @@ describe("tRPC mutation tier matrix (M10.3)", () => {
 
   /**
    * Self-scoped writes (M11.5): notification state changes touch ONLY the
-   * caller's own rows (RLS recipient_id = auth.uid()) — legitimately
+   * caller's own rows (RLS recipient_id = auth.uid()) - legitimately
    * viewer-safe, so protectedProcedure is correct. Nothing here mutates
    * deal data.
    */
@@ -65,7 +65,7 @@ describe("tRPC mutation tier matrix (M10.3)", () => {
     // RLS pins the UPDATE to auth.uid()'s own notification rows.
     "notifications.ts": ["setState", "markAllRead", "archiveAll"],
     // profile.update goes through update_own_profile() (SECURITY DEFINER,
-    // auth.uid() row only, full_name/email_notifications columns only) —
+    // auth.uid() row only, full_name/email_notifications columns only) -
     // every role may manage their own name and email preference.
     "profile.ts": ["update"],
   };

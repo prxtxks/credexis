@@ -36,7 +36,7 @@ export const CLAIM_COOKIE_OPTIONS = {
 export type ClaimErrorCode = "link" | "email" | "session" | "rate";
 
 export const CLAIM_ERROR_COPY: Record<ClaimErrorCode, string> = {
-  link: "This invitation has expired — ask your loan officer for a new link.",
+  link: "This invitation has expired - ask your loan officer for a new link.",
   email:
     "This invitation was sent to a different email address. Open the link from your email again and use the address your loan officer invited.",
   session:

@@ -12,7 +12,7 @@ const claimStartLimiter = new RateLimiter(CLAIM_START_LIMIT);
 
 /**
  * Reachable without a session. Everything else requires a verified user.
- * There is no /login here — the emailed link is the only door.
+ * There is no /login here - the emailed link is the only door.
  */
 const PUBLIC_PATHS = ["/claim", "/auth", "/signed-out"];
 
@@ -29,12 +29,12 @@ function clientKey(request: NextRequest): string {
  * borrower portal (design 05 §10.1).
  *
  * Fail-closed throughout: `getUser()` revalidates the JWT against the auth
- * server (never trust the cookie alone), and any error — auth server
- * unreachable, env missing — is treated as signed out, never as signed in.
+ * server (never trust the cookie alone), and any error - auth server
+ * unreachable, env missing - is treated as signed out, never as signed in.
  */
 export async function middleware(request: NextRequest) {
-  // Defined FIRST so every exit below — rate-limit rejections and redirects
-  // included — carries the same headers. No route ships unprotected.
+  // Defined FIRST so every exit below - rate-limit rejections and redirects
+  // included - carries the same headers. No route ships unprotected.
   const csp = buildCsp(process.env.NODE_ENV === "development");
   const secured = (res: NextResponse): NextResponse => {
     res.headers.set("Content-Security-Policy", csp);
@@ -63,7 +63,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // The invite token must never linger in a URL — browser history, Referer
+  // The invite token must never linger in a URL - browser history, Referer
   // headers and access logs all outlive the 10-minute cookie. Move it into
   // httpOnly storage and bounce to the clean path (design 05 §3.3, step 2).
   // GET only: a 307 on a POST would replay the request body against the clean
@@ -132,7 +132,7 @@ export async function middleware(request: NextRequest) {
     const startedAt = sessionStartedAtMs(accessToken, lastSignInAt);
     if (startedAt === null) {
       // Deliberately fails OPEN, loudly. Failing closed on an unreadable
-      // timestamp would sign every borrower out on every request — an
+      // timestamp would sign every borrower out on every request - an
       // infinite /signed-out loop is a worse outage than a long session, and
       // R-2 already says the invite's expires_at is the real bound.
       console.error("portal: could not determine session start; age check skipped");

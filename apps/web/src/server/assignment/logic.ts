@@ -9,7 +9,7 @@ import { ASSIGNABLE_FAMILIES } from "@/lib/form-families";
 
 export { ASSIGNABLE_FAMILIES };
 
-/** Sanity bounds only — a tax year outside these is a typo, not a filing. */
+/** Sanity bounds only - a tax year outside these is a typo, not a filing. */
 const TAX_YEAR_MIN = 2000;
 const TAX_YEAR_MAX = 2035;
 
@@ -27,7 +27,7 @@ export interface AssignmentInput {
 
 /**
  * Build the logical_documents patch for one assignment decision.
- * Throws on an empty or invalid decision — the router maps to BAD_REQUEST.
+ * Throws on an empty or invalid decision - the router maps to BAD_REQUEST.
  */
 export function buildAssignmentPatch(input: AssignmentInput): Record<string, unknown> {
   const patch: Record<string, unknown> = {};

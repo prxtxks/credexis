@@ -1,6 +1,6 @@
 /**
  * Issues API (M8.5): gate violations for the workspace panel, grouped by
- * severity client-side. Rows are produced by the recompute gate run —
+ * severity client-side. Rows are produced by the recompute gate run -
  * this router only reads.
  */
 

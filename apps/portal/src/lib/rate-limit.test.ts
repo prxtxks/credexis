@@ -6,7 +6,7 @@ import { API_WRITE_LIMIT, CLAIM_START_LIMIT, RateLimiter } from "./rate-limit";
  * link and using our auth server to email strangers (R-9). It is worth tests
  * that attack it rather than demonstrate it.
  *
- * Time is always passed in explicitly — no Date.now() anywhere — so these are
+ * Time is always passed in explicitly - no Date.now() anywhere - so these are
  * deterministic rather than dependent on how fast the suite runs.
  */
 
@@ -17,7 +17,7 @@ describe("RateLimiter", () => {
     expect(limiter.check("ip", 0)).toBe(false);
   });
 
-  it("keeps rejecting for the REST of the window — no leak on continued abuse", () => {
+  it("keeps rejecting for the REST of the window - no leak on continued abuse", () => {
     // The counter must keep incrementing past the limit; an implementation
     // that stopped counting would let every later request through.
     const limiter = new RateLimiter({ windowMs: 1000, maxRequests: 2 });
@@ -35,7 +35,7 @@ describe("RateLimiter", () => {
     expect(limiter.check("ip", 1000)).toBe(true); // boundary is inclusive
   });
 
-  it("tracks keys independently — one abuser cannot lock out everyone", () => {
+  it("tracks keys independently - one abuser cannot lock out everyone", () => {
     const limiter = new RateLimiter({ windowMs: 1000, maxRequests: 1 });
     expect(limiter.check("abuser", 0)).toBe(true);
     expect(limiter.check("abuser", 0)).toBe(false);
@@ -58,7 +58,7 @@ describe("RateLimiter", () => {
     expect(limiter.check("victim", 3), "past the bound the window does reset").toBe(true);
   });
 
-  it("claim-start is far tighter than the write budget — R-9 is the reason", () => {
+  it("claim-start is far tighter than the write budget - R-9 is the reason", () => {
     // If these ever converge, someone has widened the magic-link throttle to
     // match a general write limit, which is the bug this asserts against.
     expect(CLAIM_START_LIMIT.maxRequests).toBeLessThan(API_WRITE_LIMIT.maxRequests);

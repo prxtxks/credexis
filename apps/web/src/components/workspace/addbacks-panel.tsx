@@ -2,10 +2,10 @@
 
 /**
  * Add-backs panel (M7.3): the suggest/decide surface for the ONE addback
- * model (post-mortem trap 8 — V1 captured categories then hardcoded
+ * model (post-mortem trap 8 - V1 captured categories then hardcoded
  * "other"). "Scan" runs the engine's deterministic suggestion rules over
  * accepted facts; every suggestion carries its source fact and rationale,
- * and a human accepts or rejects — decisions recompute SDE/CFADS
+ * and a human accepts or rejects - decisions recompute SDE/CFADS
  * server-side (M7.7). The client renders integer-cent strings only.
  */
 
@@ -107,7 +107,7 @@ export function AddbacksPanel({ dealId }: { dealId: string }) {
       toast.success(
         r.suggested > 0
           ? `${r.suggested} new add-back suggestion${r.suggested === 1 ? "" : "s"}`
-          : "No new suggestions — all known patterns already recorded",
+          : "No new suggestions - all known patterns already recorded",
       );
     },
     onError: (e) => toast.error(e.message),
@@ -116,7 +116,7 @@ export function AddbacksPanel({ dealId }: { dealId: string }) {
     onSuccess: (r) => {
       refresh();
       toast.success(
-        r.state === "accepted" ? "Add-back accepted — metrics recomputed" : "Add-back rejected",
+        r.state === "accepted" ? "Add-back accepted - metrics recomputed" : "Add-back rejected",
       );
     },
     onError: (e) => toast.error(e.message),
@@ -158,7 +158,7 @@ export function AddbacksPanel({ dealId }: { dealId: string }) {
       {suggested.length > 0 ? (
         <section>
           <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-severity-warning">
-            Suggested — needs a decision ({suggested.length})
+            Suggested - needs a decision ({suggested.length})
           </h3>
           <div className="space-y-2">
             {suggested.map((a) => (
@@ -176,7 +176,7 @@ export function AddbacksPanel({ dealId }: { dealId: string }) {
       {accepted.length > 0 ? (
         <section>
           <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-            Accepted — in the cash flow ({accepted.length})
+            Accepted - in the cash flow ({accepted.length})
           </h3>
           <div className="space-y-2">
             {accepted.map((a) => (

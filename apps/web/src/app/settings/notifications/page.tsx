@@ -5,10 +5,10 @@
  * reference's channels-card + category-matrix layout.
  *
  * Honesty contract: the ONLY writable control today is the email master
- * switch (profile.emailNotifications — real). In-app notifications are
+ * switch (profile.emailNotifications - real). In-app notifications are
  * always on by design (M11.5: email is an extra channel, never the only
  * record). The per-category matrix is the UI map for plan 01 step 18
- * (m11-7-notification-granularity) — rendered from the real notification
+ * (m11-7-notification-granularity) - rendered from the real notification
  * kinds, disabled, and labeled as such. It never pretends to save.
  */
 
@@ -59,7 +59,7 @@ export default function SettingsNotificationsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">In-app</p>
                   <p className="text-muted-foreground text-[13px]">
-                    Always on — the bell is the record of what happened, never optional.
+                    Always on - the bell is the record of what happened, never optional.
                   </p>
                 </div>
                 <Switch checked disabled aria-label="In-app notifications (always on)" />
@@ -87,7 +87,7 @@ export default function SettingsNotificationsPage() {
           <SettingsCard
             title="By category"
             description="What each channel carries."
-            footer="Per-category preferences ship with the notification-granularity work — today email is all-or-nothing via the switch above."
+            footer="Per-category preferences ship with the notification-granularity work - today email is all-or-nothing via the switch above."
           >
             <div className="overflow-x-auto">
               <table className="w-full min-w-[420px] text-sm">
@@ -146,7 +146,7 @@ function FragmentRows({
   );
 }
 
-/** Read-only matrix cell — reflects today's real behavior, writable in step 18. */
+/** Read-only matrix cell - reflects today's real behavior, writable in step 18. */
 function MatrixCheck({ on, disabled }: { on: boolean; disabled?: boolean }) {
   return (
     <span

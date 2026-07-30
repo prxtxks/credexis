@@ -1,5 +1,5 @@
 /**
- * Trigger.dev scheduled task `daily-digest` (M11.7) — one email per opted-in
+ * Trigger.dev scheduled task `daily-digest` (M11.7) - one email per opted-in
  * user summarizing the notifications they haven't read.
  *
  * Deliberate boundaries:
@@ -7,10 +7,10 @@
  *   immediately from the ingest task. A digest must never be the first time
  *   someone learns an approval is waiting, and nobody gets the same event
  *   twice.
- * - Only UNREAD rows are digested — reading a card in the app is the signal
+ * - Only UNREAD rows are digested - reading a card in the app is the signal
  *   that the email is unnecessary.
  * - Sending never mutates notification state: the bell stays the source of
- *   truth (Iron Law #5 spirit — email is an advisory copy, not a record).
+ *   truth (Iron Law #5 spirit - email is an advisory copy, not a record).
  * - B4 posture: the service-role client is used with EXPLICIT tenant/
  *   recipient scoping in code; this is a worker, never a request path.
  * - Env-gated: with no RESEND_API_KEY the run logs what it WOULD have sent
@@ -23,7 +23,7 @@ import { createEmailSender, digestEmail } from "@credexis/shared";
 import { logEvent, type LogContext } from "../log.js";
 import { serviceClient } from "../supabase.js";
 
-/** Kinds that already mail immediately — never repeated in a digest. */
+/** Kinds that already mail immediately - never repeated in a digest. */
 const IMMEDIATE_KINDS = ["identity_review"];
 
 const LOOKBACK_HOURS = 24;

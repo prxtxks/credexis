@@ -4,7 +4,7 @@ import { CLAIM_COOKIE, CLAIM_ERROR_COPY, claimErrorCode } from "@/lib/claim";
 
 /**
  * Reads a cookie, so it can never be prerendered. Stated explicitly because
- * route segment config is silently IGNORED inside a "use client" module —
+ * route segment config is silently IGNORED inside a "use client" module -
  * that is how a per-user page got baked into the build output and froze
  * apps/web in production on 2026-07-29. This page is a Server Component and
  * stays one.
@@ -25,7 +25,7 @@ export default async function ClaimPage({ searchParams }: Props) {
   const error = claimErrorCode(first(params["error"]));
   // Middleware moved the token out of the URL into this cookie. Its absence
   // means the 10-minute window lapsed (or the page was opened without a
-  // link) — a fact about this browser, not about any invitation.
+  // link) - a fact about this browser, not about any invitation.
   const hasToken = (await cookies()).has(CLAIM_COOKIE);
 
   return (
@@ -51,7 +51,7 @@ export default async function ClaimPage({ searchParams }: Props) {
               <h1 className="text-xl font-semibold tracking-tight">Check your email</h1>
               {/* The one sentence this form is allowed to answer with. It is
                   identical for a valid invitation, an unknown address and a
-                  Supabase outage — anything else is an existence oracle. */}
+                  Supabase outage - anything else is an existence oracle. */}
               <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
                 If that link is valid, we&apos;ve emailed you a sign-in link.
               </p>
@@ -97,7 +97,7 @@ export default async function ClaimPage({ searchParams }: Props) {
               </form>
 
               <p className="text-muted-foreground mt-6 text-xs leading-relaxed">
-                Use the address your loan officer invited — the link only works for that mailbox.
+                Use the address your loan officer invited - the link only works for that mailbox.
               </p>
             </>
           ) : (

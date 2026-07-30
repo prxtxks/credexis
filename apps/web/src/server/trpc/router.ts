@@ -65,7 +65,7 @@ export const appRouter = router({
   /** Pipeline progress (M8.8): stage timeline per document. */
   pipeline: pipelineRouter,
 
-  /** IRS transcripts (M9): flag, consents, ingest — graceful absence. */
+  /** IRS transcripts (M9): flag, consents, ingest - graceful absence. */
   transcripts: transcriptsRouter,
 
   /** Org bootstrap (M11.2): signup → create org → org_owner. */

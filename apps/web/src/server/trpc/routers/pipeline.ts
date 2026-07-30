@@ -1,6 +1,6 @@
 /**
  * Pipeline progress API (M8.8): per-document stage timeline from
- * extraction_runs — the honest replacement for V1's opaque spinner. Today
+ * extraction_runs - the honest replacement for V1's opaque spinner. Today
  * the UI polls this; when the Trigger.dev task is deployed
  * (TRIGGER_ACCESS_TOKEN, [PRATIK]) the same shape streams over Realtime.
  */
@@ -75,7 +75,7 @@ export const pipelineRouter = router({
 
   /**
    * Daily usage series, last 30 days (ui-19 Usage graphs): the SERVER
-   * aggregates runs/pages/spend per day (Iron Law #3 — the client draws,
+   * aggregates runs/pages/spend per day (Iron Law #3 - the client draws,
    * it never sums). Days with no runs are zero-filled so the chart's
    * x-axis is honest about quiet days.
    */

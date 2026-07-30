@@ -1,17 +1,17 @@
 "use client";
 
 /**
- * App shell v3 (ui-17, 02-VERCEL-DERIVATION §3.1–3.3): fixed 250px sidebar
+ * App shell v3 (ui-17, 02-VERCEL-DERIVATION §3.1-3.3): fixed 250px sidebar
  * (Find + grouped nav + identity footer with the bell), slim top bar
  * (centered page title, page actions right), floating Find/menu pill on
- * phones — the reference's chrome, in our tokens. The deal WORKSPACE keeps
+ * phones - the reference's chrome, in our tokens. The deal WORKSPACE keeps
  * its own cockpit chrome (X4 e2e contracts live there); this shell wraps
  * everything else.
  *
  * Deliberately absent, matching the reference: sidebar collapse (Vercel's
  * rail is fixed-width), the gradient mesh (canvas is flat near-black; the
  * mesh survives only on auth screens), and the mobile tab bar (retired by
- * 02 §1.4 — the pill + sheet replace it).
+ * 02 §1.4 - the pill + sheet replace it).
  */
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -42,7 +42,7 @@ function dealIdFrom(pathname: string): string | null {
 /**
  * Deal takeover rail (02 §3.1): '< {deal}' header + deal surfaces, the way
  * the reference scopes its rail to a project. The label is the breadcrumb
- * the page already passes — the rail runs NO query of its own (the first
+ * the page already passes - the rail runs NO query of its own (the first
  * build did, and a shell-level query wedged every deal page's hydration).
  */
 function DealNav({ dealId, label, pathname }: { dealId: string; label: string; pathname: string }) {
@@ -105,7 +105,7 @@ export function AppShell({
   actions,
   children,
 }: {
-  /** Centered top-bar title (page or deal context) — plain text, never a heading. */
+  /** Centered top-bar title (page or deal context) - plain text, never a heading. */
   breadcrumb?: string | undefined;
   actions?: ReactNode;
   children: ReactNode;
@@ -216,7 +216,7 @@ export function AppShell({
           </nav>
         )}
 
-        {/* Identity footer — the reference anchors the person bottom-left,
+        {/* Identity footer - the reference anchors the person bottom-left,
             with notifications beside them. */}
         <div className="flex items-center gap-1.5 border-t border-sidebar-border p-3">
           <AccountMenu variant="row" />

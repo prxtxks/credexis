@@ -2,7 +2,7 @@
 
 /**
  * Set a new password (M11.7). Reached from the recovery email via
- * /auth/callback?next=/auth/reset-password — the code exchange has already
+ * /auth/callback?next=/auth/reset-password - the code exchange has already
  * established a session, so updateUser({ password }) is authorized. No
  * password ever transits our own API; this talks to Supabase Auth directly.
  */

@@ -2,7 +2,7 @@
  * Org bootstrap (M11.2, design 01 §4.1): the only app path that creates a
  * tenants/profiles pair. The DB function `create_organization` (0011) is
  * SECURITY DEFINER and enforces every invariant itself (authenticated,
- * profile-less caller, atomic insert, caller becomes org_owner) — this
+ * profile-less caller, atomic insert, caller becomes org_owner) - this
  * router is a thin, session-gated shim over it. No INSERT policies exist
  * on tenants/profiles; function-only creation is the security posture.
  */
@@ -44,7 +44,7 @@ export const orgRouter = router({
 });
 
 /**
- * Members & invites (M11.3). The DB enforces the tier lattice (0013 —
+ * Members & invites (M11.3). The DB enforces the tier lattice (0013 -
  * A1 fix); these procedures are the UX layer. Invite delivery is
  * copy-the-link pre-pilot (no email infra; verdict CUT list): create
  * returns the raw token ONCE, only its sha256 is stored.
@@ -75,7 +75,7 @@ export const membersRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       // RLS profiles_update_manage enforces the lattice; a denied update
-      // matches zero rows rather than erroring — surface that honestly.
+      // matches zero rows rather than erroring - surface that honestly.
       const { data, error } = await ctx.supabase
         .from("profiles")
         .update({ role: input.role, updated_at: new Date().toISOString() })
@@ -159,7 +159,7 @@ export const invitesRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: error.message });
       }
 
-      // M11.7: also email the one-time link (advisory — the copyable link
+      // M11.7: also email the one-time link (advisory - the copyable link
       // below remains the primary delivery; a failed send loses nothing).
       let emailSent = false;
       try {
@@ -202,7 +202,7 @@ export const invitesRouter = router({
       return { inviteId: data.id as string };
     }),
 
-  /** Signed-in, profile-less claim (design 01 §4.3) — definer enforces all. */
+  /** Signed-in, profile-less claim (design 01 §4.3) - definer enforces all. */
   accept: sessionProcedure
     .input(z.object({ token: z.string().min(32) }))
     .mutation(async ({ ctx, input }) => {

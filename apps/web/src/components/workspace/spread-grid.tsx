@@ -2,12 +2,12 @@
 
 /**
  * Spread grid (M8.3, Blueprint §8.2): AG Grid over taxonomy rows × period
- * columns. Values render from integer-cent strings (Iron Law #3 — zero
+ * columns. Values render from integer-cent strings (Iron Law #3 - zero
  * client math; the violet computed rows come straight from the engine's
  * computed_metrics). Label edits teach the mapper (learned_mappings).
  *
  * Tree behavior is community-safe: flat rows + depth indent + a collapsed
- * set — no enterprise row grouping.
+ * set - no enterprise row grouping.
  */
 
 import { useMemo, useState } from "react";
@@ -28,7 +28,7 @@ import { credexisGridTheme, GRID_HEADER_HEIGHT, GRID_ROW_HEIGHT } from "@/lib/ag
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 /** Confidence dot (V1 ValueCellRenderer): thresholds are display bands
- *  only — comparisons, never arithmetic (Iron Law #3). */
+ *  only - comparisons, never arithmetic (Iron Law #3). */
 function confidenceDotClass(confidence: number | null | undefined): string | null {
   if (confidence === null || confidence === undefined) return null;
   if (confidence >= 0.85) return "bg-primary";
@@ -106,7 +106,7 @@ export function SpreadGrid({
     const isHidden = (key: string) =>
       [...collapsed].some((c) => key !== c && key.startsWith(`${c}.`));
 
-    // Only rows with facts somewhere beneath them render — a 100-row empty
+    // Only rows with facts somewhere beneath them render - a 100-row empty
     // taxonomy is noise (and unscrollable in tests). Ancestors of any
     // populated row stay visible for structure.
     const populated = new Set<string>();
@@ -142,14 +142,14 @@ export function SpreadGrid({
     for (const spec of COMPUTED_ROWS[statement] ?? []) {
       const cells: GridRow["cells"] = {};
       for (const m of data.computed.filter((c) => c.metric === spec.metric)) {
-        const period = m.periodLabel ?? "—";
+        const period = m.periodLabel ?? "-";
         cells[period] = {
           display:
             m.valueKind === "cents" && m.valueCents !== null
               ? formatCents(m.valueCents)
               : m.ratioMantissa !== null && m.ratioScale !== null
                 ? formatRatio(m.ratioMantissa, m.ratioScale)
-                : "—",
+                : "-",
         };
       }
       if (Object.keys(cells).length > 0) {
@@ -232,7 +232,7 @@ export function SpreadGrid({
           tooltipValueGetter: (params) => {
             const cell = params.data?.cells[p];
             if (!cell?.status) return "";
-            const base = `${cell.status} · confidence ${cell.confidence ?? "—"}`;
+            const base = `${cell.status} · confidence ${cell.confidence ?? "-"}`;
             return cell.verified ? `${base} · verified by IRS transcript` : base;
           },
         }),
@@ -259,8 +259,8 @@ export function SpreadGrid({
         columnDefs={columnDefs}
         getRowId={(p) => p.data.key}
         // AG Grid's stock "No Rows To Show" is the one string in the cockpit
-        // we don't own — replace it with product voice (ui-17).
-        overlayNoRowsTemplate={`<span style="color: var(--muted-foreground); font-size: 13px;">No accepted facts yet — rows appear as extraction lands and review accepts them.</span>`}
+        // we don't own - replace it with product voice (ui-17).
+        overlayNoRowsTemplate={`<span style="color: var(--muted-foreground); font-size: 13px;">No accepted facts yet - rows appear as extraction lands and review accepts them.</span>`}
         theme={credexisGridTheme}
         headerHeight={GRID_HEADER_HEIGHT}
         rowHeight={GRID_ROW_HEIGHT}

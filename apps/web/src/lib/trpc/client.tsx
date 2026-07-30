@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * tRPC React client (M6.4). The client RENDERS server data — it never
+ * tRPC React client (M6.4). The client RENDERS server data - it never
  * computes (Iron Law #3): every number on screen arrives fully formed from
  * the API; money stays a string of integer cents end-to-end.
  */

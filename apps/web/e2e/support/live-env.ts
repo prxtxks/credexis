@@ -3,7 +3,7 @@
  * Playwright process does not inherit Next's env loading), exposes the
  * Management-API SQL runner and GoTrue admin-user helpers.
  *
- * Secrets never leave process memory — nothing here logs values.
+ * Secrets never leave process memory - nothing here logs values.
  */
 
 import { readFileSync } from "node:fs";
@@ -66,7 +66,7 @@ export async function runSql(query: string): Promise<{ ok: boolean; body: unknow
 }
 
 /**
- * Create a real, confirmed auth user through GoTrue's admin API — this
+ * Create a real, confirmed auth user through GoTrue's admin API - this
  * produces the identities row a password sign-in needs (hand-inserted
  * auth.users rows do not). Returns the new user id.
  */

@@ -1,5 +1,5 @@
 /**
- * Browser-side Sentry (M10.2). Gated on NEXT_PUBLIC_SENTRY_DSN — mirror
+ * Browser-side Sentry (M10.2). Gated on NEXT_PUBLIC_SENTRY_DSN - mirror
  * the DSN under that name (here and in Vercel env) to enable client
  * error capture. No session replay: workspace screens show tax data.
  */

@@ -2,7 +2,7 @@
  * Review queue API (M6.3). Reads are RLS-scoped queries; mutations run as
  * the caller (underwriter+), so the M2.5 audit triggers record every
  * accept/correct with actor + before/after automatically. Corrections
- * supersede — they never mutate the original value (Iron Law #5).
+ * supersede - they never mutate the original value (Iron Law #5).
  */
 
 import { TRPCError } from "@trpc/server";
@@ -48,7 +48,7 @@ export const reviewRouter = router({
       logicalDocumentId: (f.logical_document_id as string | null) ?? null,
       sourcePage: (f.source_page as number | null) ?? null,
       createdAt: f.created_at as string,
-      // Display payload (rendered verbatim — the client never computes).
+      // Display payload (rendered verbatim - the client never computes).
       valueCents: String(f.value_cents),
       taxonomyNodeKey: (f.taxonomy_node_key as string | null) ?? null,
       registryFieldId: (f.registry_field_id as string | null) ?? null,
@@ -82,7 +82,7 @@ export const reviewRouter = router({
           message: "fact is not in review (already resolved or not visible)",
         });
       }
-      // M7.7: a finalized fact changes the spread — recompute before returning.
+      // M7.7: a finalized fact changes the spread - recompute before returning.
       await recomputeDeal(ctx.supabase, ctx.profile.tenantId, data.deal_id as string);
       return { factId: data.id as string, status: "accepted" as const };
     }),
@@ -145,7 +145,7 @@ export const reviewRouter = router({
           .eq("id", inserted.id as string);
         throw new TRPCError({
           code: "CONFLICT",
-          message: patchErr?.message ?? "fact was resolved by someone else — correction discarded",
+          message: patchErr?.message ?? "fact was resolved by someone else - correction discarded",
         });
       }
 

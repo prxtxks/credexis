@@ -1,6 +1,6 @@
 /**
  * Support-case store (ui-19): cases persist in THIS BROWSER until a case
- * backend exists — the UI says so wherever cases render.
+ * backend exists - the UI says so wherever cases render.
  */
 export interface SupportCase {
   id: string;

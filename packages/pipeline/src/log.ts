@@ -1,6 +1,6 @@
 /**
  * Structured logging for pipeline tasks (M10.2): one JSON line per event,
- * always carrying the run/document ids — greppable in Trigger.dev's log
+ * always carrying the run/document ids - greppable in Trigger.dev's log
  * viewer and any log drain. Never log document contents or money values
  * beyond what extraction_runs already records.
  */

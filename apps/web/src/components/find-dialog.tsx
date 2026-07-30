@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Find (ui-17, 02-VERCEL-DERIVATION §3.1): the sidebar search — F opens a
+ * Find (ui-17, 02-VERCEL-DERIVATION §3.1): the sidebar search - F opens a
  * palette over the deals the client already holds (deals.board is cached by
  * the home screen; filtering a fetched list is selection, not computation).
  *
- * Scope is DEALS ONLY today and the footer says so — plan 01 step 14 bars a
+ * Scope is DEALS ONLY today and the footer says so - plan 01 step 14 bars a
  * pretend-global search until a real `search` router exists. When that
  * lands, this dialog grows sections instead of being replaced.
  */
@@ -35,7 +35,7 @@ export function FindDialog({
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  // Fetch only while open — the shell mounts this on every route.
+  // Fetch only while open - the shell mounts this on every route.
   const board = trpc.deals.board.useQuery(undefined, { enabled: open, staleTime: 30_000 });
 
   // Find is NAVIGATION search (Pratik 2026-07-30): pages first, then deal
@@ -80,7 +80,7 @@ export function FindDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        // Anchored where the sidebar's Find sits — the panel expands in
+        // Anchored where the sidebar's Find sits - the panel expands in
         // place over the rail (reference behavior), not center-screen.
         className="top-3 left-3 w-96 max-w-[calc(100vw-1.5rem)] translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-xl p-0 outline-none focus-visible:outline-none data-[state=open]:slide-in-from-left-1 sm:max-w-sm"
       >
@@ -117,7 +117,7 @@ export function FindDialog({
         </div>
 
         <div className="max-h-72 overflow-y-auto p-1">
-          {/* Nav entries are static — render them instantly; deal rows join
+          {/* Nav entries are static - render them instantly; deal rows join
               when the board query lands (never hide known results behind a
               loading state). */}
           {matches.length === 0 && board.isLoading ? (

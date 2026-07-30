@@ -13,7 +13,7 @@ import { UploadPanel } from "@/components/upload-panel";
 
 /**
  * The borrower's only screen. Per-user and authenticated, so it must never be
- * prerendered — and route segment config like this is silently IGNORED inside
+ * prerendered - and route segment config like this is silently IGNORED inside
  * a "use client" module, which is exactly how an anonymous shell got baked
  * into apps/web's build output and froze production on 2026-07-29. This page
  * is a Server Component and stays one.
@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 /**
  * Everything rendered here comes from one `borrower_portal_state()` call and
  * nothing else. The definer derives the invite from auth.uid(), takes no
- * caller-supplied id, and returns only curated fields — no metrics, no facts,
+ * caller-supplied id, and returns only curated fields - no metrics, no facts,
  * no issues, no gates, no deal status, no org member names, no other
  * borrower's documents (design 05 §10.3). This component renders; it computes
  * nothing (Iron Law #3).
@@ -69,7 +69,7 @@ export default async function PortalHome() {
         ) : invites.length === 0 ? (
           <Panel title="No active invitation">
             This account doesn&apos;t have an active invitation right now. It may have expired or
-            been withdrawn — ask your loan officer for a new link.
+            been withdrawn - ask your loan officer for a new link.
           </Panel>
         ) : (
           <div className="space-y-10">
@@ -183,7 +183,7 @@ function InviteSection({ invite, asH1 }: { invite: PortalState; asH1: boolean })
 function UploadRow({ upload }: { upload: PortalUpload }) {
   const sent = formatDate(upload.uploadedAt);
   // Two-valued by design: the borrower never learns whether extraction ran,
-  // succeeded, or exists — only whether the file needs sending again.
+  // succeeded, or exists - only whether the file needs sending again.
   const needsReplacement = upload.state === "needs_replacement";
 
   return (
@@ -196,7 +196,7 @@ function UploadRow({ upload }: { upload: PortalUpload }) {
           <span className="break-all">{upload.fileName}</span>
           {needsReplacement && (
             <span className="text-destructive block text-xs">
-              Couldn&apos;t read this — please upload it again
+              Couldn&apos;t read this - please upload it again
             </span>
           )}
         </span>

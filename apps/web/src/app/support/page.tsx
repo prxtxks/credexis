@@ -3,7 +3,7 @@
 /**
  * Support → Cases (ui-19, matched to the reference dashboard-Support view):
  * search + status/severity filters + New Case, and the case list. Cases
- * persist in THIS BROWSER (localStorage) until a case backend exists — the
+ * persist in THIS BROWSER (localStorage) until a case backend exists - the
  * footer says so plainly. Creating a case happens on /support/new.
  */
 
@@ -127,7 +127,7 @@ export default function SupportCasesPage() {
           )}
         </div>
         <p className="text-muted-foreground mt-2 text-[11px]">
-          Cases are stored in this browser until the case backend lands — email support@credexis.co
+          Cases are stored in this browser until the case backend lands - email support@credexis.co
           for anything urgent.
         </p>
       </main>

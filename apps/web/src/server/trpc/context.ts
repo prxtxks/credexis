@@ -20,7 +20,7 @@ export interface Context {
 }
 
 /**
- * tRPC context (M2.3): verify the caller's JWT server-side (Iron Law #7 —
+ * tRPC context (M2.3): verify the caller's JWT server-side (Iron Law #7 -
  * every route authenticates), then load their profile (tenant + role) through
  * an RLS-scoped query. A signed-in user with no profile has no tenant and is
  * treated as unauthorized by `protectedProcedure`.

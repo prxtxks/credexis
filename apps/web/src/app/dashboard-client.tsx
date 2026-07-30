@@ -5,13 +5,13 @@
  *
  * Desktop is the reference's Overview: one toolbar row (search · filter/sort
  * menu · view toggle · New deal), a left rail (Usage from pipeline.costs,
- * Recent activity from audit.list — both REAL data or absent), and a
+ * Recent activity from audit.list - both REAL data or absent), and a
  * projects-style deal grid with a list alternative. The kanban is retired:
- * status lives in the dot, the ring, and the filter — not in four columns
+ * status lives in the dot, the ring, and the filter - not in four columns
  * that were two-thirds empty at eight deals.
  *
  * Phone keeps the ui-14-6 shape (one urgency-ordered list, counts as
- * filter) — it shipped days ago and matches the reference's mobile home.
+ * filter) - it shipped days ago and matches the reference's mobile home.
  *
  * ONE DOM that reflows at `md`, never a parallel mobile tree (the reason is
  * documented at deals/[dealId]/borrower/page.tsx).
@@ -60,7 +60,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-/** Phone list order: most urgent first — a phone is a triage surface. */
+/** Phone list order: most urgent first - a phone is a triage surface. */
 const MOBILE_GROUPS = [
   { status: "review", label: "In review" },
   { status: "parsing", label: "Parsing" },
@@ -82,7 +82,7 @@ type BoardView = "grid" | "list";
 const VIEW_STORAGE_KEY = "credexis-deals-view";
 const PIN_STORAGE_KEY = "credexis-pinned-deals";
 
-/** Pinned deals (ui-17: Pratik queue item) — a per-browser preference, so
+/** Pinned deals (ui-17: Pratik queue item) - a per-browser preference, so
  *  localStorage is the right home; ordering is presentation, not truth. */
 function usePinnedDeals() {
   const [pinned, setPinned] = useState<Set<string>>(new Set());
@@ -128,7 +128,7 @@ function NewDealWizard({ onDone }: { onDone: (dealId: string) => void }) {
   return (
     <div className="space-y-5 text-sm">
       <p className="text-muted-foreground -mt-2 text-[13px]">
-        Name the file, pick the loan type, and add the entities on it — the document checklist
+        Name the file, pick the loan type, and add the entities on it - the document checklist
         follows the type.
       </p>
 
@@ -332,7 +332,7 @@ export default function DashboardClient() {
     if (query !== "") rows = rows.filter((d) => d.name.toLowerCase().includes(query));
     if (sort === "name") rows = [...rows].sort((a, b) => a.name.localeCompare(b.name));
     // "activity" keeps server order; pinned deals float first either way
-    // (stable partition — presentation, not truth).
+    // (stable partition - presentation, not truth).
     return [...rows.filter((d) => pinned.has(d.id)), ...rows.filter((d) => !pinned.has(d.id))];
   }, [deals, filter, query, sort, pinned]);
 
@@ -435,7 +435,7 @@ export default function DashboardClient() {
             </button>
           </div>
 
-          {/* Add New ▾ — the reference's split-CTA in OUR teal (Pratik
+          {/* Add New ▾ - the reference's split-CTA in OUR teal (Pratik
               2026-07-30: brand colour on the primary create action). Menu
               items map the create-actions the product will grow into. */}
           <DropdownMenu>
@@ -607,7 +607,7 @@ function docProgress(deal: BoardDeal): { have: number; need: number } {
   };
 }
 
-/** Status dot colour — one dot per row, the only per-row colour. */
+/** Status dot colour - one dot per row, the only per-row colour. */
 const STATUS_DOT: Record<string, string> = {
   intake: "bg-muted-foreground/50",
   parsing: "bg-severity-warning",
@@ -615,7 +615,7 @@ const STATUS_DOT: Record<string, string> = {
   complete: "bg-primary/40",
 };
 
-/** Human relative time — a list-scanning affordance, not a fact record. */
+/** Human relative time - a list-scanning affordance, not a fact record. */
 function relativeTime(iso: string): string {
   const ms = Date.now() - Date.parse(iso);
   if (!Number.isFinite(ms) || ms < 0) return "just now";
@@ -663,7 +663,7 @@ function DocRing({ have, need }: { have: number; need: number }) {
   );
 }
 
-/** The desktop grid card — the reference's project-card anatomy, our facts. */
+/** The desktop grid card - the reference's project-card anatomy, our facts. */
 function DealGridCard({
   deal,
   pinned,
@@ -796,7 +796,7 @@ function DealListRow({
 
 /**
  * The per-deal overflow menu (Pratik queue: pin/delete). Lives INSIDE the
- * row <Link>, so it stops propagation — opening the menu must not navigate.
+ * row <Link>, so it stops propagation - opening the menu must not navigate.
  * Delete is staged (no backend removes a deal yet) and says so.
  */
 function DealMenu({
@@ -835,7 +835,7 @@ function DealMenu({
 }
 
 /**
- * Usage rail — real spend per deal from pipeline.costs (server-aggregated;
+ * Usage rail - real spend per deal from pipeline.costs (server-aggregated;
  * the over-envelope tint is the server's flag, never a client threshold).
  */
 function UsageRail() {
@@ -864,7 +864,7 @@ function UsageRail() {
           </div>
         ) : rows.length === 0 ? (
           <p className="text-muted-foreground px-4 pb-4 text-[13px]">
-            No extraction runs yet — spend appears once the pipeline processes documents.
+            No extraction runs yet - spend appears once the pipeline processes documents.
           </p>
         ) : (
           <>
@@ -919,7 +919,7 @@ function UsageRail() {
 }
 
 /**
- * Per-deal envelope ring — the reference's usage-meter ring. Both numbers
+ * Per-deal envelope ring - the reference's usage-meter ring. Both numbers
  * come from the server; the arc is presentation geometry only.
  */
 function SpendRing({ spentMicro, envelopeMicro }: { spentMicro: string; envelopeMicro: string }) {
@@ -947,7 +947,7 @@ function SpendRing({ spentMicro, envelopeMicro }: { spentMicro: string; envelope
 }
 
 /**
- * Recent activity — the org audit trail, feed-styled (the reference's
+ * Recent activity - the org audit trail, feed-styled (the reference's
  * Recent Previews slot). audit.list is admin-gated today; the section
  * renders nothing for roles the policy excludes rather than erroring.
  */
@@ -966,7 +966,7 @@ function ActivityRail() {
           </div>
         ) : (activity.data?.entries.length ?? 0) === 0 ? (
           <p className="text-muted-foreground py-3 text-[13px]">
-            Nothing yet — changes to deals, facts, and members land here.
+            Nothing yet - changes to deals, facts, and members land here.
           </p>
         ) : (
           <ul className="divide-border/70 divide-y">
@@ -996,7 +996,7 @@ function ActivityRail() {
   );
 }
 
-/** Skeletons mirror the loaded anatomy (02 §3.14) — never fake zeros. */
+/** Skeletons mirror the loaded anatomy (02 §3.14) - never fake zeros. */
 function DealsSkeleton({ view }: { view: BoardView }) {
   if (view === "list") {
     return (
@@ -1033,7 +1033,7 @@ function DealsSkeleton({ view }: { view: BoardView }) {
   );
 }
 
-/** The phone row (craft pass ui-16) — unchanged anatomy. */
+/** The phone row (craft pass ui-16) - unchanged anatomy. */
 function DealRow({ deal }: { deal: BoardDeal }) {
   const { have, need } = docProgress(deal);
   return (
@@ -1085,7 +1085,7 @@ function DealRow({ deal }: { deal: BoardDeal }) {
   );
 }
 
-/** ONE panel, not four dashed boxes — reference empty-state anatomy. */
+/** ONE panel, not four dashed boxes - reference empty-state anatomy. */
 function FirstRun({ hasAnyDeal, onNew }: { hasAnyDeal: boolean; onNew: () => void }) {
   if (hasAnyDeal) {
     return (

@@ -1,6 +1,6 @@
 /**
  * Policy compliance API (M8.6): evaluate the deal's PINNED pack (Iron Law
- * #8 — deals keep the pack they were underwritten under) against a
+ * #8 - deals keep the pack they were underwritten under) against a
  * scenario's engine output. The schema↔engine type bridge lives here:
  * policyPackRulesSchema-parsed data feeds evaluatePolicy directly.
  */
@@ -33,7 +33,7 @@ export const policyRouter = router({
         return { available: false as const, reason: "policy pack rules failed validation" };
       }
       // Explicit map: zod's `T | undefined` optionals vs the engine's exact
-      // optional properties — runtime-identical, spelled out for the compiler.
+      // optional properties - runtime-identical, spelled out for the compiler.
       const pack: PolicyPackInput = {
         sopReference: parsed.data.sopReference,
         reviewStatus: parsed.data.reviewStatus,
@@ -86,7 +86,7 @@ export const policyRouter = router({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: metricsRes.error.message });
       }
 
-      // Basis period: the latest period that has a DSCR — the underwriting
+      // Basis period: the latest period that has a DSCR - the underwriting
       // basis (historical latest; projections join with the pro-forma tab).
       const rows = metricsRes.data ?? [];
       const basisPeriod =

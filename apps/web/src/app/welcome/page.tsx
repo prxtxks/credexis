@@ -2,10 +2,10 @@
 
 /**
  * Org bootstrap (M11.2, design 01 §4.1): the page a signed-in,
- * profile-less account lands on — replacing the previous dead end where
+ * profile-less account lands on - replacing the previous dead end where
  * new signups had no path into the product. One choice (org type), one
  * name, one click; the caller becomes org_owner via create_organization()
- * (SECURITY DEFINER — the only way a tenants/profiles pair is born).
+ * (SECURITY DEFINER - the only way a tenants/profiles pair is born).
  * A solo broker is an org of one; hiring later = inviting a member.
  */
 
@@ -37,7 +37,7 @@ const KINDS = [
     key: "solo_broker" as const,
     icon: Briefcase,
     title: "Independent Broker",
-    blurb: "Solo broker — invite teammates anytime later",
+    blurb: "Solo broker - invite teammates anytime later",
   },
 ];
 
@@ -53,7 +53,7 @@ export default function WelcomePage() {
     if (bootstrap.data?.hasProfile) router.replace("/");
   }, [bootstrap.data?.hasProfile, router]);
 
-  // Solo brokers usually operate under an LLC named after themselves —
+  // Solo brokers usually operate under an LLC named after themselves -
   // prefill from the account name until the user edits.
   useEffect(() => {
     if (!touched && bootstrap.data?.suggestedName && name === "") {
@@ -63,7 +63,7 @@ export default function WelcomePage() {
 
   const create = trpc.org.create.useMutation({
     onSuccess: () => {
-      toast.success("Workspace created — welcome to Credexis");
+      toast.success("Workspace created - welcome to Credexis");
       router.replace("/");
       router.refresh();
     },
@@ -86,7 +86,7 @@ export default function WelcomePage() {
         <div className="glass-card rounded-[20px] p-8">
           <h1 className="mb-1 text-2xl font-semibold tracking-tight">Set up your workspace</h1>
           <p className="mb-6 text-sm text-muted-foreground">
-            One workspace per organization — you&apos;ll be its owner and can invite your team.
+            One workspace per organization - you&apos;ll be its owner and can invite your team.
           </p>
 
           <div className="mb-5 grid gap-2">

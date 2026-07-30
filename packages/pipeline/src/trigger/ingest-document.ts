@@ -1,5 +1,5 @@
 /**
- * Trigger.dev task `ingest-document` — the id the upload route's
+ * Trigger.dev task `ingest-document` - the id the upload route's
  * trigger-client posts to (apps/web/src/server/pipeline/trigger-client.ts).
  * Thin binding only: all logic lives in runIngest, which is unit-tested
  * against fakes; this file just assembles real deps.
@@ -29,8 +29,8 @@ import {
 
 /**
  * `document_failed` fan-out (M12.1). B4 posture: service-role writer with
- * EXPLICIT tenant scoping in code. Best-effort — a notification outage
- * must never fail the pipeline — but errors are surfaced, not swallowed:
+ * EXPLICIT tenant scoping in code. Best-effort - a notification outage
+ * must never fail the pipeline - but errors are surfaced, not swallowed:
  * supabase-js RETURNS errors rather than throwing, so the earlier
  * try/catch-only version logged nothing when the write failed (that is
  * exactly how the partial-index 42P10 bug stayed invisible; index fixed
@@ -79,20 +79,20 @@ const DEAL_STATUS_ORDER = ["intake", "parsing", "review", "complete"] as const;
 type DealStatus = (typeof DEAL_STATUS_ORDER)[number];
 
 /**
- * Deal pipeline status (m8-10) — the writer the board never had.
+ * Deal pipeline status (m8-10) - the writer the board never had.
  *
  * MONOTONIC AND IDEMPOTENT BY CONSTRUCTION: the statement names every
  * status the deal may be coming FROM (strictly behind the target), so it
  * is a no-op unless the deal is genuinely earlier in the funnel. A retried
  * run, or a second document's run racing this one, therefore cannot drag a
- * deal in 'review' back to 'parsing' — Postgres re-evaluates that
+ * deal in 'review' back to 'parsing' - Postgres re-evaluates that
  * predicate after the row lock is released, so the loser of a race matches
  * zero rows instead of overwriting the winner. Human hands may still move
  * a deal backwards (deals.setStatus); the worker never does.
  *
  * B4 posture, identical to the notification fan-out above: service-role
  * writer with EXPLICIT tenant scoping in code, because the worker bypasses
- * RLS. Best-effort — a board that lags must never fail an ingest — but
+ * RLS. Best-effort - a board that lags must never fail an ingest - but
  * errors are logged, not swallowed (supabase-js RETURNS errors).
  */
 async function advanceDealStatus(
@@ -124,8 +124,8 @@ async function advanceDealStatus(
 /**
  * parsing → review, gated on the deal actually HAVING something to review.
  * The review queue is "suggested facts on this deal"
- * (apps/web/src/server/trpc/routers/review.ts), so that count — not
- * "extraction finished" — is the honest signal: consensus auto-accepts
+ * (apps/web/src/server/trpc/routers/review.ts), so that count - not
+ * "extraction finished" - is the honest signal: consensus auto-accepts
  * high-confidence facts, and a deal that lands in Review with an empty
  * queue teaches underwriters to ignore the column. count+head is one round
  * trip and, unlike summing rows client-side, immune to PostgREST's
@@ -181,7 +181,7 @@ export const ingestDocument = task({
     const client = serviceClient();
 
     // intake → parsing. The upload route commits the documents row before
-    // it triggers this task, so reaching here IS "a document arrived" —
+    // it triggers this task, so reaching here IS "a document arrived" -
     // no separate count needed. Deliberately ahead of the cost ceiling and
     // the AV gate: a deal whose first document is withheld or infected
     // must still leave Intake, or the board hides the one deal that needs
@@ -198,13 +198,13 @@ export const ingestDocument = task({
       : null;
 
     try {
-      // ── M12.1 cost ceiling — FIRST, before any LLM touches this file. ──
+      // ── M12.1 cost ceiling - FIRST, before any LLM touches this file. ──
       // Page classification inside runIngest calls Anthropic per page, so
       // checking after ingest (as the first cut did) still burned tokens on
       // every upload to an already-over-budget deal. Over the ceiling, the
       // document is failed without a single vendor call. The sum is a SQL
       // aggregate (definer): a client-side row sum silently stopped
-      // counting past PostgREST's 1000-row cap — weakest on the biggest
+      // counting past PostgREST's 1000-row cap - weakest on the biggest
       // deals, which is backwards for a ceiling.
       const { data: tenantRow } = await client
         .from("tenants")
@@ -238,7 +238,7 @@ export const ingestDocument = task({
         return {
           documentId: payload.documentId,
           status: "failed",
-          // Nothing was downloaded or scanned — the column keeps its
+          // Nothing was downloaded or scanned - the column keeps its
           // honest default rather than implying a verdict we never made.
           virusScan: "pending",
           logicalDocuments: [],
@@ -250,7 +250,7 @@ export const ingestDocument = task({
         {
           db: supabaseDb(client),
           storage: supabaseStorage(client),
-          // M12.1: structural validation is the wired engine — magic bytes
+          // M12.1: structural validation is the wired engine - magic bytes
           // must match the declared type, PDFs must carry no active
           // content (object streams inflated, hex escapes normalized).
           // Non-clean verdicts fail the document before any vendor call.
@@ -269,7 +269,7 @@ export const ingestDocument = task({
       if (result.status === "failed") {
         Sentry.captureMessage(`ingest failed: ${result.reason}`);
         // A failed document (integrity, AV verdict, corrupt PDF) gets a
-        // card — underwriters must see it without opening the deal.
+        // card - underwriters must see it without opening the deal.
         await notifyDocumentFailed(client, log, payload, result.reason ?? "processing failed");
       }
 
@@ -294,13 +294,13 @@ export const ingestDocument = task({
             .single();
 
           // M12.1 AV lock #2: extraction ships bytes to vendors and spends
-          // money, so it demands an explicit "clean" verdict on the ROW —
+          // money, so it demands an explicit "clean" verdict on the ROW -
           // independent of the ingest-stage throw path, so a future caller
           // that reaches extraction another way still cannot skip it.
           // (The cost ceiling is checked at task entry, before any LLM.)
           let extractionBlocked: string | null = null;
           if (doc && (doc.virus_scan as string) !== "clean") {
-            extractionBlocked = `av verdict "${(doc.virus_scan as string) ?? "unknown"}" — extraction requires clean`;
+            extractionBlocked = `av verdict "${(doc.virus_scan as string) ?? "unknown"}" - extraction requires clean`;
             // Withheld work must never look like completed work.
             await client.from("extraction_runs").insert({
               tenant_id: payload.tenantId,
@@ -329,8 +329,8 @@ export const ingestDocument = task({
                 // (2026-07-24): a reader known to misread these documents
                 // must never stand in for Reducto. If Reducto is
                 // unavailable, Path 1 is null and reconciliation degrades to
-                // the Claude-vision reader (path2) alone — a real, accurate
-                // reader whose single-source values route to review — never
+                // the Claude-vision reader (path2) alone - a real, accurate
+                // reader whose single-source values route to review - never
                 // to a bad reader. Azure stays a bench-only eval contender;
                 // re-promote only with data.
                 path1ForFamily: () => reducto,
@@ -365,7 +365,7 @@ export const ingestDocument = task({
 
             // M11.5 notification fan-out (B4 honest posture: service-role
             // writer + EXPLICIT tenant scoping in code; recipients =
-            // underwriter tier and above, active only — X3 fix).
+            // underwriter tier and above, active only - X3 fix).
             try {
               const { data: recips } = await client
                 .from("profiles")
@@ -379,7 +379,7 @@ export const ingestDocument = task({
                     tenant_id: payload.tenantId,
                     recipient_id: r.id as string,
                     kind: "document_processed",
-                    title: `Document processed — ${extract.factsInserted} facts extracted`,
+                    title: `Document processed - ${extract.factsInserted} facts extracted`,
                     body: null,
                     action_url: `/deals/${payload.dealId}/workspace`,
                     deal_id: payload.dealId,
@@ -389,8 +389,8 @@ export const ingestDocument = task({
                   { onConflict: "recipient_id,dedupe_key", ignoreDuplicates: true },
                 );
               }
-              // M11.6: identity mismatches need a human — "Name matches
-              // NN% — approve?" cards for every non-high suggested match
+              // M11.6: identity mismatches need a human - "Name matches
+              // NN% - approve?" cards for every non-high suggested match
               // on this document (same recipients, same B4 posture).
               const ldIds = (lds ?? []).map((l) => l.id as string);
               if (ldIds.length > 0 && recips && recips.length > 0) {
@@ -423,7 +423,7 @@ export const ingestDocument = task({
                   const pct = Math.round((ident.score_bps as number) / 100);
                   const title =
                     (ident.band as string) === "mid"
-                      ? `Name matches ${pct}% — approve?`
+                      ? `Name matches ${pct}% - approve?`
                       : `Name mismatch on a document (${pct}%)`;
                   await client.from("notifications").upsert(
                     recips.map((r) => ({
