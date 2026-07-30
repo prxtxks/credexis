@@ -56,10 +56,24 @@ export interface PageSignals {
 const IRS_FORM_PATTERNS: ReadonlyArray<[RegExp, FormFamily, string]> = [
   [/schedule\s+k-?1\s*\(form\s+1120-?s\)(?!,?\s*box)/i, "K1_1120S", "k1-1120s"],
   [/schedule\s+k-?1\s*\(form\s+1065\)(?!,?\s*box)/i, "K1_1065", "k1-1065"],
-  [/schedule\s+c\s*\(form\s+1040\)|profit or loss from business/i, "1040_SCH_C", "sch-c"],
-  [/schedule\s+e\s*\(form\s+1040\)|supplemental income and loss/i, "1040_SCH_E", "sch-e"],
-  [/schedule\s+f\s*\(form\s+1040\)|profit or loss from farming/i, "1040_SCH_F", "sch-f"],
-  [/schedule\s+1\s*\(form\s+1040\)/i, "1040_SCH_1", "sch-1"],
+  // 2019-era revisions print "(Form 1040 or 1040-SR)" - the sweep caught
+  // those pages falling through to the bare-1040 pattern (corpus-1).
+  [
+    /schedule\s+c\s*\(form\s+1040(?:\s+or\s+1040-?sr)?\)|profit or loss from business/i,
+    "1040_SCH_C",
+    "sch-c",
+  ],
+  [
+    /schedule\s+e\s*\(form\s+1040(?:\s+or\s+1040-?sr)?\)|supplemental income and loss/i,
+    "1040_SCH_E",
+    "sch-e",
+  ],
+  [
+    /schedule\s+f\s*\(form\s+1040(?:\s+or\s+1040-?sr)?\)|profit or loss from farming/i,
+    "1040_SCH_F",
+    "sch-f",
+  ],
+  [/schedule\s+1\s*\(form\s+1040(?:\s+or\s+1040-?sr)?\)/i, "1040_SCH_1", "sch-1"],
   // Token only — "Compensation of officers" is 1120-S line 7 / 1120 line 12
   // (false-confidence probe, 2026-07-30).
   [/form\s+1125-?e\b/i, "1125E", "1125e"],
@@ -67,13 +81,17 @@ const IRS_FORM_PATTERNS: ReadonlyArray<[RegExp, FormFamily, string]> = [
   // Token only — "Depreciation and amortization" is a P&L expense line
   // (false-confidence probe, 2026-07-30).
   [/form\s+4562\b/i, "4562", "4562"],
-  [/form\s+1120-?s\b/i, "1120S", "1120s"],
-  [/form\s+1120\b/i, "1120", "1120"],
-  [/form\s+1065\b/i, "1065", "1065"],
+  // Suffix lookaheads: "Form 1120-F"/"1120-H"/"1040-NR" are DIFFERENT,
+  // unsupported forms and must abstain - a 42-page 1120-F classified as
+  // 1120 at 0.98 before the sweep caught it (corpus-1). 1040-SR is the
+  // same form family (seniors' print) and stays a 1040.
+  [/form\s+1120-?s(?![0-9a-z-])/i, "1120S", "1120s"],
+  [/form\s+1120(?![0-9a-z-])/i, "1120", "1120"],
+  [/form\s+1065(?![0-9a-z-])/i, "1065", "1065"],
   // Title only — "Attach Form(s) W-2" references on 1040s must not match
   // (real-doc regression, 2026-07-19).
   [/wage and tax statement/i, "W2", "w2"],
-  [/form\s+1040\b/i, "1040", "1040"],
+  [/form\s+1040(?:-?sr)?(?![0-9a-z-])/i, "1040", "1040"],
 ];
 
 /** Identity lives at the top of the page: real forms and their continuation
@@ -81,11 +99,15 @@ const IRS_FORM_PATTERNS: ReadonlyArray<[RegExp, FormFamily, string]> = [
  *  form ("we prepared Form 1120-S") is prose, not identity. */
 const HEADER_WINDOW = 400;
 
-/** "(attach Form 4562)", "from Form 1125-E", "See attached Form 4562" —
- *  parents cite their attachments by number; a cited token never
- *  classifies. Checked against the ~24 chars before a token match. */
+/** "(attach Form 4562)", "Attach to Schedule M-3 for Form 1065", "File
+ *  electronically with Form 1120", "Refer to the Form 1040 instructions" —
+ *  documents cite OTHER forms constantly; a cited token never classifies.
+ *  Prepositions and articles are in the guard because identity headers
+ *  never lead their own form number with one - every phrasing here was
+ *  captured verbatim from the IRS corpus sweep (corpus-1, 2026-07-30).
+ *  Checked against the ~24 chars before a token match. */
 const REFERENCE_CONTEXT_RE =
-  /(?:attach(?:ed|ment)?s?|from|see|per|includes?|included|reported\s+on|shown\s+on|enter(?:ed)?\s+on)[\s(:.,]*$/i;
+  /\b(?:attach(?:ed|ment)?s?|from|see|per|refer(?:red)?|to|on|in|of|for|about|the|your|with|includes?|included|reported|shown|enter(?:ed)?|filed?)[\s(:.,]*$/i;
 
 /** First non-cited token match inside the header window, in pattern order. */
 function findAnchoredFormSignal(text: string): { family: FormFamily; label: string } | null {
@@ -104,6 +126,11 @@ function findAnchoredFormSignal(text: string): { family: FormFamily; label: stri
 const OMB_RE = /omb\s+no\.?\s*(1545-\d{4})/i;
 const OMB_UNIQUE: Readonly<Record<string, FormFamily>> = {
   "1545-0008": "W2",
+  // The current W-2 revision carries the W-2/W-3 series number instead -
+  // the corpus sweep caught every current-revision W-2 page abstaining
+  // (corpus-1, 2026-07-30). The printed title sits at the BOTTOM of a W-2,
+  // outside any header window, so the OMB number is the working signal.
+  "1545-0029": "W2",
 };
 /** Shared OMBs corroborate only their own form group (real-doc
  * regression: 1545-0074 must never boost a W-2 misread to 0.98). */
@@ -118,6 +145,13 @@ const STATEMENT_PATTERNS: ReadonlyArray<[RegExp, FormFamily, string]> = [
   [/balance sheet/i, "BALANCE_SHEET", "bs-keyword"],
   [/debt schedule|schedule of (?:liabilities|debts|loans)/i, "DEBT_SCHEDULE", "debt-keyword"],
 ];
+
+/** A page that bears IRS print markers is an IRS form page. If the form
+ *  tier abstained on it, the statement keywords must NOT guess - an
+ *  unsupported 1120-F's "Schedule L - Balance Sheets per Books" is not a
+ *  CPA balance sheet (corpus-1 sweep finding). The LLM/review tier owns
+ *  those pages. Freeform CPA statements carry none of these markers. */
+const IRS_MARKER_RE = /\bform\s+\d{3,4}[a-z0-9-]*\b|\bomb\s+no\.|\bschedule\s+[a-z0-9-]+\s*\(form/i;
 
 const CONTINUATION_RE = /(?:^|\s)page\s+([2-9]\d?)(?:\s|$)/i;
 const TAX_YEAR_RES = [
@@ -154,8 +188,9 @@ export function detectPageSignals(text: string): PageSignals {
     }
   }
 
-  // 3. Statement keywords — only in the absence of any IRS signal.
-  if (formFamily === null) {
+  // 3. Statement keywords — only in the absence of any IRS signal, and
+  //    never on a page with IRS print markers (see IRS_MARKER_RE).
+  if (formFamily === null && !IRS_MARKER_RE.test(text)) {
     for (const [re, family, label] of STATEMENT_PATTERNS) {
       if (re.test(text)) {
         formFamily = family;
