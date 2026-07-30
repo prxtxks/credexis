@@ -72,3 +72,6 @@ docs/testing-docs/
 
 # Trigger.dev CLI build artifacts
 .trigger/
+
+# Vercel UI reference screenshots (Pratik's captures — reference only, never shipped)
+docs/Vercel-ui/

@@ -1,5 +1,15 @@
 # Credexis Design Language v1 — "Precision Instrument"
 
+> **Amended 2026-07-30 by `02-VERCEL-DERIVATION.md` (binding):** the reference
+> is now Vercel's dashboard, measured from 35 captures ("match 100%, our
+> colors" — Pratik). Where this file conflicts with 02, 02 wins. Specifically
+> superseded here: the 135° emerald **gradient on primary buttons** (§2 Color —
+> primaries are now flat white/near-black inverse; emerald is the accent that
+> replaces Vercel's blue), the **24/18/15/13/11 type scale** (§2 Type — now
+> 28/20/16/14/13/11), the **10/14/20 radii** (§2 Geometry — now 8/12/16/20),
+> and the **mobile bottom tab bar** (§2 Density — mobile nav is the floating
+> Find/menu pill + nav sheet).
+
 Directive (Pratik, 2026-07-29): UI is now the top priority. World-class,
 distinctive, not AI-generated-looking — "as if Apple collaborated with the
 best UI design team." Enterprise-grade responsiveness at every inch.
