@@ -4,7 +4,7 @@
  * Dark-mode toggle (M8.1, V1 visuals). Class strategy: `.dark` on <html>,
  * persisted in localStorage, defaulting to the OS preference. An inline
  * <script> in the layout applies the stored choice before first paint
- * (no flash). No next-themes — the boot script + this toggle are the
+ * (no flash). No next-themes - the boot script + this toggle are the
  * whole mechanism; `useIsDark` lets other components (sonner) follow it.
  */
 
@@ -37,7 +37,7 @@ export function ThemeToggle() {
   }, []);
 
   if (dark === null) {
-    // Avoid a mismatched flash on hydration — same footprint, no icon.
+    // Avoid a mismatched flash on hydration - same footprint, no icon.
     return (
       <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
         <span className="h-4 w-4" />
@@ -69,5 +69,5 @@ export function ThemeToggle() {
   );
 }
 
-/** Runs before paint (inlined in layout) — never imported dynamically. */
+/** Runs before paint (inlined in layout) - never imported dynamically. */
 export const THEME_BOOT_SCRIPT = `(function(){try{var t=localStorage.getItem("${STORAGE_KEY}");var d=t? t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark");}catch(e){}})();`;

@@ -2,7 +2,7 @@
 
 /**
  * Issues panel (M8.5): open gate violations grouped by severity. Clicking
- * an issue opens its first implicated fact in the source viewer — resolve
+ * an issue opens its first implicated fact in the source viewer - resolve
  * by override there or through the review queue.
  */
 

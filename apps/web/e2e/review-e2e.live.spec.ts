@@ -1,10 +1,10 @@
 /**
- * M6.6 — the full review loop against the LIVE stack: seeded deal with a
+ * M6.6 - the full review loop against the LIVE stack: seeded deal with a
  * planted G1 disagreement → real reviewer signs in and resolves it through
  * the keyboard-first UI → facts finalized (accept + supersession) → gate
  * engine re-run comes back green → every mutation audited with the actor.
  *
- * Gated on RUN_LIVE_E2E=1 + live credentials in .env.local — never in CI.
+ * Gated on RUN_LIVE_E2E=1 + live credentials in .env.local - never in CI.
  * Everything seeded is removed in afterAll; the reviewer user is created
  * through GoTrue's admin API (so password sign-in works) and deleted after.
  */
@@ -43,7 +43,7 @@ const CLEANUP = `
   delete from public.deals where id = '${T.dealId}';
   delete from public.profiles where tenant_id = '${T.tenantId}';
   -- LAST among tenant-referencing rows: deleting facts above FIRES the
-  -- audit trigger, creating fresh audit_log rows — purging audit_log any
+  -- audit trigger, creating fresh audit_log rows - purging audit_log any
   -- earlier leaves those behind and the tenants delete hits the FK.
   delete from public.audit_log where tenant_id = '${T.tenantId}';
   delete from public.tenants where id = '${T.tenantId}';
@@ -120,7 +120,7 @@ test.describe("M6.6 review loop (live)", () => {
   });
 
   test.afterAll(async () => {
-    // Assert — a silently failing cleanup leaves rows that dup-break the
+    // Assert - a silently failing cleanup leaves rows that dup-break the
     // NEXT run's seed (exactly how the audit-trigger ordering bug surfaced).
     const cleaned = await runSql(CLEANUP);
     expect(cleaned.ok, JSON.stringify(cleaned.body)).toBe(true);
@@ -136,7 +136,7 @@ test.describe("M6.6 review loop (live)", () => {
     expect(g1?.blocking).toBe(true);
     expect(before.blockedFactIds.has(T.factTotal)).toBe(true);
 
-    // 2. The reviewer signs in — a real GoTrue session, no shortcuts.
+    // 2. The reviewer signs in - a real GoTrue session, no shortcuts.
     await page.goto("/login");
     await page.getByLabel("Email").fill(reviewerEmail);
     await page.getByLabel("Password").fill(reviewerPassword);
@@ -200,7 +200,7 @@ test.describe("M6.6 review loop (live)", () => {
     expect(after.issues.filter((i) => i.blocking)).toHaveLength(0);
     expect(after.blockedFactIds.size).toBe(0);
 
-    // 7. M7.7: each review mutation recomputed the spread in-request —
+    // 7. M7.7: each review mutation recomputed the spread in-request -
     //    engine-stamped metric rows exist (revenue_total = the corrected Σ).
     const metricsRes = await runSql(`
       select metric, value_cents::text as value_cents, engine_version

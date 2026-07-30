@@ -1,8 +1,8 @@
 /**
  * Notification center (M11.5, design 02 §2). Reads and state changes are
- * self-scoped (RLS: own rows only) — safe for every role including
+ * self-scoped (RLS: own rows only) - safe for every role including
  * viewer. Rows are BORN elsewhere: DB triggers (member_joined) and the
- * pipeline's service-role writer (document events) — there is no
+ * pipeline's service-role writer (document events) - there is no
  * client-reachable insert (B1 fix).
  */
 
@@ -17,7 +17,7 @@ export const notificationsRouter = router({
         .object({
           limit: z.number().int().min(1).max(100).default(30),
           /** ui-18: the notifications page shows the archive; "dismissed"
-           *  is the archive state (existing enum — no migration). */
+           *  is the archive state (existing enum - no migration). */
           view: z.enum(["inbox", "archived"]).default("inbox"),
         })
         .optional(),

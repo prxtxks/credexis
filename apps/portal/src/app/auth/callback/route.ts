@@ -9,7 +9,7 @@ import {
 } from "@/lib/claim";
 import { createClient } from "@/lib/supabase/server";
 
-/** Reads cookies and the query string — never a static route. */
+/** Reads cookies and the query string - never a static route. */
 export const dynamic = "force-dynamic";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;

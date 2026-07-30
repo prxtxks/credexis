@@ -3,7 +3,7 @@
  * serverless this bounds per-instance abuse, and a shared store slots in
  * behind the same interface when scale demands one.
  *
- * Duplicated from apps/web rather than imported — the portal is a separate
+ * Duplicated from apps/web rather than imported - the portal is a separate
  * deployment with no dependency on the staff app (design 05 §10.1). Design
  * 05 §4.5 moves this into @credexis/shared in PR 3; collapse then.
  */

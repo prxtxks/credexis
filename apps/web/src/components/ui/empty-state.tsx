@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Empty state (M11.1): icon tile + REAL heading + next action. The title
- * always renders as a heading element — several e2e specs assert empty
+ * always renders as a heading element - several e2e specs assert empty
  * states by heading role (e.g. /Queue clear/), so `as` defaults to h2 and
  * must stay a heading tag (X4 contract).
  */

@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * SettingsCard (ui-17, 02-VERCEL-DERIVATION §3.5) — the reference's
+ * SettingsCard (ui-17, 02-VERCEL-DERIVATION §3.5) - the reference's
  * settings workhorse: title, prose description, arbitrary content, and a
  * hairline-separated footer strip (hint left, action right). The danger
  * variant carries the red hairline + tinted footer.
  *
- * Replaces the Card + glass-card stack (card.tsx dies in this PR —
+ * Replaces the Card + glass-card stack (card.tsx dies in this PR -
  * plan 01 §4.1).
  */
 export function SettingsCard({
@@ -22,9 +22,9 @@ export function SettingsCard({
   title: string;
   description?: ReactNode;
   children?: ReactNode;
-  /** Left side of the footer strip — 13px muted, may contain links. */
+  /** Left side of the footer strip - 13px muted, may contain links. */
   footer?: ReactNode;
-  /** Right side of the footer strip — usually one small button. */
+  /** Right side of the footer strip - usually one small button. */
   footerAction?: ReactNode;
   variant?: "default" | "danger";
   className?: string;

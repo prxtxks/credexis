@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * Source viewer (M8.4 — the hero feature, Blueprint §8.2): the selected
+ * Source viewer (M8.4 - the hero feature, Blueprint §8.2): the selected
  * cell's PDF page rendered with its bounding box highlighted, full lineage,
  * override + revert, and the explicit addback action with a category
- * picker (V1 hardcoded "other" — fixed). Rendering is pdf.js on a canvas;
+ * picker (V1 hardcoded "other" - fixed). Rendering is pdf.js on a canvas;
  * the bbox overlay is a positioned div over normalized 0..1 coordinates.
  */
 
@@ -144,23 +144,23 @@ export function SourceViewer({
         <PdfPage url={d.document.signedUrl} page={d.document.pdfPage} bbox={d.bbox} />
       ) : (
         <div className="rounded border border-dashed border-border p-4 text-xs text-muted-foreground">
-          No source render — {d.method === "human" ? "human-entered value" : "no PDF lineage"}.
+          No source render - {d.method === "human" ? "human-entered value" : "no PDF lineage"}.
         </div>
       )}
 
       <dl className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
         <dt className="font-semibold">Document</dt>
-        <dd className="truncate">{d.document?.fileName ?? "—"}</dd>
+        <dd className="truncate">{d.document?.fileName ?? "-"}</dd>
         <dt className="font-semibold">Form</dt>
         <dd>
-          {d.document?.formFamily ?? "—"} {d.document?.taxYear ?? ""}
+          {d.document?.formFamily ?? "-"} {d.document?.taxYear ?? ""}
         </dd>
         <dt className="font-semibold">Page</dt>
-        <dd>{d.document?.pdfPage ?? "—"}</dd>
+        <dd>{d.document?.pdfPage ?? "-"}</dd>
         <dt className="font-semibold">Method</dt>
         <dd>{d.method}</dd>
         <dt className="font-semibold">Confidence</dt>
-        <dd>{d.confidence ?? "—"}</dd>
+        <dd>{d.confidence ?? "-"}</dd>
         <dt className="font-semibold">Status</dt>
         <dd>{d.status}</dd>
       </dl>

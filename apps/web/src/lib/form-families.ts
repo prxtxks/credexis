@@ -1,7 +1,7 @@
 /**
  * Assignable form-family vocabulary (M6.5): the Stage-S families plus its
  * explicit UNKNOWN sentinel. Lives in lib/ because both the server-side
- * assignment logic and the client picker render it — the client only ever
+ * assignment logic and the client picker render it - the client only ever
  * displays and selects labels, it computes nothing (Iron Law #3).
  */
 

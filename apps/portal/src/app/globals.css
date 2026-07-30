@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 /* ============================================================
-   Credexis borrower portal — minimal design tokens.
+   Credexis borrower portal - minimal design tokens.
 
    A deliberately small subset of the staff app's system: the brand
    values match apps/web so a borrower recognises the lender's tool,
    but nothing here is imported from apps/web (separate deployment,
-   design 05 §10.1) and no metric/DSCR/severity colours exist — the
+   design 05 §10.1) and no metric/DSCR/severity colours exist - the
    portal has nothing to colour by risk.
 
    Dark mode follows the OS. There is no theme toggle and therefore

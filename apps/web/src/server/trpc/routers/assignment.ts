@@ -86,7 +86,7 @@ export const assignmentRouter = router({
 });
 
 /**
- * M11.6: identity matches for the assignment screen — the printed name,
+ * M11.6: identity matches for the assignment screen - the printed name,
  * its deterministic score, and the suggested entity, keyed by logical
  * document. Deciding (confirm/reject) is underwriter-tier; RLS enforces
  * the same floor.

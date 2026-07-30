@@ -1,5 +1,5 @@
 /**
- * Recompute mapping logic (M7.7): DB rows ⇄ engine shapes. Pure — no I/O,
+ * Recompute mapping logic (M7.7): DB rows ⇄ engine shapes. Pure - no I/O,
  * no arithmetic (the engine computes; this file only reshapes). The
  * recompute orchestrator binds these to Supabase.
  */
@@ -27,7 +27,7 @@ export type ScenarioMapping =
 
 /**
  * A loan scenario row → engine scenario. Rate resolution inputs (current
- * prime, policy cap) live in the scenario's structure jsonb — explicit,
+ * prime, policy cap) live in the scenario's structure jsonb - explicit,
  * human-entered, versioned with the scenario (Iron Law #8: never a code
  * constant).
  */

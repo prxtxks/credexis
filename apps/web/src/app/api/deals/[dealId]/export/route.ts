@@ -1,5 +1,5 @@
 /**
- * Banker workbook download (M10.1): GET → .xlsx. Runs AS THE CALLER —
+ * Banker workbook download (M10.1): GET → .xlsx. Runs AS THE CALLER -
  * RLS scopes every read; export is also an audit-worthy event and the
  * assembled data comes from the same sources the workspace renders.
  */

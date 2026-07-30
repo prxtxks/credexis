@@ -5,7 +5,7 @@
  * Why the split: `export const dynamic` is route-segment config and is
  * IGNORED inside a "use client" module, so a fully-client page silently gets
  * prerendered at build time. For a per-user authenticated dashboard that is
- * wrong twice over — it bakes an anonymous shell into the build output, and
+ * wrong twice over - it bakes an anonymous shell into the build output, and
  * in production that shell stuck permanently on the route-level loading
  * fallback ("Loading your deals…") while /costs rendered fine.
  */

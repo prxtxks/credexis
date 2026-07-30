@@ -1,7 +1,7 @@
 /**
- * M4.8 — Tax Spread tab against the LIVE stack: registry-keyed rows render
+ * M4.8 - Tax Spread tab against the LIVE stack: registry-keyed rows render
  * from seeded tax-form facts, including a REGISTRY-ONLY fact (null
- * taxonomy — the derived-AGI case the old NOT NULL silently dropped), and
+ * taxonomy - the derived-AGI case the old NOT NULL silently dropped), and
  * an agreeing IRS transcript fact badges the cell.
  *
  * The seed INSERT itself exercises migration 0009 against the live DB: a
@@ -17,7 +17,7 @@ import { expect, test } from "@playwright/test";
 import { adminCreateUser, adminDeleteUser, live, runSql } from "./support/live-env";
 
 const T = {
-  // The REAL seeded pack (M2.6) — never deleted by this spec.
+  // The REAL seeded pack (M2.6) - never deleted by this spec.
   packId: "00000000-0000-4000-9000-000000000001",
   tenantId: "00000000-0000-4000-c000-00000000010a",
   dealId: "00000000-0000-4000-c000-0000000001da",
@@ -45,7 +45,7 @@ const CLEANUP = `
 `;
 
 /**
- * 1040 FY2023: line 9 ($100k) − line 10 ($5k) = line 11 AGI ($95k) — the
+ * 1040 FY2023: line 9 ($100k) − line 10 ($5k) = line 11 AGI ($95k) - the
  * registry relation holds, so the seed adds no G4 noise. AGI additionally
  * gets an AGREEING transcript fact → the ✓IRS badge.
  */
@@ -115,7 +115,7 @@ test.describe("M4.8 Tax Spread tab (live)", () => {
     await expect(page.getByRole("gridcell", { name: "$5,000.00" })).toBeVisible();
 
     // The derived line (registry-only fact, null taxonomy) renders with its
-    // chip — this row simply did not exist before M4.8.
+    // chip - this row simply did not exist before M4.8.
     await expect(page.getByText("Adjusted gross income")).toBeVisible();
     await expect(page.getByText("derived", { exact: true })).toBeVisible();
 

@@ -1,5 +1,5 @@
 /**
- * Security headers (M12.3 GAP list — "CSP/security headers").
+ * Security headers (M12.3 GAP list - "CSP/security headers").
  *
  * script-src is HOST-based (see the note in buildCsp): a nonce cannot be
  * stamped onto statically prerendered HTML, and `strict-dynamic` without a
@@ -28,7 +28,7 @@ export function buildCsp(isDev: boolean): string {
   const img = ["'self'", "blob:", "data:", supabase].filter(Boolean).join(" ");
 
   // WHY NOT nonce + strict-dynamic (it broke production, 2026-07-29):
-  // `strict-dynamic` makes browsers IGNORE the `'self'` allowlist — only
+  // `strict-dynamic` makes browsers IGNORE the `'self'` allowlist - only
   // nonced scripts may run. Next.js can only stamp a per-request nonce onto
   // pages it renders per request; our pages are statically prerendered at
   // build time, so the shipped HTML carried 24 script tags and zero nonces.
@@ -39,7 +39,7 @@ export function buildCsp(isDev: boolean): string {
   // So script-src is host-based. That still blocks the main third-party
   // injection vector (loading script from another origin) while allowing
   // Next's own same-origin chunks and its inline hydration bootstrap.
-  // Upgrading to nonces requires forcing dynamic rendering app-wide — a real
+  // Upgrading to nonces requires forcing dynamic rendering app-wide - a real
   // cost for a real gain, and a deliberate decision, not a silent default.
   const scriptSrc = isDev
     ? // Dev only: HMR/react-refresh evaluate generated code. Never in prod.
@@ -53,7 +53,7 @@ export function buildCsp(isDev: boolean): string {
     // <style> blocks are inline. Inline STYLE is a far smaller risk surface
     // than inline script, and nonce-ing every one is not workable today.
     "style-src 'self' 'unsafe-inline'",
-    "font-src 'self'", // Geist is self-hosted via next/font — no external CDN.
+    "font-src 'self'", // Geist is self-hosted via next/font - no external CDN.
     `img-src ${img}`,
     `connect-src ${connect}`,
     "object-src 'none'",

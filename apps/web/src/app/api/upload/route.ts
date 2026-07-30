@@ -3,9 +3,9 @@
  * addressed, tenant-prefixed) → documents row → pipeline trigger.
  *
  * Runs AS THE CALLER: the RLS-scoped client enforces tenant prefix and
- * role on the storage write and the row insert (Iron Law #7 — no service
+ * role on the storage write and the row insert (Iron Law #7 - no service
  * key anywhere near this path). Dedupe is the DB's unique(deal_id, sha256)
- * — re-uploading identical bytes returns 409 with the existing document.
+ * - re-uploading identical bytes returns 409 with the existing document.
  */
 
 import { NextResponse, type NextRequest } from "next/server";
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // M12.1 per-deal quota (borrower-portal prerequisite): count + total
   // bytes against tenants.settings.limits (defaults in @credexis/shared).
   // This is the friendly wall; migration 0021's BEFORE INSERT trigger on
-  // documents is the backstop no caller — including the worker — can skip.
+  // documents is the backstop no caller - including the worker - can skip.
   const [{ data: tenantRow }, { data: existing }] = await Promise.all([
     supabase.from("tenants").select("settings").eq("id", tenantId).single(),
     supabase.from("documents").select("bytes").eq("deal_id", dealId),
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (storageErr && !/already exists|duplicate/i.test(storageErr.message)) {
     return NextResponse.json({ error: `storage: ${storageErr.message}` }, { status: 502 });
   }
-  // True only when THIS request created the object — the "already exists"
+  // True only when THIS request created the object - the "already exists"
   // branch above means the bytes belong to an earlier (possibly another
   // deal's) row, so cleanup below must not touch them.
   const objectCreatedHere = !storageErr;
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (objectCreatedHere) {
       await supabase.storage.from(DEAL_DOCUMENTS_BUCKET).remove([objectKey]);
     }
-    // The quota backstop raises a plain exception — surface it as the same
+    // The quota backstop raises a plain exception - surface it as the same
     // 429 the pre-check returns, not a confusing 502.
     const quotaHit = /deal (document|storage) limit reached/i.test(insertErr.message);
     return NextResponse.json({ error: insertErr.message }, { status: quotaHit ? 429 : 502 });
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // non-2xx, so a worker-only transition would leave the board frozen in
   // exactly the environments where nothing else reveals it.
   //
-  // Monotonic by construction — the WHERE clause only matches 'intake', so a
+  // Monotonic by construction - the WHERE clause only matches 'intake', so a
   // concurrent upload cannot drag a deal already in review backwards, and a
   // re-upload is a no-op. Best-effort: a deal whose status did not move is a
   // cosmetic problem, never a reason to fail an accepted document.

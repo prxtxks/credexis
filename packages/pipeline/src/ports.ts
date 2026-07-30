@@ -84,10 +84,10 @@ export interface ScanResult {
 
 /**
  * Virus-scan seam. Wired to StructuralScanner (scan/structural.ts) since
- * M12.1 — deterministic magic-byte + PDF active-content validation, the
+ * M12.1 - deterministic magic-byte + PDF active-content validation, the
  * engine recorded with every verdict. A signature engine (ClamAV sidecar)
  * can replace it behind this same port. `mimeType` is the DECLARED type
- * from the documents row — the scanner's job includes proving the bytes
+ * from the documents row - the scanner's job includes proving the bytes
  * match it.
  */
 export interface VirusScanner {

@@ -10,10 +10,10 @@ import {
 /**
  * This parser is the LAST gate between the database and a borrower's screen.
  * Everything the portal renders comes through it, so its job is not
- * convenience — it is containment. These tests attack it as the leak it would
+ * convenience - it is containment. These tests attack it as the leak it would
  * be if it were permissive.
  */
-describe("parsePortalState — containment", () => {
+describe("parsePortalState - containment", () => {
   const valid = {
     inviteId: "inv-1",
     label: "Sunrise Motel Acquisition",
@@ -32,7 +32,7 @@ describe("parsePortalState — containment", () => {
     expect(invites[0]?.label).toBe("Sunrise Motel Acquisition");
   });
 
-  it("STRIPS unknown keys — a future definer field cannot leak by being added", () => {
+  it("STRIPS unknown keys - a future definer field cannot leak by being added", () => {
     // The whole containment argument: adding a column to the definer must not
     // be enough to put it on a borrower's screen.
     const leaky = {
@@ -61,7 +61,7 @@ describe("parsePortalState — containment", () => {
     }
   });
 
-  it("coerces an INTERNAL deal status to a curated one — never renders the raw value", () => {
+  it("coerces an INTERNAL deal status to a curated one - never renders the raw value", () => {
     // deals.status values must never reach a borrower. If one ever does, the
     // borrower sees a safe curated string rather than our pipeline vocabulary.
     for (const internal of ["intake", "parsing", "review", "complete_", "PARSING", ""]) {
@@ -101,7 +101,7 @@ describe("parsePortalState — containment", () => {
     }
   });
 
-  it("accepts both a bare object and an array — two deals, same borrower", () => {
+  it("accepts both a bare object and an array - two deals, same borrower", () => {
     const two = parsePortalState([valid, { ...valid, inviteId: "inv-2" }]);
     expect(two.invites.map((i) => i.inviteId)).toEqual(["inv-1", "inv-2"]);
     expect(parsePortalState(valid).invites).toHaveLength(1);

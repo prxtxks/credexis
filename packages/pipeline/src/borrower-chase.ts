@@ -1,7 +1,7 @@
 /**
- * Borrower chasing (M12.1 — design 05 §10.5): PURE selection logic.
+ * Borrower chasing (M12.1 - design 05 §10.5): PURE selection logic.
  *
- * Every function here is total and takes plain data — no Supabase client, no
+ * Every function here is total and takes plain data - no Supabase client, no
  * network, no clock of its own (`now` is always injected). The Trigger.dev
  * binding in `trigger/chase-borrowers.ts` queries, calls these, and acts. That
  * split is the point: a once-a-day job that emails real borrowers must be
@@ -14,7 +14,7 @@
  *    is swept, never chased: its link is already dead, so mailing it would
  *    send the borrower somewhere they cannot get in.
  *  - Only a CLAIMED (`active`) invite is chased. The raw invite token is never
- *    stored — only its sha256 (design §3.3) — so no worker can rebuild a
+ *    stored - only its sha256 (design §3.3) - so no worker can rebuild a
  *    working `/claim?token=` link for a `pending` one. Re-inviting mints a
  *    fresh token and is a broker action in `/deals/[dealId]/borrower`.
  *  - Item satisfaction is computed ONLY over the invite's OWN uploads
@@ -26,7 +26,7 @@ export const LIVE_INVITE_STATUSES = ["pending", "active"] as const;
 
 const MS_PER_DAY = 86_400_000;
 
-/* ── cadence (tenants.settings, never a literal — Advisory 5) ─────────── */
+/* ── cadence (tenants.settings, never a literal - Advisory 5) ─────────── */
 
 export interface ChaseCadence {
   /** Days after the invite was minted before its single reminder falls due. */
@@ -37,7 +37,7 @@ export interface ChaseCadence {
    * Why a grace window exists at all: `expired` is TERMINAL (the 0026 guard
    * refuses any transition out of it), while `borrowerInvites.extend` only
    * bumps `expires_at`. Sweeping the instant an invite lapses would therefore
-   * silently destroy the broker's Extend button — the exact action they reach
+   * silently destroy the broker's Extend button - the exact action they reach
    * for when a borrower goes quiet. But the sweep cannot simply be dropped:
    * `borrower_invites_live_uq` is partial on ('pending','active'), so a stale
    * live row BLOCKS re-inviting that borrower on that deal.
@@ -56,7 +56,7 @@ export const CHASE_CADENCE_DEFAULTS: ChaseCadence = {
 
 /**
  * An invite lives at most 60 days (design §4.2), so a cadence beyond that
- * could never fire — a silent "chasing off" switch wearing a number's
+ * could never fire - a silent "chasing off" switch wearing a number's
  * clothes. Out-of-range values are therefore malformed, not honoured.
  */
 const MAX_REMINDER_AFTER_DAYS = 60;
@@ -89,7 +89,7 @@ function objectAt(source: unknown, key: string): Record<string, unknown> {
  * absent → default, NEVER off. A corrupt settings blob must not silently stop
  * a lender chasing their borrowers.
  *
- * Unlike the limits parser this one has NO SQL mirror — cadence is read by
+ * Unlike the limits parser this one has NO SQL mirror - cadence is read by
  * this worker alone, so there is no "change both places" rule attached to it.
  */
 export function resolveChaseCadence(settings: unknown): ChaseCadence {
@@ -120,7 +120,7 @@ export interface ChaseInvite {
   id: string;
   tenantId: string;
   dealId: string;
-  /** The address the token was bound to at mint time — never a caller input. */
+  /** The address the token was bound to at mint time - never a caller input. */
   email: string;
   /** Snapshot label; the portal and its emails never show `deals.name`. */
   displayLabel: string;
@@ -134,7 +134,7 @@ export interface ChaseInvite {
 }
 
 /**
- * A validated `requested_items` entry — the parsed view of the schema's
+ * A validated `requested_items` entry - the parsed view of the schema's
  * `RequestedItem`, kept separate because jsonb from a broker-editable column
  * is untrusted input, not a typed row.
  */
@@ -225,7 +225,7 @@ export function parseRequestedItems(value: unknown): RequestedItemSnapshot[] {
  * Items NOT satisfied by this invite's own uploads.
  *
  * An item with no form families can never be ticked by an upload, so it stays
- * outstanding — acceptable because the blast radius of a wrong answer is one
+ * outstanding - acceptable because the blast radius of a wrong answer is one
  * email in the invite's entire lifetime.
  */
 export function unsatisfiedItems(
@@ -273,7 +273,7 @@ export function selectChaseActions(input: SelectChaseInput): ChaseSelection {
       continue;
     }
     if (expiresAt <= nowMs) {
-      // Lapsed, but only stamped terminal once the grace window closes — see
+      // Lapsed, but only stamped terminal once the grace window closes - see
       // `expireGraceDays`. Until then the row stays live so Extend still works;
       // it is already unusable to the borrower, because every access path
       // re-checks `expires_at > now()` on each statement.
@@ -287,7 +287,7 @@ export function selectChaseActions(input: SelectChaseInput): ChaseSelection {
       continue;
     }
 
-    // Only a claimed invite can be chased — see the header note on tokens.
+    // Only a claimed invite can be chased - see the header note on tokens.
     if (invite.status !== "active") continue;
     if (invite.lastRemindedAt !== null) continue;
     if (invite.portalStatus === "complete") continue;
@@ -333,7 +333,7 @@ export function selectChaseActions(input: SelectChaseInput): ChaseSelection {
  * `uploadedFormFamilies` maps invite id → the `form_family` values of THAT
  * invite's own uploads; a missing entry means "this invite has uploaded
  * nothing". The caller must therefore abort rather than pass a partial map
- * when its query failed — an empty map makes every checklist look untouched
+ * when its query failed - an empty map makes every checklist look untouched
  * and would mail borrowers who already sent everything, burning the one
  * reminder they get.
  */

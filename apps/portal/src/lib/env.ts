@@ -17,7 +17,7 @@ export function supabaseEnv(): { url: string; anonKey: string } | null {
  * Deliberately NOT derived from the Host header: Supabase mails the value we
  * pass, so an attacker-controlled Host would put their origin into an email
  * a real borrower receives. A missing/invalid value returns null and the
- * caller declines to send — a link that lands on the staff app would sign the
+ * caller declines to send - a link that lands on the staff app would sign the
  * borrower into a workspace where they are a profile-less nobody.
  */
 export function portalOrigin(): string | null {

@@ -1,5 +1,5 @@
 /**
- * Storage layout (M2.4) — the single place object keys are built.
+ * Storage layout (M2.4) - the single place object keys are built.
  *
  * Bucket `deal-documents` is private; RLS on storage.objects keys on the
  * FIRST path segment being the caller's tenant id, so every key built here

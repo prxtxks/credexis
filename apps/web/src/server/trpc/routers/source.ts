@@ -1,8 +1,8 @@
 /**
- * Source viewer API (M8.4 — the hero feature): a selected cell's full
+ * Source viewer API (M8.4 - the hero feature): a selected cell's full
  * lineage (document, page, bbox, method, confidence, supersession chain)
  * plus a short-TTL signed URL for the PDF render. Overrides supersede
- * accepted facts (never mutate — Iron Law #5); revert restores the
+ * accepted facts (never mutate - Iron Law #5); revert restores the
  * original and rejects the override. Every mutation recomputes.
  */
 
@@ -83,7 +83,7 @@ export const sourceRouter = router({
       };
     }),
 
-  /** Override an accepted (or suggested) cell — supersession, never mutation. */
+  /** Override an accepted (or suggested) cell - supersession, never mutation. */
   override: underwriterProcedure
     .input(
       z.object({
@@ -137,7 +137,7 @@ export const sourceRouter = router({
           .eq("id", inserted.id as string);
         throw new TRPCError({
           code: "CONFLICT",
-          message: patchErr?.message ?? "fact changed under you — override discarded",
+          message: patchErr?.message ?? "fact changed under you - override discarded",
         });
       }
 

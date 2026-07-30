@@ -1,10 +1,10 @@
 /**
  * Banker workbook export (M10.1, Blueprint §8.2): Spread · Addbacks ·
- * Global CF · Pro-Forma · Assumptions tabs via exceljs — a real workbook,
+ * Global CF · Pro-Forma · Assumptions tabs via exceljs - a real workbook,
  * not V1's mislabeled CSV.
  *
  * Money boundary: Excel cells are IEEE doubles, so this is the ONE place
- * integer cents become decimal numbers — via string slicing (never
+ * integer cents become decimal numbers - via string slicing (never
  * division), formatted "#,##0.00". The Assumptions tab states that
  * Credexis holds the authoritative integer-cent values.
  */
@@ -119,7 +119,7 @@ export function buildWorkbook(data: ExportData): Workbook {
   for (const a of data.addbacks) {
     const r = addbacks.addRow([
       a.category.replaceAll("_", " "),
-      a.periodLabel ?? "—",
+      a.periodLabel ?? "-",
       a.state,
       centsToExcelNumber(a.amountCents),
       a.note ?? "",

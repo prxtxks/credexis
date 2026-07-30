@@ -1,22 +1,22 @@
 /**
- * StructuralScanner (M12.1) — the first real engine behind the VirusScanner
+ * StructuralScanner (M12.1) - the first real engine behind the VirusScanner
  * port (ports.ts), closing the GAP-list item "AV verdict enforced BEFORE
  * extraction". Deterministic, zero-dependency, and runs entirely in the
  * worker: tax documents contain PII, so third-party AV APIs (VirusTotal
- * et al.) are OFF the table — anything that leaves our infrastructure
+ * et al.) are OFF the table - anything that leaves our infrastructure
  * violates the ZDR posture.
  *
  * What it proves: the bytes ARE the format the uploader declared (magic
  * bytes), and PDFs carry none of the classic active-content attack vectors
  * (encryption that hides content from review, embedded JavaScript, launch
  * actions, embedded files). What it does NOT prove: absence of known
- * malware signatures — a ClamAV sidecar can replace this engine behind the
+ * malware signatures - a ClamAV sidecar can replace this engine behind the
  * same port when pilots demand it (tracked in MASTER_TASK_LIST M12). The
  * engine name is recorded with every verdict so the audit trail shows
  * exactly what cleared each file.
  *
  * Verdict semantics: "infected" here means "not safe to process as
- * claimed" — the detail string always says precisely why.
+ * claimed" - the detail string always says precisely why.
  */
 
 import { inflateSync } from "node:zlib";
@@ -51,12 +51,12 @@ const MAGIC: Record<string, { name: string; prefixes: number[][] }> = {
  * PDF tokens that mean active or hidden content. A legitimate tax form has
  * no business carrying any of them.
  *
- * Matching is evasion-aware (adversarial review, 2026-07-29 — both bypasses
+ * Matching is evasion-aware (adversarial review, 2026-07-29 - both bypasses
  * below were reproduced against real PDFs before this hardening):
  * - PDF name objects may hex-escape any character (`/J#61vaScript` ≡
  *   `/JavaScript`, PDF 32000-1 §7.3.5), so bytes are normalized first.
  * - PDF 1.5 OBJECT STREAMS (`/Type /ObjStm`) hold ordinary dictionary
- *   objects — including `/OpenAction` and JS action dicts — Flate-
+ *   objects - including `/OpenAction` and JS action dicts - Flate-
  *   compressed, and every reader decompresses and runs them. One
  *   `qpdf --object-streams=generate` hid a working `app.alert` from the
  *   first version of this scanner. Object streams are therefore inflated
@@ -65,7 +65,7 @@ const MAGIC: Record<string, { name: string; prefixes: number[][] }> = {
  *   it would reject documents that merely print the word.
  */
 const PDF_FORBIDDEN: { token: string; why: string }[] = [
-  { token: "/Encrypt", why: "encrypted PDF — content cannot be reviewed" },
+  { token: "/Encrypt", why: "encrypted PDF - content cannot be reviewed" },
   { token: "/JavaScript", why: "embedded JavaScript action" },
   { token: "/JS", why: "embedded JavaScript action" },
   { token: "/Launch", why: "launch action (executes external content)" },
@@ -110,7 +110,7 @@ function normalizeNameEscapes(bytes: Uint8Array): Uint8Array {
  * Inflate every object stream in the file and return the decompressed
  * payloads. Object streams are located by their `/ObjStm` dictionary and
  * inflated from the following `stream` keyword; a stream that fails to
- * inflate is skipped (a scanner must not crash on a malformed file — the
+ * inflate is skipped (a scanner must not crash on a malformed file - the
  * PDF parser downstream will reject it).
  */
 function objectStreamPayloads(bytes: Uint8Array): Uint8Array[] {
@@ -150,7 +150,7 @@ function objectStreamPayloads(bytes: Uint8Array): Uint8Array[] {
     try {
       out.push(new Uint8Array(inflateSync(Buffer.from(bytes.subarray(s)))));
     } catch {
-      // Not Flate, truncated, or otherwise unreadable — skip.
+      // Not Flate, truncated, or otherwise unreadable - skip.
     }
   }
   return out;
@@ -208,7 +208,7 @@ export class StructuralScanner implements VirusScanner {
 
       if (mimeType === "application/pdf") {
         // Scan the raw file AND every inflated object stream, each with
-        // hex escapes decoded — the two evasions the review reproduced.
+        // hex escapes decoded - the two evasions the review reproduced.
         const surfaces = [bytes, ...objectStreamPayloads(bytes)].map(normalizeNameEscapes);
         for (const { token, why } of PDF_FORBIDDEN) {
           for (const surface of surfaces) {

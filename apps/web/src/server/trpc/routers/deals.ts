@@ -150,7 +150,7 @@ export const dealsRouter = router({
     }),
 
   /**
-   * m8-10: the explicit human transition on the pipeline board — notably
+   * m8-10: the explicit human transition on the pipeline board - notably
    * review → complete, which no automation can decide.
    *
    * Deliberately NOT monotonic, unlike the pipeline writer

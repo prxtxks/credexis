@@ -52,7 +52,7 @@ const DATA: ExportData = {
 };
 
 describe("centsToExcelNumber", () => {
-  it("converts by string slicing — no arithmetic on money", () => {
+  it("converts by string slicing - no arithmetic on money", () => {
     expect(centsToExcelNumber("123456")).toBe(1234.56);
     expect(centsToExcelNumber("-50")).toBe(-0.5);
     expect(centsToExcelNumber("7")).toBe(0.07);

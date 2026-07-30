@@ -6,13 +6,13 @@
  *
  * REAL today: in-app password change (supabase.auth.updateUser), password
  * reset email, sign-out-everywhere (signOut scope:'others'), and the audit
- * CSV export (pages through audit.list — admin-gated by the same policy as
+ * CSV export (pages through audit.list - admin-gated by the same policy as
  * the viewer).
  *
  * UI-first (honest, disabled): TOTP enrollment (step 13) and org-wide 2FA
  * enforcement (Tier 3). A per-device session list is deliberately NOT
  * offered: it needs the auth admin API, which Iron Law #7 bars from a
- * request path — we say so rather than fake a device list.
+ * request path - we say so rather than fake a device list.
  */
 
 import { useState } from "react";
@@ -81,7 +81,7 @@ export default function SettingsSecurityPage() {
     else toast.success("Signed out on every other device");
   }
 
-  /** Page through audit.list and download a CSV — client string work only. */
+  /** Page through audit.list and download a CSV - client string work only. */
   async function exportAuditCsv() {
     setExporting(true);
     try {
@@ -105,7 +105,7 @@ export default function SettingsSecurityPage() {
       URL.revokeObjectURL(url);
       toast.success(`Exported ${rows.length - 1} audit rows`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Export failed — audit access is admin-gated");
+      toast.error(e instanceof Error ? e.message : "Export failed - audit access is admin-gated");
     } finally {
       setExporting(false);
     }
@@ -173,7 +173,7 @@ export default function SettingsSecurityPage() {
 
           <SettingsCard
             title="Sessions"
-            description="Signing out everywhere invalidates every session except this one on its next request. A per-device list is not offered — it would need the auth admin API in a request path, which our security rules forbid."
+            description="Signing out everywhere invalidates every session except this one on its next request. A per-device list is not offered - it would need the auth admin API in a request path, which our security rules forbid."
             footerAction={
               <Button
                 size="sm"
@@ -214,7 +214,7 @@ export default function SettingsSecurityPage() {
 
           <SettingsCard
             title="Export audit log"
-            description="Download your organization's activity as CSV — every recorded change with actor, action, and row. Reading the audit trail is admin-gated."
+            description="Download your organization's activity as CSV - every recorded change with actor, action, and row. Reading the audit trail is admin-gated."
             footer="Exports the most recent 1,000 rows; the full trail lives in the Audit log page."
             footerAction={
               <Button
@@ -234,7 +234,7 @@ export default function SettingsSecurityPage() {
           <SettingsCard
             title="Data retention"
             description="How long completed deals keep their documents."
-            footer="A contract term, not a config default — the retention window (decision D6) must be written down before this becomes editable, because it collides with the append-only audit log."
+            footer="A contract term, not a config default - the retention window (decision D6) must be written down before this becomes editable, because it collides with the append-only audit log."
           >
             <div className="text-muted-foreground text-sm">
               Documents and facts are retained indefinitely today; nothing is auto-deleted.

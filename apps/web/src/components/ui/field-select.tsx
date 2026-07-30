@@ -4,7 +4,7 @@
  * FieldSelect (ui-8, design language §3): the ONE way to render a dropdown
  * field. Wraps the shadcn/Radix Select so call sites stay as small as the
  * native <select> they replace: options in, value out. The menu is a
- * surface-2 overlay (opaque bg-popover, hairline, shadow) — the "zero
+ * surface-2 overlay (opaque bg-popover, hairline, shadow) - the "zero
  * styling" native dropdowns are retired everywhere.
  *
  * Radix forbids empty-string item values, so `value=""` (common for

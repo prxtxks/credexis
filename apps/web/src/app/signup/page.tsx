@@ -2,7 +2,7 @@
 
 /**
  * Signup (M11.2): email/password account creation. On success, the session
- * exists but no profile does — /welcome owns org bootstrap (design 01
+ * exists but no profile does - /welcome owns org bootstrap (design 01
  * §4.1). Supabase may require email confirmation depending on project
  * settings; both paths are handled.
  */
@@ -90,7 +90,7 @@ export default function SignupPage() {
                   Create your account
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Lenders, broker firms, and independent brokers — your workspace is next.
+                  Lenders, broker firms, and independent brokers - your workspace is next.
                 </p>
               </div>
 

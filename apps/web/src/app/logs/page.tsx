@@ -2,10 +2,10 @@
 
 /**
  * Logs (ui-18, 02-VERCEL-DERIVATION §4): the org-wide pipeline run log,
- * derived from the reference's Logs page — toolbar filters over a dense
+ * derived from the reference's Logs page - toolbar filters over a dense
  * table, honest empty state. Data is REAL (`extraction_runs` via
  * pipeline.runs, RLS-scoped). Live tail is staged until a streaming
- * backend exists — the button says so.
+ * backend exists - the button says so.
  */
 
 import { useState } from "react";
@@ -43,7 +43,7 @@ export default function LogsPage() {
   const utils = trpc.useUtils();
   const runs = trpc.pipeline.runs.useQuery({ limit: 100 });
 
-  // Stage options come from the data itself — the pipeline's stage strings
+  // Stage options come from the data itself - the pipeline's stage strings
   // are its own vocabulary; hardcoding a list here would drift.
   const stages = [...new Set((runs.data ?? []).map((r) => r.stage))].sort();
   const rows = (runs.data ?? []).filter(
@@ -57,7 +57,7 @@ export default function LogsPage() {
           <div>
             <h1 className="text-title">Logs</h1>
             <p className="text-muted-foreground mt-1 text-sm">
-              Every pipeline run across the workspace — stage, outcome, pages, and spend.
+              Every pipeline run across the workspace - stage, outcome, pages, and spend.
             </p>
           </div>
           <div className="flex gap-2">
@@ -137,7 +137,7 @@ export default function LogsPage() {
                       </span>
                       <p className="mt-3 text-[15px] font-semibold">No runs match</p>
                       <p className="text-muted-foreground mt-1 max-w-sm text-[13px]">
-                        Pipeline runs appear here as documents are processed — upload to a deal to
+                        Pipeline runs appear here as documents are processed - upload to a deal to
                         start one.
                       </p>
                     </div>
@@ -164,12 +164,12 @@ export default function LogsPage() {
                       {r.status}
                       {r.error ? (
                         <span className="text-muted-foreground ml-1.5 font-normal" title={r.error}>
-                          — {r.error.slice(0, 40)}
+                          - {r.error.slice(0, 40)}
                           {r.error.length > 40 ? "…" : ""}
                         </span>
                       ) : null}
                     </td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">{r.pages ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums">{r.pages ?? "-"}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">
                       {formatMicroUsd(r.costMicroUsd)}
                     </td>

@@ -2,7 +2,7 @@
  * Per-page text extraction from uploaded bytes (unpdf = pdf.js text layer).
  * Native PDFs yield real text; scanned pages yield empty strings and fall
  * through to the LLM classifier (and, once thumbnail rendering lands, to
- * vision). This module extracts what the file already contains — it never
+ * vision). This module extracts what the file already contains - it never
  * synthesizes content (Iron Law #1 applies downstream).
  */
 
@@ -22,7 +22,7 @@ export async function extractPdfText(bytes: Uint8Array): Promise<PdfText> {
 
 /**
  * Slice a page range [pageStart..pageEnd] (1-based, inclusive) into a new
- * PDF (M3.4 finding): adapters read ONLY the logical document's pages —
+ * PDF (M3.4 finding): adapters read ONLY the logical document's pages -
  * Azure stops hallucinating 1099s from cover letters, every vendor bills
  * fewer pages, and recall rises because the signal isn't buried in a
  * 50-page bundle. Falls back to the original bytes on any slice failure

@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Loan scenario inspector (M8.6): structured inputs — amount, rate spec
+ * Loan scenario inspector (M8.6): structured inputs - amount, rate spec
  * (fixed / prime+spread with the current prime as an explicit input), term,
- * use of proceeds, equity injection, replacement salary — for multiple
+ * use of proceeds, equity injection, replacement salary - for multiple
  * scenarios. Saving recomputes server-side; the metrics strip and policy
  * chips re-render from fresh engine output (never client math).
  */

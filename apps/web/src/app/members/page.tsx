@@ -74,8 +74,8 @@ export default function MembersPage() {
       refresh();
       toast.success(
         r.emailSent
-          ? "Invite created and emailed — the link below also works"
-          : "Invite created — copy the link below and send it",
+          ? "Invite created and emailed - the link below also works"
+          : "Invite created - copy the link below and send it",
       );
     },
     onError: (e) => toast.error(e.message),
@@ -121,7 +121,7 @@ export default function MembersPage() {
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
         <h1 className="text-title">Members</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Manage this workspace&apos;s members and invitations — originators originate, underwriters
+          Manage this workspace&apos;s members and invitations - originators originate, underwriters
           decide.
         </p>
 

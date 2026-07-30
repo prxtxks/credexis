@@ -1,6 +1,6 @@
 /**
  * Tax Spread assembly (M8.3 tax tab, ADR-0002 follow-up): registry-keyed
- * pivot — including registry-only facts (derived lines with no taxonomy
+ * pivot - including registry-only facts (derived lines with no taxonomy
  * placement, e.g. 1040 AGI), which the statement spread can never show.
  */
 
@@ -27,7 +27,7 @@ const META: RegistryRowMeta[] = [
     formFamily: "1040",
     lineNumber: "11",
     label: "Adjusted gross income",
-    taxonomyNodeKey: null, // derived line — registry-only
+    taxonomyNodeKey: null, // derived line - registry-only
   },
 ];
 

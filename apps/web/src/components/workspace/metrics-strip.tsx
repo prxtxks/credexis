@@ -2,7 +2,7 @@
 
 /**
  * Persistent metrics strip (M8.2, Blueprint §8.2): CFADS · Debt Service ·
- * DSCR business/global · engine version — always visible under the three
+ * DSCR business/global · engine version - always visible under the three
  * zones. Values arrive pre-computed as strings (Iron Law #3: the client
  * renders, never computes; formatting is string work in money-display).
  * Policy compliance chips join in M8.6.
@@ -22,7 +22,7 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
     <div className="flex min-w-28 flex-col border-r border-border/40 px-4 py-1.5">
       <span className="text-[10px] uppercase tracking-wider text-muted-foreground/80">{label}</span>
       {/* Money/ratios are the protagonist (design language §2): Geist
-          tabular figures, semibold — never mono-terminal, never muted. */}
+          tabular figures, semibold - never mono-terminal, never muted. */}
       <span className={`text-[15px] font-semibold tabular-nums ${accent ? "text-primary" : ""}`}>
         {value}
       </span>
@@ -41,7 +41,7 @@ function PolicyChips({ dealId, scenarioId }: { dealId: string; scenarioId: strin
     <div className="flex items-center gap-1" aria-label="policy compliance">
       {!p.certifiable && (
         <Badge className="rounded-full border-0 bg-computed px-2 text-[10px] font-semibold text-white">
-          DRAFT PACK — advisory only
+          DRAFT PACK - advisory only
         </Badge>
       )}
       {p.rules.map((r) => (
@@ -97,7 +97,7 @@ export function MetricsStrip({
     const m = rows.find(
       (r) => r.metric === metric && (r.periodLabel === period || r.periodLabel === null),
     );
-    return m?.valueCents != null ? formatCents(m.valueCents) : "—";
+    return m?.valueCents != null ? formatCents(m.valueCents) : "-";
   };
   const ratioOf = (metric: string) => {
     const m = rows.find(
@@ -105,7 +105,7 @@ export function MetricsStrip({
     );
     return m?.ratioMantissa != null && m.ratioScale != null
       ? formatRatio(m.ratioMantissa, m.ratioScale)
-      : "—";
+      : "-";
   };
 
   const engineVersion = rows[0]?.engineVersion;

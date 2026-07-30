@@ -212,7 +212,7 @@ describe("runIngest", () => {
     expect(split.model).toBe("claude-haiku-4-5");
   });
 
-  it("stores unresolved spans as UNKNOWN for the review queue — never guesses", async () => {
+  it("stores unresolved spans as UNKNOWN for the review queue - never guesses", async () => {
     const { db, deps, payload } = await setup({
       pageTexts: ["no printed signals here"],
       classifier: null,
@@ -303,7 +303,7 @@ describe("assertStoragePathPinned", () => {
     ).toThrow(/traversal/);
   });
 
-  it("refuses a leaf that is not the row's own digest — no substituted bytes", () => {
+  it("refuses a leaf that is not the row's own digest - no substituted bytes", () => {
     expect(() =>
       assertStoragePathPinned(
         row({ storagePath: `ten-1/deals/deal-1/borrower-uploads/inv-1/${"b".repeat(64)}.pdf` }),

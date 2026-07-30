@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * A metadata pill — bordered, rounded-full, 11px, optional leading glyph.
+ * A metadata pill - bordered, rounded-full, 11px, optional leading glyph.
  *
  * This is the texture that separates a finished product from a wireframe.
  * Vercel's project rows carry their metadata in exactly these: `Preview`,
  * `#148`, a deploy hash with a status dot. We had the same information as
- * dot-separated grey text, which reads as a draft — the pill gives each fact
+ * dot-separated grey text, which reads as a draft - the pill gives each fact
  * an edge, so the eye can count them without reading them.
  *
  * Deliberately NOT a Badge: Badge is a status word (`Admin`, `deactivated`)

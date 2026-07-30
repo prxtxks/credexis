@@ -16,15 +16,15 @@ function isPublic(pathname: string): boolean {
 /**
  * Route guard + session refresh (M2.3). Every request: refresh the Supabase
  * session cookies, then gate non-public routes on a verified user
- * (`getUser()` revalidates the JWT against the auth server — never trust the
+ * (`getUser()` revalidates the JWT against the auth server - never trust the
  * cookie alone). Errors (e.g. auth server unreachable) are treated as
  * signed-out, never as signed-in.
  */
 export async function middleware(request: NextRequest) {
-  // M12.3 security headers. Defined FIRST so every exit below — including
-  // the rate-limit rejection — carries them.
+  // M12.3 security headers. Defined FIRST so every exit below - including
+  // the rate-limit rejection - carries them.
   const csp = buildCsp(process.env.NODE_ENV === "development");
-  /** Every return path carries the same headers — no route ships unprotected. */
+  /** Every return path carries the same headers - no route ships unprotected. */
   const secured = (res: NextResponse): NextResponse => {
     res.headers.set("Content-Security-Policy", csp);
     for (const [k, v] of Object.entries(STATIC_SECURITY_HEADERS)) res.headers.set(k, v);

@@ -1,11 +1,11 @@
 /**
  * Recompute orchestration (M7.7): load the deal's finalized inputs, run the
  * ONE engine (Iron Law #3), replace computed_metrics. Called after every
- * fact/addback/scenario mutation, always as the caller — RLS scopes every
+ * fact/addback/scenario mutation, always as the caller - RLS scopes every
  * read and write, and the engine runs in-process (exit-gate budget: the
  * whole round trip stays well under 2s).
  *
- * This module does I/O and reshaping ONLY — zero arithmetic. All math is
+ * This module does I/O and reshaping ONLY - zero arithmetic. All math is
  * in @credexis/engine (the client-math CI grep enforces the same for the
  * rest of apps/web).
  */

@@ -2,13 +2,13 @@
  * Audit log reads (m12-3-audit-viewer, plan 01 §5 step 4).
  *
  * Two queries and no mutation, by construction: `audit_log` is append-only
- * at the database — 0004_audit-writer.sql revokes insert/update/delete from
+ * at the database - 0004_audit-writer.sql revokes insert/update/delete from
  * `authenticated`, and rows are born only inside the `audit_record()`
- * trigger — so there is nothing for a write procedure here to do.
+ * trigger - so there is nothing for a write procedure here to do.
  *
  * Both are `adminProcedure`, matching migration 0032: audit_log_select now
  * requires admin tier, because the audit log was previously READABLE BY
- * VIEWERS while the invites table it records requires tier 3 — invitee
+ * VIEWERS while the invites table it records requires tier 3 - invitee
  * emails, granted roles and token hashes leaked through audit rows. RLS is
  * still the boundary; the procedure tier exists so a viewer gets an honest
  * FORBIDDEN instead of an empty table that looks like "no activity".
@@ -19,7 +19,7 @@
  * `verify_audit_chain()` is SECURITY INVOKER, so it can only verify rows the
  * caller could already read. A role gate here would be a second, silently
  * drifting copy of a policy that already exists. Narrowing WHO may read
- * (Pratik decision D4) is a policy change — plan §5 step 17.
+ * (Pratik decision D4) is a policy change - plan §5 step 17.
  */
 
 import { TRPCError } from "@trpc/server";
@@ -55,7 +55,7 @@ export const auditRouter = router({
    *
    * Keyset, never offset. `id` is bigserial and strictly increasing, so
    * `id < cursor` walks a stable window backwards. Offset paging would
-   * reshuffle every page each time a new row lands mid-scroll — and on an
+   * reshuffle every page each time a new row lands mid-scroll - and on an
    * append-only table that a live pipeline writes to, that is constantly.
    */
   list: adminProcedure
@@ -78,7 +78,7 @@ export const auditRouter = router({
         .from("audit_log")
         .select(AUDIT_COLUMNS)
         .order("id", { ascending: false })
-        // One extra row is the cheapest "is there a next page?" — a count
+        // One extra row is the cheapest "is there a next page?" - a count
         // would make every page a second full scan of a growing table.
         .limit(input.limit + 1);
 
@@ -106,7 +106,7 @@ export const auditRouter = router({
           action: r.action,
           tableName: r.table_name,
           rowId: r.row_id,
-          /** Raw JSON text exactly as Postgres stored it — see AUDIT_COLUMNS. */
+          /** Raw JSON text exactly as Postgres stored it - see AUDIT_COLUMNS. */
           before: r.before,
           after: r.after,
           prevHash: r.prev_hash,

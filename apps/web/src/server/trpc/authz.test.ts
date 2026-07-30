@@ -1,5 +1,5 @@
 /**
- * Server-side role enforcement tests (M2.3). Contexts are fabricated — these
+ * Server-side role enforcement tests (M2.3). Contexts are fabricated - these
  * prove the middleware chain (signed-in → tenant-assigned → role) rejects
  * every insufficient tier with the right TRPC error code, independent of the
  * database.
@@ -95,7 +95,7 @@ describe("appRouter surface", () => {
   });
 });
 
-describe("review router (M6.3) — role gating", () => {
+describe("review router (M6.3) - role gating", () => {
   const review = (state: Parameters<typeof ctxFor>[0]) =>
     appRouter.createCaller(ctxFor(state)).review;
 

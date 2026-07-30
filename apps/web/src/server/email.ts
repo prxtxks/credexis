@@ -1,7 +1,7 @@
 /**
  * Server-side email wiring (M11.7). The shared transport is env-gated:
  * without RESEND_API_KEY every send is a visible no-op, so all call sites
- * are live and tested before the key exists. Email is ADVISORY — in-app
+ * are live and tested before the key exists. Email is ADVISORY - in-app
  * notifications and one-time links keep working when it is down.
  */
 

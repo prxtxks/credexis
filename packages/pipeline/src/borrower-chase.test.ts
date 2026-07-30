@@ -135,7 +135,7 @@ describe("unsatisfiedItems", () => {
   });
 });
 
-describe("selectChaseActions — reminders", () => {
+describe("selectChaseActions - reminders", () => {
   it("selects a claimed, live, un-reminded invite past the cadence day", () => {
     const s = select([invite()]);
     expect(s.dueForReminder.map((c) => c.invite.id)).toEqual(["inv-1"]);
@@ -144,7 +144,7 @@ describe("selectChaseActions — reminders", () => {
     expect(s.problems).toEqual([]);
   });
 
-  it("sends EXACTLY ONE reminder ever — last_reminded_at is the record", () => {
+  it("sends EXACTLY ONE reminder ever - last_reminded_at is the record", () => {
     expect(select([invite({ lastRemindedAt: at(T0 - DAY) })]).dueForReminder).toEqual([]);
   });
 
@@ -167,7 +167,7 @@ describe("selectChaseActions — reminders", () => {
     ).toHaveLength(1);
   });
 
-  it("never chases an unclaimed invite — the raw claim token is not stored", () => {
+  it("never chases an unclaimed invite - the raw claim token is not stored", () => {
     const pending = invite({ status: "pending" });
     const s = select([pending]);
     expect(s.dueForReminder).toEqual([]);
@@ -202,7 +202,7 @@ describe("selectChaseActions — reminders", () => {
   });
 });
 
-describe("selectChaseActions — expiry sweep", () => {
+describe("selectChaseActions - expiry sweep", () => {
   it("sweeps both pending and claimed invites once the grace window closes", () => {
     const s = select([
       invite({ id: "pending-gone", status: "pending", expiresAt: at(T0 - 15 * DAY) }),
@@ -219,7 +219,7 @@ describe("selectChaseActions — expiry sweep", () => {
   it("GRACE: a just-lapsed invite is NOT swept, so Extend still works", () => {
     // `expired` is terminal (0026 guard) while extend only bumps expires_at,
     // so sweeping on the day it lapses would silently delete the broker's
-    // Extend button — the exact action they reach for when a borrower goes
+    // Extend button - the exact action they reach for when a borrower goes
     // quiet. The borrower still cannot use it: every access path re-checks
     // expires_at > now() per statement.
     for (const days of [0, 1, 13]) {
@@ -231,7 +231,7 @@ describe("selectChaseActions — expiry sweep", () => {
     expect(select([invite({ expiresAt: at(T0 - 14 * DAY) })]).toExpire).toHaveLength(1);
   });
 
-  it("expiring and chasing are disjoint — a dead link is never mailed", () => {
+  it("expiring and chasing are disjoint - a dead link is never mailed", () => {
     // Otherwise the borrower gets a reminder pointing at a portal they can no
     // longer enter.
     const s = select([invite({ expiresAt: at(T0 - 1) })]);
@@ -245,7 +245,7 @@ describe("selectChaseActions — expiry sweep", () => {
   });
 });
 
-describe("selectChaseActions — problems are surfaced, never swallowed", () => {
+describe("selectChaseActions - problems are surfaced, never swallowed", () => {
   it("reports unreadable timestamps and acts on neither", () => {
     const s = select([
       invite({ id: "bad-expiry", expiresAt: "not a date" }),
@@ -294,7 +294,7 @@ describe("remindersFor", () => {
     expect(remindersFor(candidates, new Map([["inv-1", ["1065", "1040"]]]))).toEqual([]);
   });
 
-  it("counts only THIS invite's uploads (Advisory 3 — no deal-composition oracle)", () => {
+  it("counts only THIS invite's uploads (Advisory 3 - no deal-composition oracle)", () => {
     // A co-guarantor's or the org's upload of the same family must not tick
     // this borrower's box.
     const reminders = remindersFor(candidates, new Map([["inv-2", ["1120", "1040"]]]));

@@ -1,7 +1,7 @@
 /**
  * Vendor API pricing → integer micro-USD (M3.2 cost discipline: every
  * external call is recorded; money is never a float). Prices are per
- * million tokens as published on the vendor price list — update the date
+ * million tokens as published on the vendor price list - update the date
  * when updating a rate. Unknown models cost 0 and flag themselves in
  * metadata rather than inventing a rate.
  */
@@ -19,7 +19,7 @@ const ANTHROPIC_PER_MTOK_USD: Record<string, { input: number; output: number }> 
 
 /**
  * Integer micro-USD: rate is dollars per 1e6 tokens, so
- * micro-USD = tokens × rate — exact integer arithmetic, no floats needed
+ * micro-USD = tokens × rate - exact integer arithmetic, no floats needed
  * beyond the (integer-valued) published rates.
  */
 export function anthropicCostMicroUsd(model: string, usage: TokenUsage): bigint {

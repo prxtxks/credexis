@@ -1,10 +1,10 @@
 /**
  * Spread assembly (M8.3): pivot facts into taxonomy rows × period columns.
- * Pure reshaping — no arithmetic (Iron Law #3); the engine's computed rows
+ * Pure reshaping - no arithmetic (Iron Law #3); the engine's computed rows
  * arrive separately from computed_metrics.
  *
  * Cell selection: the best ACCEPTED fact per (node, period) by method
- * authority; if none, the best SUGGESTED fact (rendered as pending —
+ * authority; if none, the best SUGGESTED fact (rendered as pending -
  * the review queue owns it). Rejected/overridden rows never show.
  */
 
@@ -38,7 +38,7 @@ export interface SpreadCell {
   sourceLogicalDocumentId: string | null;
   /**
    * M9.4: an IRS transcript fact AND a parsed fact agree on this cell's
-   * value — the strongest trust signal a cell can carry. Disagreement is
+   * value - the strongest trust signal a cell can carry. Disagreement is
    * G5's critical tamper issue, never a silent badge downgrade.
    */
   verifiedByTranscript: boolean;
@@ -136,7 +136,7 @@ export function assembleSpread(
   return { periods: sortedPeriods, rows };
 }
 
-/** Normalization the taxonomy mapper uses — renames must match it. */
+/** Normalization the taxonomy mapper uses - renames must match it. */
 export function normalizeLabel(label: string): string {
   return label.toLowerCase().replace(/\s+/g, " ").trim();
 }

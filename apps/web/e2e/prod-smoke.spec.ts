@@ -1,12 +1,12 @@
 /**
- * Production-build smoke — the gate for the 2026-07-29 outage.
+ * Production-build smoke - the gate for the 2026-07-29 outage.
  *
  * Every other browser gate in CI drives `next dev`. Dev renders every route
  * dynamically and ships a relaxed CSP, so it is structurally blind to the two
  * defects that reached production that day:
  *
  *   1. A route-level Suspense fallback (`app/loading.tsx`) that resolved in
- *      dev but never in the production build — the app painted a full-viewport
+ *      dev but never in the production build - the app painted a full-viewport
  *      "Loading your deals…" forever. The root cause is upstream of the
  *      fallback: `export const dynamic` is route-segment config and is IGNORED
  *      inside a "use client" module, so the per-user dashboard was statically
@@ -16,12 +16,12 @@
  *      carries no nonce, so all 24 script tags were blocked and nothing
  *      hydrated.
  *
- * Both are invisible to `next build` exiting 0 — they are render-time, not
+ * Both are invisible to `next build` exiting 0 - they are render-time, not
  * compile-time. So this spec runs ONLY against `next start` over a real
  * `next build` (see playwright.config.ts, E2E_PROD=1) and asserts the app
  * RENDERS.
  *
- * Signed-out surface only — CI has no Supabase project (dummy env; the
+ * Signed-out surface only - CI has no Supabase project (dummy env; the
  * middleware fails closed, same as smoke.spec.ts). That is sufficient: the
  * prerendered HTML for /login is a CSR bailout (`useSearchParams`), so the
  * sign-in form exists in the DOM only if the client bundle downloaded, parsed
@@ -35,7 +35,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 const DEAL_ID = "00000000-0000-4000-a000-000000000001";
 
-/** Signed-out visits must land on a rendered login page — never on a spinner. */
+/** Signed-out visits must land on a rendered login page - never on a spinner. */
 const PROTECTED_ROUTES = ["/", "/costs", "/settings", `/deals/${DEAL_ID}/workspace`];
 
 /**
@@ -53,7 +53,7 @@ type FailureProbe = {
 /**
  * Collects everything a broken production render shows up as: console errors
  * (CSP refusals, 404s, React hydration errors), uncaught exceptions, and the
- * `securitypolicyviolation` DOM event — the event is kept because it is the
+ * `securitypolicyviolation` DOM event - the event is kept because it is the
  * only signal that names the directive that did the blocking.
  *
  * Must be installed before the first navigation: `addInitScript` runs at
@@ -90,10 +90,10 @@ async function watchForFailures(page: Page): Promise<FailureProbe> {
 /**
  * The outage's signature: a Suspense fallback that paints and never resolves.
  * Asserting the absence of the fallback is what a screenshot-free gate can see
- * — pair it with a positive assertion that the real content is present.
+ * - pair it with a positive assertion that the real content is present.
  */
 async function expectNoStuckFallback(page: Page): Promise<void> {
-  // ui-17: spinners became skeletons; the marker moved with them (plan 01 §3.2 —
+  // ui-17: spinners became skeletons; the marker moved with them (plan 01 §3.2 -
   // the detector is retargeted in the same PR that removes its old target).
   await expect(page.locator('[data-slot="page-skeleton"]')).toHaveCount(0);
   await expect(page.locator(".grid-loader")).toHaveCount(0);
@@ -113,10 +113,10 @@ test("login page renders, hydrates and is interactive in a production build", as
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
   await expectNoStuckFallback(page);
 
-  // Next's app bootstrap sets window.next as its first act — a direct read of
+  // Next's app bootstrap sets window.next as its first act - a direct read of
   // "the framework's own chunk executed", independent of our markup.
   const bootstrapped = await page.evaluate(() => "next" in window);
-  expect(bootstrapped, "Next's client bundle never executed — scripts blocked?").toBe(true);
+  expect(bootstrapped, "Next's client bundle never executed - scripts blocked?").toBe(true);
 
   // Interactivity, not just paint: the theme toggle renders an unlabelled
   // placeholder until an effect runs, and only flips <html class="dark"> if
@@ -127,7 +127,7 @@ test("login page renders, hydrates and is interactive in a production build", as
   await toggle.click();
   await expect
     .poll(() => page.evaluate(() => document.documentElement.classList.contains("dark")), {
-      message: "theme toggle did not react — the page painted but never hydrated",
+      message: "theme toggle did not react - the page painted but never hydrated",
     })
     .toBe(!darkBefore);
 
@@ -177,7 +177,7 @@ test("production responses carry the security headers", async ({ request }) => {
   // Doubles as a guard that this suite is pointed at a PRODUCTION server:
   // 'unsafe-eval' appears only in the dev CSP (HMR), and the prod-only
   // upgrade-insecure-requests only outside dev.
-  expect(csp, "this is the dev CSP — the gate is testing the wrong server").not.toContain(
+  expect(csp, "this is the dev CSP - the gate is testing the wrong server").not.toContain(
     "unsafe-eval",
   );
   expect(csp).toContain("upgrade-insecure-requests");
@@ -202,11 +202,11 @@ test("the authenticated dashboard is not prerendered into a static shell", async
   // The root cause of the frozen fallback, caught at its source: `/` is a
   // per-user authenticated dashboard. If it appears here, `export const
   // dynamic = "force-dynamic"` was ignored (route-segment config does nothing
-  // inside a "use client" module) and an anonymous shell — fallback and all —
+  // inside a "use client" module) and an anonymous shell - fallback and all -
   // was baked into the build output.
   expect(
     Object.keys(manifest.routes),
-    '/ was statically prerendered — the dashboard needs a SERVER wrapper for "force-dynamic" to apply',
+    '/ was statically prerendered - the dashboard needs a SERVER wrapper for "force-dynamic" to apply',
   ).not.toContain("/");
   expect(
     existsSync(join(nextDir, "server", "app", "page.html")),

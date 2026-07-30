@@ -1,6 +1,6 @@
 /**
  * Profile settings (M11.7). Self-scoped: `get` reads the caller's own row
- * (RLS), `update` goes through the update_own_profile() SECURITY DEFINER —
+ * (RLS), `update` goes through the update_own_profile() SECURITY DEFINER -
  * never a direct UPDATE, so full_name/email_notifications are the ONLY
  * columns a user can touch on their own row (role/status/tenant stay
  * admin-managed via profiles_update_manage).
@@ -29,7 +29,7 @@ export const profileRouter = router({
     };
   }),
 
-  // Self-scoped by construction (definer updates auth.uid() only) — listed
+  // Self-scoped by construction (definer updates auth.uid() only) - listed
   // in SELF_SCOPED_EXCEPTIONS of the mutation-tier guard.
   update: protectedProcedure
     .input(

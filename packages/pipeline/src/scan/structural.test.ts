@@ -38,7 +38,7 @@ describe("StructuralScanner", () => {
     }
   });
 
-  it("encrypted PDFs are rejected — content must be reviewable", async () => {
+  it("encrypted PDFs are rejected - content must be reviewable", async () => {
     const r = await scanPdf("trailer << /Encrypt 5 0 R >>");
     expect(r.status).toBe("infected");
     expect(r.detail).toContain("encrypted");
@@ -67,7 +67,7 @@ describe("StructuralScanner", () => {
   // shipped-clean against the first version of the scanner. ──
 
   it("EVASION: JavaScript hidden in a compressed object stream is caught", async () => {
-    // A /Type /ObjStm whose inflated payload carries the JS action dict —
+    // A /Type /ObjStm whose inflated payload carries the JS action dict -
     // exactly what `qpdf --object-streams=generate` produces. The raw file
     // bytes contain no /JS or /JavaScript at all.
     const payload = Buffer.from(
@@ -102,7 +102,7 @@ describe("StructuralScanner", () => {
     }
   });
 
-  it("page content streams are NOT scanned — printing the word is not an action", async () => {
+  it("page content streams are NOT scanned - printing the word is not an action", async () => {
     // A tax form that merely renders the text "JavaScript" must pass.
     const content = deflateSync(Buffer.from("BT (JavaScript /Launch) Tj ET"));
     const bytes = new Uint8Array(

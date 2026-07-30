@@ -3,7 +3,7 @@ import { MAX_SESSION_AGE_MS, decodeJwtClaims, sessionStartedAtMs } from "./sessi
 
 /**
  * The absolute session ceiling. The module's own header is honest that this is
- * an app-layer control rather than the real boundary — so these tests pin the
+ * an app-layer control rather than the real boundary - so these tests pin the
  * one property it genuinely owes: it must not be defeated by ordinary token
  * refresh, which is exactly how an "age" check silently becomes fiction.
  */
@@ -17,7 +17,7 @@ function token(claims: Record<string, unknown>): string {
 const HOUR = 3600_000;
 const nowS = 1_785_000_000; // fixed: no Date.now() in assertions
 
-describe("sessionStartedAtMs — refresh must not reset the clock", () => {
+describe("sessionStartedAtMs - refresh must not reset the clock", () => {
   it("THE POINT: a freshly re-stamped iat does not hide an old sign-in", () => {
     // Supabase re-stamps iat on every hourly refresh. If iat alone won, a
     // borrower could hold a session for weeks and the ceiling would never
@@ -38,7 +38,7 @@ describe("sessionStartedAtMs — refresh must not reset the clock", () => {
     expect(started).toBe(Date.parse(signedIn));
   });
 
-  it("the OLDEST signal wins — the conservative reading of an ambiguous set", () => {
+  it("the OLDEST signal wins - the conservative reading of an ambiguous set", () => {
     const oldest = (nowS - 30 * 3600) * 1000;
     const started = sessionStartedAtMs(
       token({ iat: nowS, amr: [{ method: "otp", timestamp: nowS - 5 * 3600 }] }),
@@ -55,7 +55,7 @@ describe("sessionStartedAtMs — refresh must not reset the clock", () => {
     expect(nowS * 1000 - (started as number)).toBeLessThan(MAX_SESSION_AGE_MS);
   });
 
-  it("returns null when NOTHING is readable — the caller must decide, not guess", () => {
+  it("returns null when NOTHING is readable - the caller must decide, not guess", () => {
     // Deliberately not 0 (which would read as "epoch, therefore ancient") and
     // not Date.now() (which would read as "brand new"). Either default would
     // be a security decision hidden in a parser.
@@ -101,7 +101,7 @@ describe("decodeJwtClaims", () => {
     expect(decodeJwtClaims(scalar)).toBeNull();
   });
 
-  it("does NOT verify — it only decodes", () => {
+  it("does NOT verify - it only decodes", () => {
     // Verification is getUser()'s job against the auth server. This module
     // reads timestamps out of a token already verified; a test asserting
     // otherwise would misrepresent where the trust boundary sits.

@@ -15,14 +15,14 @@ const EMAIL_MAX_LENGTH = 254;
  * (design 05 §3.3, step 3).
  *
  * NEUTRAL BY CONSTRUCTION. Unknown invite, wrong address, malformed input,
- * Supabase outage — every path ends on the same /claim?sent=1 screen with the
+ * Supabase outage - every path ends on the same /claim?sent=1 screen with the
  * same sentence. A branch that answered differently would turn this form into
  * an invite/email-existence oracle, and this page is reachable by anyone who
  * obtains a link.
  *
  * No database function is consulted here, so `anon` gains no privilege: this
  * is Supabase's own auth endpoint doing what it is for. The second factor is
- * control of the invited mailbox — claim_borrower_invite() refuses a session
+ * control of the invited mailbox - claim_borrower_invite() refuses a session
  * whose email is not the invitee's, so the link alone is worthless.
  */
 export async function startClaim(formData: FormData): Promise<void> {
@@ -48,7 +48,7 @@ async function sendMagicLink(email: string): Promise<void> {
     // Without our own origin Supabase would fall back to its project Site URL,
     // which is the STAFF app: the borrower would be signed into a workspace
     // where they are a profile-less nobody, and the invite would never claim.
-    console.error("portal: NEXT_PUBLIC_PORTAL_URL is not configured — magic link not sent");
+    console.error("portal: NEXT_PUBLIC_PORTAL_URL is not configured - magic link not sent");
     return;
   }
 
@@ -61,7 +61,7 @@ async function sendMagicLink(email: string): Promise<void> {
         emailRedirectTo: `${origin}/auth/callback`,
       },
     });
-    // supabase-js returns errors, it does not throw them — an unlogged error
+    // supabase-js returns errors, it does not throw them - an unlogged error
     // here is a borrower who never receives their link and a support ticket
     // with nothing behind it.
     if (error) console.error("portal: magic link send failed", error.message);

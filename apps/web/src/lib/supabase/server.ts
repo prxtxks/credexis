@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 /**
  * Server-side Supabase client bound to the request's cookies (anon key; the
- * caller's own JWT does the authorizing — Iron Law #7: no service-role key in
+ * caller's own JWT does the authorizing - Iron Law #7: no service-role key in
  * request paths).
  */
 export async function createClient() {
@@ -22,7 +22,7 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             }
           } catch {
-            // Called from a Server Component — middleware handles refresh.
+            // Called from a Server Component - middleware handles refresh.
           }
         },
       },

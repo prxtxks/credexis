@@ -4,7 +4,7 @@ import type { Context, UserRole } from "./context";
 
 /**
  * tRPC initialization + role-tiered procedures (M2.3). Roles are enforced
- * HERE, server-side, from the RLS-loaded profile — never from anything the
+ * HERE, server-side, from the RLS-loaded profile - never from anything the
  * client sends. superjson transformer carries bigint (cents) losslessly.
  */
 const t = initTRPC.context<Context>().create({ transformer: superjson });
@@ -13,7 +13,7 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 
 /**
- * Signed-in only — profile OPTIONAL (M11.2). For the org-bootstrap seam
+ * Signed-in only - profile OPTIONAL (M11.2). For the org-bootstrap seam
  * exclusively: a fresh signup has a session but no profile yet, and
  * `org.create` / `me.bootstrap` must work in that state. Everything else
  * stays on protectedProcedure or stricter.

@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * Sign out. Borrowers routinely open these links on shared or borrowed
  * devices, so leaving is a first-class action even though there is no
- * re-authentication form to come back through — the emailed link is the only
+ * re-authentication form to come back through - the emailed link is the only
  * way in (design 05 §10.2, screen 4).
  */
 export async function signOut(): Promise<void> {

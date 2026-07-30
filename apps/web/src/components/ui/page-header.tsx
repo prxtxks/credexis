@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Page header (M11.1): one consistent title block for non-workspace
- * surfaces — h1 + optional description + right-aligned actions. Keeps
+ * surfaces - h1 + optional description + right-aligned actions. Keeps
  * heading semantics stable for a11y and e2e.
  */
 export function PageHeader({

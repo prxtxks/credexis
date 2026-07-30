@@ -2,14 +2,14 @@
 
 /**
  * Deal Overview (ui-17-deal-scope, 02-VERCEL-DERIVATION §4): the deal's
- * front page, shaped like the reference's project overview — a state hero,
+ * front page, shaped like the reference's project overview - a state hero,
  * the checklist widget (completed rows fill + strike, exactly the
  * Production Checklist pattern), extraction and validation widgets, and
  * recent documents.
  *
  * Every number is server truth: deals.get/board, pipeline.costs,
  * issues.forDeal, documents.list. Checklist completion is set membership
- * over fetched rows (selection, not metric math — Iron Law #3).
+ * over fetched rows (selection, not metric math - Iron Law #3).
  */
 
 import Link from "next/link";
@@ -157,7 +157,7 @@ export default function DealOverviewPage() {
 
         {/* ── Widgets ── */}
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          {/* Checklist — the reference's Production Checklist pattern */}
+          {/* Checklist - the reference's Production Checklist pattern */}
           <section className="glass-card rounded-lg p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-heading">Document checklist</h2>
@@ -202,7 +202,7 @@ export default function DealOverviewPage() {
             </ul>
           </section>
 
-          {/* Extraction — real pipeline totals for this deal */}
+          {/* Extraction - real pipeline totals for this deal */}
           <section className="glass-card rounded-lg p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-heading">Extraction</h2>
@@ -248,12 +248,12 @@ export default function DealOverviewPage() {
               </dl>
             ) : (
               <p className="text-muted-foreground text-[13px]">
-                No extraction runs yet — upload documents and the pipeline totals land here.
+                No extraction runs yet - upload documents and the pipeline totals land here.
               </p>
             )}
           </section>
 
-          {/* Validation — open issues by gate */}
+          {/* Validation - open issues by gate */}
           <section className="glass-card rounded-lg p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-heading">Validation</h2>
@@ -272,7 +272,7 @@ export default function DealOverviewPage() {
               </div>
             ) : issuesByGate.size === 0 ? (
               <p className="text-muted-foreground text-[13px]">
-                No open gate violations — fields auto-accept when their gates pass.
+                No open gate violations - fields auto-accept when their gates pass.
               </p>
             ) : (
               <ul className="space-y-2 text-sm">

@@ -15,7 +15,7 @@ const qf = (id: string, p: Partial<QueueFact> = {}): QueueFact => ({
   ...p,
 });
 
-describe("orderQueue (M6.3) — severity first, then document order", () => {
+describe("orderQueue (M6.3) - severity first, then document order", () => {
   it("critical issues jump the queue; unimplicated facts go last", () => {
     const ordered = orderQueue(
       [qf("plain"), qf("tampered"), qf("broken-sum")],
@@ -55,7 +55,7 @@ describe("orderQueue (M6.3) — severity first, then document order", () => {
   });
 });
 
-describe("buildSupersession (Iron Law #5) — corrections never mutate", () => {
+describe("buildSupersession (Iron Law #5) - corrections never mutate", () => {
   const oldFact: SupersedableFact = {
     id: "old-1",
     tenant_id: "t1",

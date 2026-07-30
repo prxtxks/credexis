@@ -4,14 +4,14 @@
  * surfaced as a critical G5 tamper flag in the issues panel.
  *
  * Transcript facts are seeded directly (the ingest mapper is unit-tested;
- * no provider is configured yet — M9.1). Gated on RUN_LIVE_E2E=1.
+ * no provider is configured yet - M9.1). Gated on RUN_LIVE_E2E=1.
  */
 
 import { expect, test } from "@playwright/test";
 import { adminCreateUser, adminDeleteUser, live, runSql } from "./support/live-env";
 
 const T = {
-  packId: "00000000-0000-4000-9000-000000000001", // real seeded pack — never deleted
+  packId: "00000000-0000-4000-9000-000000000001", // real seeded pack - never deleted
   tenantId: "00000000-0000-4000-d000-00000000000a",
   dealId: "00000000-0000-4000-d000-0000000000da",
   entityId: "00000000-0000-4000-d000-0000000000ea",
@@ -102,7 +102,7 @@ test.describe("M9 transcript verification (live)", () => {
       timeout: 15_000,
     });
 
-    // The mismatched interest cell carries NO badge — G5 owns disagreements.
+    // The mismatched interest cell carries NO badge - G5 owns disagreements.
     await expect(page.getByRole("gridcell", { name: "$25,000.00", exact: true })).toBeVisible();
 
     // Run the engine + gates explicitly, then open the issues tab.

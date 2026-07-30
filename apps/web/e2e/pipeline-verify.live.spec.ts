@@ -1,20 +1,20 @@
 /**
  * M3.1 exit proof, live: a REAL document uploaded through the UI is
- * processed by the DEPLOYED Trigger.dev pipeline — status uploaded →
+ * processed by the DEPLOYED Trigger.dev pipeline - status uploaded →
  * processing → processed, logical_documents split/classified, one
  * extraction_run per stage. Point E2E_TARGET_URL at production to verify
  * the deployed stack end-to-end.
  *
  * Uses a consented real business return (25-page 1120-S). Gated on
  * RUN_LIVE_E2E=1; seeds and the reviewer are removed after; the storage
- * object is deleted through the storage API (service key — cleanup only).
+ * object is deleted through the storage API (service key - cleanup only).
  */
 
 import { expect, test } from "@playwright/test";
 import { adminCreateUser, adminDeleteUser, env, live, runSql } from "./support/live-env";
 
 const T = {
-  packId: "00000000-0000-4000-9000-000000000001", // real seeded pack — never deleted
+  packId: "00000000-0000-4000-9000-000000000001", // real seeded pack - never deleted
   tenantId: "00000000-0000-4000-e000-00000000000a",
   dealId: "00000000-0000-4000-e000-0000000000da",
   entityId: "00000000-0000-4000-e000-0000000000ea",
@@ -100,7 +100,7 @@ test.describe("M3.1 deployed pipeline (live)", () => {
     await page.locator('input[type="file"]').setInputFiles(PDF_PATH);
     await expect(page.getByText("✓ 2023.pdf")).toBeVisible({ timeout: 30_000 });
 
-    // The deployed worker takes it from here: poll the DB, not the UI —
+    // The deployed worker takes it from here: poll the DB, not the UI -
     // this proves the TASK ran, not that the page refreshed.
     await expect
       .poll(
@@ -112,7 +112,7 @@ test.describe("M3.1 deployed pipeline (live)", () => {
         },
         {
           message:
-            "document never reached 'processed' — is the PROD secret key in the web app env?",
+            "document never reached 'processed' - is the PROD secret key in the web app env?",
           timeout: 240_000,
           intervals: [5_000],
         },
@@ -135,7 +135,7 @@ test.describe("M3.1 deployed pipeline (live)", () => {
       where deal_id = '${T.dealId}' order by started_at;
     `);
     const runRows = runs.body as { stage: string; status: string; page_count: number | null }[];
-    // Extraction (M4.5) appends its own rows behind these — assert the
+    // Extraction (M4.5) appends its own rows behind these - assert the
     // ingest stages specifically, not the whole list.
     const ingestRuns = runRows.filter((r) => r.stage === "ingest" || r.stage === "split_classify");
     expect(ingestRuns.map((r) => [r.stage, r.status])).toEqual([
@@ -145,7 +145,7 @@ test.describe("M3.1 deployed pipeline (live)", () => {
     expect(ingestRuns[1]!.page_count).toBe(25);
 
     // Extraction stage (M4.5): facts landed from the real return, with
-    // registry lineage. Both vendor paths ran live — poll generously.
+    // registry lineage. Both vendor paths ran live - poll generously.
     await expect
       .poll(
         async () => {

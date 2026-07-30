@@ -4,7 +4,7 @@
  * Duplicated from apps/web rather than imported: the portal is a separate
  * deployment on a separate origin and must not depend on the staff app
  * (design 05 §10.1). Design 05 §4.5 moves this into @credexis/shared in
- * PR 3 — collapse the two copies then, not before.
+ * PR 3 - collapse the two copies then, not before.
  *
  * Connect/img origins derive from configured env, never hardcoded, so a
  * project swap cannot silently break the app or quietly widen the policy.
@@ -32,7 +32,7 @@ export function buildCsp(isDev: boolean): string {
 
   // WHY NOT nonce + strict-dynamic (it broke apps/web in production,
   // 2026-07-29): `strict-dynamic` makes browsers IGNORE the `'self'`
-  // allowlist — only nonced scripts may run. Next can only stamp a
+  // allowlist - only nonced scripts may run. Next can only stamp a
   // per-request nonce onto pages it renders per request; statically
   // prerendered HTML carries none, so every script is blocked, the server
   // HTML paints and nothing hydrates. Dev never shows it because dev renders
@@ -48,7 +48,7 @@ export function buildCsp(isDev: boolean): string {
     // React style props and Next's injected <style> blocks are inline.
     // Inline STYLE is a far smaller surface than inline script.
     "style-src 'self' 'unsafe-inline'",
-    "font-src 'self'", // Geist is self-hosted via next/font — no external CDN.
+    "font-src 'self'", // Geist is self-hosted via next/font - no external CDN.
     `img-src ${img}`,
     `connect-src ${connect}`,
     "object-src 'none'",

@@ -13,7 +13,7 @@ const s = (factId: string, category: AddbackSuggestion["category"]): AddbackSugg
 });
 
 describe("newSuggestions", () => {
-  it("keeps only pairs not already persisted — a rejection stays rejected", () => {
+  it("keeps only pairs not already persisted - a rejection stays rejected", () => {
     const result = newSuggestions(
       [s("f-1", "interest"), s("f-2", "officer_comp"), s("f-1", "one_time")],
       [

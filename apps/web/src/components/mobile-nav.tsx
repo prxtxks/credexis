@@ -18,7 +18,7 @@ export function MobileNav({ onFind }: { onFind: () => void }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  // Route change closes the sheet — navigating from inside it must not
+  // Route change closes the sheet - navigating from inside it must not
   // leave a full-screen scrim over the destination.
   useEffect(() => {
     setOpen(false);

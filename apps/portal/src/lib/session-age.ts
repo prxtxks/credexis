@@ -3,7 +3,7 @@
  *
  * The portal signs a borrower out beyond a fixed wall-clock age regardless of
  * refresh activity. R-2 is explicit that this is an app-layer control, not the
- * real boundary — a stolen refresh token can still talk to PostgREST/Storage
+ * real boundary - a stolen refresh token can still talk to PostgREST/Storage
  * directly, and what actually bounds it is the invite's expires_at plus the
  * per-statement status/revoked_at/expires_at re-check inside every definer.
  */
@@ -45,7 +45,7 @@ function seconds(value: unknown): number | null {
  * NOT `iat` alone: Supabase re-stamps `iat` on every hourly token refresh, so
  * an iat-only check never trips and the "12 hour" ceiling would be fiction.
  * `amr[].timestamp` (the authentication-method instant) and
- * `user.last_sign_in_at` survive refresh. The OLDEST available signal wins —
+ * `user.last_sign_in_at` survive refresh. The OLDEST available signal wins -
  * the conservative reading of an ambiguous set.
  */
 export function sessionStartedAtMs(

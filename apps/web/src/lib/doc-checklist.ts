@@ -1,8 +1,8 @@
 /**
- * Doc-completeness checklists per deal type (M8.7, Blueprint §8.2) —
+ * Doc-completeness checklists per deal type (M8.7, Blueprint §8.2) -
  * which form families an SBA 7(a) file needs before underwriting can
  * finish. Display data for the pipeline board; SOP thresholds stay in the
- * policy pack (Iron Law #8) — this is a workflow aid, not compliance.
+ * policy pack (Iron Law #8) - this is a workflow aid, not compliance.
  */
 
 export interface ChecklistItem {

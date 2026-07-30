@@ -1,7 +1,7 @@
 /**
  * Pipeline trigger seam (M3.1). The upload path calls this; the actual
  * Trigger.dev task lands in the pipeline package (PR B). Until the task is
- * deployed, uploads succeed and report `pipeline: {triggered: false}` —
+ * deployed, uploads succeed and report `pipeline: {triggered: false}` -
  * the document sits in `uploaded` status, and the ingest task can be
  * triggered retroactively for any pending document.
  */
@@ -31,7 +31,7 @@ export async function triggerIngest(payload: IngestPayload): Promise<TriggerResu
       body: JSON.stringify({ payload }),
     });
     if (!res.ok) {
-      // 404 until the task is deployed (needs TRIGGER_ACCESS_TOKEN) —
+      // 404 until the task is deployed (needs TRIGGER_ACCESS_TOKEN) -
       // uploads must not fail because the pipeline isn't live yet.
       return { triggered: false, reason: `trigger api ${res.status}` };
     }
