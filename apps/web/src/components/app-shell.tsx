@@ -1,155 +1,159 @@
 "use client";
 
 /**
- * App shell v2 (ui-7, design 03 §2 — Vercel/Linear-class): persistent
- * left sidebar (nav + collapse) and a slim top bar (breadcrumb slot,
- * bell, account menu) for every page-style surface. The deal
- * WORKSPACE deliberately keeps its own cockpit chrome (X4 e2e contracts
- * live there); this shell wraps everything else. Collapse state is a
- * cookie-free useState — persistence intentionally cut (verdict CUT:
- * user_prefs table is ceremony pre-pilot).
+ * App shell v3 (ui-17, 02-VERCEL-DERIVATION §3.1–3.3): fixed 250px sidebar
+ * (Find + grouped nav + identity footer with the bell), slim top bar
+ * (centered page title, page actions right), floating Find/menu pill on
+ * phones — the reference's chrome, in our tokens. The deal WORKSPACE keeps
+ * its own cockpit chrome (X4 e2e contracts live there); this shell wraps
+ * everything else.
+ *
+ * Deliberately absent, matching the reference: sidebar collapse (Vercel's
+ * rail is fixed-width), the gradient mesh (canvas is flat near-black; the
+ * mesh survives only on auth screens), and the mobile tab bar (retired by
+ * 02 §1.4 — the pill + sheet replace it).
  */
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Coins, PanelLeftClose, PanelLeftOpen, Settings, Users } from "lucide-react";
 import { AccountMenu } from "@/components/account-menu";
+import { FindDialog } from "@/components/find-dialog";
 import { Logo } from "@/components/logo";
+import { MobileNav } from "@/components/mobile-nav";
+import { NAV_MAIN, NAV_ORG, isActive, type NavItem } from "@/components/nav-config";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { cn } from "@/lib/utils";
 
-const NAV = [
-  { href: "/", label: "Deals", icon: Briefcase, exact: true },
-  { href: "/org/members", label: "Members", icon: Users, exact: false },
-  { href: "/costs", label: "Costs", icon: Coins, exact: false },
-  { href: "/settings", label: "Settings", icon: Settings, exact: false },
-];
+function NavRow({ item, pathname }: { item: NavItem; pathname: string }) {
+  const active = isActive(item, pathname);
+  return (
+    <Link
+      href={item.href}
+      title={item.label}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-colors duration-150",
+        active
+          ? "bg-sidebar-accent text-foreground"
+          : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+      )}
+    >
+      <item.icon aria-hidden="true" className="size-4 shrink-0" />
+      {item.label}
+    </Link>
+  );
+}
 
 export function AppShell({
   breadcrumb,
   actions,
   children,
 }: {
-  /** Top-bar context (e.g. deal name) — plain text, never a heading. */
+  /** Centered top-bar title (page or deal context) — plain text, never a heading. */
   breadcrumb?: string | undefined;
   actions?: ReactNode;
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(true);
+  const [findOpen, setFindOpen] = useState(false);
+
+  // F opens Find anywhere in the shell (the reference's kbd chip), unless
+  // the user is typing somewhere.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "f" && e.key !== "F") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      e.preventDefault();
+      setFindOpen(true);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <div className="flex min-h-screen">
+      <FindDialog open={findOpen} onOpenChange={setFindOpen} />
+
       {/* ── Sidebar ── */}
       <aside
         aria-label="primary navigation"
-        className={cn(
-          "sticky top-0 z-40 flex h-screen shrink-0 flex-col border-r border-border/60 bg-sidebar transition-[width] duration-250 ease-[cubic-bezier(0.16,1,0.3,1)] max-md:hidden",
-          open ? "w-56" : "w-14",
-        )}
+        className="sticky top-0 z-40 flex h-screen w-[250px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar max-md:hidden"
       >
-        <div
-          className={cn(
-            "flex h-14 items-center border-b border-border",
-            open ? "px-4" : "justify-center",
-          )}
-        >
-          {open ? <Logo size="sm" /> : <Logo size="sm" href="/" iconOnly />}
+        <div className="flex h-14 items-center px-4">
+          <Logo size="sm" />
         </div>
-        <nav className="flex-1 space-y-0.5 p-2">
-          {NAV.map(({ href, label, icon: Icon, exact }) => {
-            const active = exact ? pathname === href : pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                title={label}
-                className={cn(
-                  "relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors duration-150",
-                  active
-                    ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
-                  !open && "justify-center px-0",
-                )}
-              >
-                {/* Active indicator: a 2px accent bar, not more color fill. */}
-                {active ? (
-                  <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-primary" />
-                ) : null}
-                <Icon className="h-4 w-4 shrink-0" />
-                {open ? label : null}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="border-t border-border p-2">
+
+        <div className="px-3 pb-2">
           <button
-            aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
-            onClick={() => setOpen((o) => !o)}
-            className="flex w-full items-center justify-center rounded-lg py-2 text-muted-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-foreground"
+            type="button"
+            onClick={() => setFindOpen(true)}
+            className="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-transparent px-3 text-sm text-muted-foreground transition-colors duration-150 hover:bg-accent/50"
           >
-            {open ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+            <svg
+              aria-hidden="true"
+              className="size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            <span className="flex-1 text-left">Find</span>
+            <kbd className="rounded-md border border-border px-1.5 text-[11px]">F</kbd>
           </button>
+        </div>
+
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
+          {NAV_MAIN.map((item) => (
+            <NavRow key={item.href} item={item} pathname={pathname} />
+          ))}
+          <div className="my-2 border-t border-sidebar-border" />
+          {NAV_ORG.map((item) => (
+            <NavRow key={item.href} item={item} pathname={pathname} />
+          ))}
+        </nav>
+
+        {/* Identity footer — the reference anchors the person bottom-left,
+            with notifications beside them. */}
+        <div className="flex items-center gap-1.5 border-t border-sidebar-border p-3">
+          <AccountMenu variant="row" />
+          <NotificationsBell />
         </div>
       </aside>
 
       {/* ── Main column ── */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="frosted-toolbar sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 px-4">
-          {/* The brand mark is ALWAYS present on mobile — hiding it whenever a
-              breadcrumb existed meant the logo appeared on no real page at all.
-              Mark only (not the wordmark) so it costs 28px and the breadcrumb
-              still reads as the page title. */}
           <span className="md:hidden">
             <Logo size="sm" href="/" iconOnly />
           </span>
+          {/* Centered title, as the reference centers "Overview". Absolute so
+              left/right clusters don't shift it. */}
           {breadcrumb ? (
-            <span className="text-muted-foreground truncate text-sm max-md:text-[15px] max-md:font-semibold max-md:text-foreground">
+            <span className="pointer-events-none absolute inset-x-0 mx-auto w-fit max-w-[50%] truncate text-sm font-medium text-foreground max-md:static max-md:mx-0 max-md:max-w-none max-md:text-[15px] max-md:font-semibold">
               {breadcrumb}
             </span>
           ) : null}
           <div className="ml-auto flex items-center gap-2">
             {actions}
-            <NotificationsBell />
-            {/* Identity, theme and sign out now live behind one control
-                (ui-14-2). /login keeps its own ThemeToggle — it renders
-                outside this shell. */}
-            <AccountMenu />
+            <span className="md:hidden">
+              <NotificationsBell />
+            </span>
+            <span className="md:hidden">
+              <AccountMenu />
+            </span>
           </div>
         </header>
-        <div className="gradient-mesh min-w-0 flex-1 max-md:pb-20">{children}</div>
+        <div className="min-w-0 flex-1 max-md:pb-24">{children}</div>
       </div>
 
-      {/* ── Mobile bottom tabs (iOS pattern, M11.8) — phones only ── */}
-      <nav
-        aria-label="mobile navigation"
-        className="tab-bar fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around pb-[env(safe-area-inset-bottom)] md:hidden"
-      >
-        {NAV.map(({ href, label, icon: Icon, exact }) => {
-          const active = exact ? pathname === href : pathname.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex min-h-12 flex-1 flex-col items-center justify-center gap-1 pt-2 pb-1.5 text-[10px] font-medium transition-colors duration-150",
-                active ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              <Icon
-                className={cn(
-                  "h-[22px] w-[22px] transition-transform duration-150",
-                  active && "scale-105",
-                )}
-                strokeWidth={active ? 2.2 : 1.8}
-              />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
+      {/* ── Mobile: floating Find/menu pill + nav sheet ── */}
+      <MobileNav onFind={() => setFindOpen(true)} />
     </div>
   );
 }

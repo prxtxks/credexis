@@ -60,7 +60,7 @@ function initialsOf(fullName: string | null | undefined, email: string | undefin
   return (email ?? "").slice(0, 1).toUpperCase();
 }
 
-export function AccountMenu() {
+export function AccountMenu({ variant = "avatar" }: { variant?: "avatar" | "row" } = {}) {
   const dark = useIsDark();
   // Identity changes about once a year and the shell mounts this on every
   // route — a fresh fetch per navigation would be pure noise.
@@ -88,13 +88,34 @@ export function AccountMenu() {
           // The accessible name must not flip once the query lands, so the
           // loading state carries the generic label rather than a stand-in.
           aria-label={primary ? `Account — ${primary}` : "Account"}
-          className="flex size-9 items-center justify-center rounded-full border border-border bg-muted text-[11px] font-semibold tracking-wide text-foreground transition-colors duration-150 hover:bg-accent data-[state=open]:bg-accent"
+          className={
+            variant === "row"
+              ? // Sidebar identity footer (ui-17): the reference anchors the
+                // person bottom-left as a full row, not a corner avatar.
+                "flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-lg px-1.5 text-left transition-colors duration-150 hover:bg-sidebar-accent/60 data-[state=open]:bg-sidebar-accent"
+              : "flex size-9 items-center justify-center rounded-full border border-border bg-muted text-[11px] font-semibold tracking-wide text-foreground transition-colors duration-150 hover:bg-accent data-[state=open]:bg-accent"
+          }
         >
-          {mark}
+          {variant === "row" ? (
+            <>
+              <span
+                aria-hidden="true"
+                className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-[10px] font-semibold tracking-wide"
+              >
+                {mark}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
+                {primary ?? "…"}
+              </span>
+            </>
+          ) : (
+            mark
+          )}
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
-          align="end"
+          align={variant === "row" ? "start" : "end"}
+          side={variant === "row" ? "top" : "bottom"}
           sideOffset={8}
           className="w-64 rounded-xl border-border p-1.5 shadow-lg"
         >
