@@ -64,6 +64,7 @@ export const pipelineRouter = router({
         failedRuns: d.failedRuns,
         pages: d.pages,
         totalMicroUsd: d.totalMicroUsd.toString(),
+        envelopeMicroUsd: COST_ENVELOPE_MICRO_USD.toString(),
         overEnvelope: d.totalMicroUsd > COST_ENVELOPE_MICRO_USD,
         byStage: [...d.byStage.entries()].map(([stage, micro]) => ({
           stage,
