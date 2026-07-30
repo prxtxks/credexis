@@ -23,6 +23,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FieldSelect } from "@/components/ui/field-select";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
+import { Segmented } from "@/components/ui/segmented";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -318,33 +319,16 @@ export default function AuditClient() {
               <span>Clear filters</span>
             </Button>
           ) : null}
-          <div
-            role="group"
-            aria-label="Audit view"
-            className="border-border ml-auto flex h-8 items-center rounded-lg border p-0.5"
-          >
-            {(
-              [
-                { key: "feed", label: "Feed" },
-                { key: "table", label: "Table" },
-              ] as const
-            ).map((v) => (
-              <button
-                key={v.key}
-                type="button"
-                aria-pressed={view === v.key}
-                onClick={() => setView(v.key)}
-                className={cn(
-                  "h-full rounded-[6px] px-2.5 text-[13px] font-medium transition-colors duration-150",
-                  view === v.key
-                    ? "bg-accent text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {v.label}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            ariaLabel="Audit view"
+            value={view}
+            onChange={setView}
+            options={[
+              { value: "feed", label: "Feed" },
+              { value: "table", label: "Table" },
+            ]}
+            className="ml-auto"
+          />
         </div>
 
         {log.isLoading ? (
