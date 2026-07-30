@@ -27,6 +27,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Check,
+  ChevronDown,
   ChevronRight,
   FileText,
   LayoutGrid,
@@ -34,7 +35,6 @@ import {
   List as ListIcon,
   Plus,
   Search,
-  X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { checklistFor } from "@/lib/doc-checklist";
@@ -42,6 +42,7 @@ import { formatMicroUsd, formatRatio } from "@/lib/money-display";
 import { AppShell } from "@/components/app-shell";
 import { Pill, PillDot } from "@/components/ui/pill";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,8 +90,7 @@ function NewDealWizard({ onDone }: { onDone: (dealId: string) => void }) {
   const create = trpc.deals.create.useMutation({ onSuccess: (r) => onDone(r.dealId) });
 
   return (
-    <div className="glass-card rounded-xl space-y-4 p-6 text-sm">
-      <h2 className="text-heading">New deal</h2>
+    <div className="space-y-4 text-sm">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label htmlFor="deal-name">Deal name</Label>
@@ -157,20 +157,27 @@ function NewDealWizard({ onDone }: { onDone: (dealId: string) => void }) {
         </ul>
       </div>
 
-      <Button
-        onClick={() =>
-          create.mutate({ name, type, entities: entities.filter((e) => e.name.trim() !== "") })
-        }
-        disabled={create.isPending || name.trim() === ""}
-        className="px-6"
-      >
-        Create deal
-      </Button>
       {create.error && (
         <p role="alert" className="text-xs text-destructive">
           {create.error.message}
         </p>
       )}
+      <div className="border-border -mx-6 -mb-6 mt-4 flex items-center justify-end gap-2 border-t px-6 py-4">
+        <DialogClose asChild>
+          <Button variant="outline" size="sm">
+            Cancel
+          </Button>
+        </DialogClose>
+        <Button
+          size="sm"
+          onClick={() =>
+            create.mutate({ name, type, entities: entities.filter((e) => e.name.trim() !== "") })
+          }
+          disabled={create.isPending || name.trim() === ""}
+        >
+          Create deal
+        </Button>
+      </div>
     </div>
   );
 }
@@ -328,12 +335,35 @@ export default function DashboardClient() {
             </button>
           </div>
 
-          <Button onClick={() => setShowWizard((v) => !v)} className="h-9 shrink-0 px-3 sm:px-4">
-            <span className="flex items-center gap-1.5">
-              {showWizard ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-              <span className="max-sm:sr-only">{showWizard ? "Close" : "New deal"}</span>
-            </span>
-          </Button>
+          {/* Add New ▾ — the reference's split-CTA in OUR teal (Pratik
+              2026-07-30: brand colour on the primary create action). Menu
+              items map the create-actions the product will grow into. */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label="Add new"
+              className="bg-primary hover:bg-primary/90 flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-white transition-colors duration-150 sm:px-4"
+            >
+              <span className="max-sm:sr-only">Add New</span>
+              <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={8} className="w-56 rounded-xl p-1.5">
+              <DropdownMenuItem
+                className="rounded-lg text-[13px]"
+                // Deferred a tick: Radix returns focus on menu close, which
+                // would immediately dismiss a dialog opened synchronously.
+                onSelect={() => setTimeout(() => setShowWizard(true), 0)}
+              >
+                New deal
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="rounded-lg text-[13px]">
+                <Link href="/settings/members">Invite team member</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled className="rounded-lg text-[13px]">
+                <span className="flex-1">New integration</span>
+                <Pill tone="accent">Soon</Pill>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* ── Phone: counts as filter (ui-14-6, unchanged) ── */}
@@ -370,16 +400,17 @@ export default function DashboardClient() {
           })}
         </div>
 
-        {showWizard && (
-          <div className="mt-4 max-w-2xl">
+        <Dialog open={showWizard} onOpenChange={setShowWizard}>
+          <DialogContent className="rounded-2xl p-6 sm:max-w-xl">
+            <DialogTitle className="text-title">New deal</DialogTitle>
             <NewDealWizard
               onDone={() => {
                 setShowWizard(false);
                 void utils.deals.board.invalidate();
               }}
             />
-          </div>
-        )}
+          </DialogContent>
+        </Dialog>
 
         {/* ── Desktop: rail + deals ── */}
         <div className="mt-6 gap-8 max-md:hidden xl:grid xl:grid-cols-[300px_1fr]">
@@ -401,7 +432,7 @@ export default function DashboardClient() {
                 ))}
               </div>
             ) : (
-              <ul className="glass-card divide-border/70 divide-y rounded-xl">
+              <ul className="glass-card divide-border/70 divide-y rounded-lg">
                 {matched.map((d) => (
                   <DealListRow key={d.id} deal={d} />
                 ))}
@@ -639,7 +670,7 @@ function UsageRail() {
   return (
     <section>
       <h2 className="text-heading mb-3">Usage</h2>
-      <div className="glass-card rounded-xl">
+      <div className="glass-card rounded-lg">
         <div className="flex items-center justify-between px-4 py-3">
           <span className="text-sm font-medium">Extraction spend</span>
           <Link
@@ -695,7 +726,7 @@ function ActivityRail() {
   return (
     <section>
       <h2 className="text-heading mb-3">Recent activity</h2>
-      <div className="glass-card rounded-xl px-4 py-1">
+      <div className="glass-card rounded-lg px-4 py-1">
         {activity.isLoading ? (
           <div className="space-y-2 py-3">
             <Skeleton className="h-4" />
@@ -738,7 +769,7 @@ function ActivityRail() {
 function DealsSkeleton({ view }: { view: BoardView }) {
   if (view === "list") {
     return (
-      <div className="glass-card divide-border/70 divide-y rounded-xl">
+      <div className="glass-card divide-border/70 divide-y rounded-lg">
         {[0, 1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="flex items-center gap-3 px-4 py-3.5">
             <Skeleton className="size-2 rounded-full" />
@@ -752,7 +783,7 @@ function DealsSkeleton({ view }: { view: BoardView }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
       {[0, 1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="glass-card rounded-xl p-4">
+        <div key={i} className="glass-card rounded-lg p-4">
           <div className="flex items-start gap-2.5">
             <Skeleton className="mt-1 size-2 rounded-full" />
             <div className="min-w-0 flex-1 space-y-2">

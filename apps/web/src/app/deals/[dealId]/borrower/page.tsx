@@ -216,7 +216,7 @@ export default function BorrowerInvitesPage() {
         />
 
         {canWrite ? (
-          <section className="glass-card mb-6 rounded-xl p-5">
+          <section className="glass-card mb-6 rounded-lg p-5">
             <div className="mb-4">
               <h2 className="flex items-center gap-2 text-base font-semibold">
                 <UserPlus className="h-4 w-4 text-primary" />
@@ -385,7 +385,7 @@ export default function BorrowerInvitesPage() {
                    button's accessible name. */
                 <article
                   key={i.id}
-                  className="glass-card rounded-xl border border-border p-3.5 sm:p-4"
+                  className="glass-card rounded-lg border border-border p-3.5 sm:p-4"
                 >
                   <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
                     <div className="min-w-0 flex-1">

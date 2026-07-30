@@ -93,7 +93,9 @@ async function watchForFailures(page: Page): Promise<FailureProbe> {
  * — pair it with a positive assertion that the real content is present.
  */
 async function expectNoStuckFallback(page: Page): Promise<void> {
-  await expect(page.locator(".grid-loader")).toHaveCount(0);
+  // ui-17: spinners became skeletons; the marker moved with them (plan 01 §3.2 —
+  // the detector is retargeted in the same PR that removes its old target).
+  await expect(page.locator('[data-slot="page-skeleton"]')).toHaveCount(0);
   await expect(page.getByText(/^Loading/i)).toHaveCount(0);
 }
 

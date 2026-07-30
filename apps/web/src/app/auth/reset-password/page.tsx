@@ -50,7 +50,7 @@ export default function ResetPasswordPage() {
         <div className="flex justify-center">
           <Logo size="md" />
         </div>
-        <section className="glass-card rounded-xl p-5">
+        <section className="glass-card rounded-lg p-5">
           <div className="mb-4">
             <h1 className="flex items-center gap-2 text-base font-semibold">
               <KeyRound className="h-4 w-4 text-primary" />

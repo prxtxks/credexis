@@ -305,7 +305,7 @@ export default function AuditClient() {
         ) : log.error ? (
           // An unreadable log must never render as an empty one — "no entries"
           // and "we could not read the entries" are opposite claims.
-          <section className="glass-card rounded-xl p-4">
+          <section className="glass-card rounded-lg p-4">
             <p className="text-[15px] font-semibold text-severity-critical">
               Audit log could not be read
             </p>
