@@ -80,18 +80,26 @@ const IRS_FORM_PATTERNS: ReadonlyArray<[RegExp, FormFamily, string]> = [
   [/form\s+8825\b|rental real estate income and expenses of a partnership/i, "8825", "8825"],
   // Token only — "Depreciation and amortization" is a P&L expense line
   // (false-confidence probe, 2026-07-30).
-  [/form\s+4562\b/i, "4562", "4562"],
+  [/form\s+4562(?![\d-])/i, "4562", "4562"],
+  // Known-but-unsupported (M13.1): the corporate AMT form rides along in
+  // real 1120 filings. Labelling it deterministically keeps its seven
+  // pages out of the LLM, which used to relabel them 4562/1120.
+  [/form\s+4626(?![\d-])/i, "4626", "4626"],
   // Suffix lookaheads: "Form 1120-F"/"1120-H"/"1040-NR" are DIFFERENT,
   // unsupported forms and must abstain - a 42-page 1120-F classified as
   // 1120 at 0.98 before the sweep caught it (corpus-1). 1040-SR is the
-  // same form family (seniors' print) and stays a 1040.
-  [/form\s+1120-?s(?![0-9a-z-])/i, "1120S", "1120s"],
-  [/form\s+1120(?![0-9a-z-])/i, "1120", "1120"],
-  [/form\s+1065(?![0-9a-z-])/i, "1065", "1065"],
+  // same form family (seniors' print) and stays a 1040. Sibling suffixes
+  // are always DASHED (or the bare S) - a glued LETTER is the text layer
+  // fusing columns ("Form 1120Department of the Treasury", ats-1120-s12
+  // p2) and must still match; rejecting all letters made the detector
+  // abstain on real 1120 headers (M13.1 finding).
+  [/form\s+1120-?s(?!f)(?![\d-])/i, "1120S", "1120s"],
+  [/form\s+1120(?!-?s\b)(?![\d-])(?!-[a-z])/i, "1120", "1120"],
+  [/form\s+1065(?![\d-])(?!-[a-z])/i, "1065", "1065"],
   // Title only — "Attach Form(s) W-2" references on 1040s must not match
   // (real-doc regression, 2026-07-19).
   [/wage and tax statement/i, "W2", "w2"],
-  [/form\s+1040(?:-?sr)?(?![0-9a-z-])/i, "1040", "1040"],
+  [/form\s+1040(?:-?sr)?(?![\d-])(?!-[a-z])(?!(?:a|ez)\b)/i, "1040", "1040"],
 ];
 
 /** Identity lives at the top of the page: real forms and their continuation
@@ -135,7 +143,7 @@ const OMB_UNIQUE: Readonly<Record<string, FormFamily>> = {
 /** Shared OMBs corroborate only their own form group (real-doc
  * regression: 1545-0074 must never boost a W-2 misread to 0.98). */
 const OMB_CORROBORATING: Readonly<Record<string, readonly FormFamily[]>> = {
-  "1545-0123": ["1120", "1120S", "1065", "1125E", "8825", "K1_1120S", "K1_1065"],
+  "1545-0123": ["1120", "1120S", "1065", "1125E", "8825", "K1_1120S", "K1_1065", "4626"],
   "1545-0074": ["1040", "1040_SCH_1", "1040_SCH_C", "1040_SCH_E", "1040_SCH_F"],
 };
 
@@ -219,4 +227,50 @@ export function detectPageSignals(text: string): PageSignals {
   const isDocumentStart = formFamily !== null && omb !== undefined && continuationPage === null;
 
   return { formFamily, taxYear, isDocumentStart, continuationPage, confidence, matched };
+}
+
+/* ── Token evidence for the LLM fallback (M13.1) ─────────────────────── */
+
+/** How a family's printed token appears on a page's text layer. */
+export type TokenEvidence = "anchored" | "unanchored" | "cited-only" | "absent";
+
+/**
+ * Evidence check the LLM classifier's claims are validated against
+ * (classify.ts). The first-deal walkthrough showed the vision model
+ * reading "attach Form 1125-E" on an 1120 page 1 as an identity - the
+ * exact bug class #177 closed in the regex path. This helper exposes the
+ * same vocabulary so the LLM path can veto a claim whose only textual
+ * basis is a citation:
+ *
+ * - "anchored"   the token appears non-cited in the header window - the
+ *                deterministic layer's own standard of identity
+ * - "unanchored" a non-cited token exists, but outside the header window
+ * - "cited-only" every occurrence is preceded by a reference verb - the
+ *                page talks ABOUT the form; claiming it IS the form is
+ *                the 1125-E bug
+ * - "absent"     the text layer never mentions the token (image-only
+ *                evidence - a garbled scan, a graphical header; the
+ *                vision model's claim stands on the image)
+ */
+export function familyTokenEvidence(text: string, family: FormFamily): TokenEvidence {
+  const patterns = IRS_FORM_PATTERNS.filter(([, f]) => f === family);
+  if (patterns.length === 0) return "absent"; // statements etc. have no token
+  let sawCited = false;
+  let sawUnanchored = false;
+  for (const [re] of patterns) {
+    const global = new RegExp(re.source, re.flags.includes("g") ? re.flags : re.flags + "g");
+    for (const m of text.matchAll(global)) {
+      const idx = m.index ?? 0;
+      const before = text.slice(Math.max(0, idx - 24), idx);
+      if (REFERENCE_CONTEXT_RE.test(before)) {
+        sawCited = true;
+      } else if (idx < HEADER_WINDOW) {
+        return "anchored";
+      } else {
+        sawUnanchored = true;
+      }
+    }
+  }
+  if (sawUnanchored) return "unanchored";
+  return sawCited ? "cited-only" : "absent";
 }

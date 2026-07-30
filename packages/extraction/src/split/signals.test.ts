@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectPageSignals } from "./signals.js";
+import { detectPageSignals, familyTokenEvidence } from "./signals.js";
 
 describe("deterministic page signals (M3.5)", () => {
   it("classifies IRS forms by printed form number + OMB corroboration", () => {
@@ -277,5 +277,30 @@ describe("IRS corpus sweep regressions (corpus-1: 69 docs / 1153 pages, 2026-07-
     );
     expect(s.formFamily).toBeNull();
     expect(s.confidence).toBe(0);
+  });
+});
+
+describe("4626 + token evidence (M13.1, first-deal walkthrough)", () => {
+  it("Form 4626 classifies deterministically as known-but-unsupported", () => {
+    const s = detectPageSignals(
+      "Form 4626 Alternative Minimum Tax - Corporations OMB No. 1545-0123 2023",
+    );
+    expect(s.formFamily).toBe("4626");
+    expect(s.confidence).toBeCloseTo(0.98);
+    const cont = detectPageSignals("Form 4626 (2023) Page 6 Part V Additional information");
+    expect(cont.formFamily).toBe("4626");
+    expect(cont.continuationPage).toBe(6);
+  });
+
+  it("familyTokenEvidence distinguishes identity from citation", () => {
+    const f1120p1 =
+      "Form 1120 U.S. Corporation Income Tax Return OMB No. 1545-0123\n" +
+      "12 Compensation of officers (see instructions - attach Form 1125-E)";
+    expect(familyTokenEvidence(f1120p1, "1125E")).toBe("cited-only");
+    expect(familyTokenEvidence(f1120p1, "1120")).toBe("anchored");
+    expect(familyTokenEvidence("Form 1125-E Compensation of Officers", "1125E")).toBe("anchored");
+    expect(familyTokenEvidence("ACME LLC Statement of Operations", "4562")).toBe("absent");
+    const buried = "x".repeat(450) + " Form 4562 depreciation detail";
+    expect(familyTokenEvidence(buried, "4562")).toBe("unanchored");
   });
 });

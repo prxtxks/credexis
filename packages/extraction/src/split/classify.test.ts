@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AnthropicPageClassifier } from "./classify.js";
+import { AnthropicPageClassifier, validateLlmClaim } from "./classify.js";
 
 /** Recorded Messages API response (structured output) — synthetic fixture. */
 const RECORDED_RESPONSE = {
@@ -15,6 +15,7 @@ const RECORDED_RESPONSE = {
           {
             page: 39,
             form_family: "PNL",
+            printed_form: null,
             tax_year: null,
             is_document_start: false,
             confidence: 0.8,
@@ -22,6 +23,7 @@ const RECORDED_RESPONSE = {
           {
             page: 54,
             form_family: null,
+            printed_form: null,
             tax_year: null,
             is_document_start: false,
             confidence: 0.1,
@@ -53,7 +55,8 @@ describe("AnthropicPageClassifier (recorded responses — no live calls)", () =>
       { page: 54, text: "handwritten margin notes" },
     ]);
     expect(result[0]).toMatchObject({ page: 39, formFamily: "PNL", method: "llm" });
-    expect(result[1]).toMatchObject({ page: 54, formFamily: null, confidence: 0.1 });
+    // A null family is an abstention - it carries no confidence (M13.1).
+    expect(result[1]).toMatchObject({ page: 54, formFamily: null, confidence: 0 });
   });
 
   it("uses a Haiku-class model with structured outputs (Blueprint §4.1)", async () => {
@@ -92,5 +95,112 @@ describe("AnthropicPageClassifier (recorded responses — no live calls)", () =>
     ]);
     const body = capture.body as { messages: Array<{ content: Array<{ type: string }> }> };
     expect(body.messages[0]?.content.some((c) => c.type === "image")).toBe(true);
+  });
+});
+
+/* The exact page text that produced the bug: Form 1120 page 1, whose only
+ * mention of 1125-E is the line-12 citation. The deterministic layer
+ * abstains here; the vision model claimed 1125E on the first real deal. */
+const F1120_PAGE1_TEXT =
+  "Form 1120 U.S. Corporation Income Tax Return OMB No. 1545-0123 2023\n" +
+  "1a Gross receipts or sales 1,500,000,000\n" +
+  "12 Compensation of officers (see instructions - attach Form 1125-E)\n" +
+  "20 Depreciation from Form 4562 not claimed elsewhere (attach Form 4562)";
+
+describe("validateLlmClaim - structural guards (M13.1, first-deal walkthrough)", () => {
+  it("vetoes a claim whose only textual basis is a citation (the 1125-E bug)", () => {
+    expect(
+      validateLlmClaim({ form_family: "1125E", printed_form: "1125-E" }, F1120_PAGE1_TEXT),
+    ).toBeNull();
+  });
+
+  it("vetoes a family that contradicts the printed form (the 4626→4562 bug)", () => {
+    const amtPage = "Form 4626 Alternative Minimum Tax - Corporations OMB No. 1545-0123";
+    expect(validateLlmClaim({ form_family: "4562", printed_form: "4626" }, amtPage)).toBeNull();
+    expect(validateLlmClaim({ form_family: "1120", printed_form: "4626" }, amtPage)).toBeNull();
+  });
+
+  it("labels 4626 honestly when print and claim agree", () => {
+    expect(
+      validateLlmClaim(
+        { form_family: "4626", printed_form: "4626" },
+        "Form 4626 Alternative Minimum Tax - Corporations OMB No. 1545-0123",
+      ),
+    ).toBe("4626");
+  });
+
+  it("an unknown printed form abstains, never snaps to a neighbor", () => {
+    expect(
+      validateLlmClaim(
+        { form_family: "1120", printed_form: "5472" },
+        "Form 5472 Information Return of a 25% Foreign-Owned U.S. Corporation",
+      ),
+    ).toBeNull();
+  });
+
+  it("a tax-form claim without a printed identity abstains", () => {
+    expect(validateLlmClaim({ form_family: "1120", printed_form: null }, "cover page")).toBeNull();
+  });
+
+  it("NON_FORM and statement families need no printed token", () => {
+    expect(validateLlmClaim({ form_family: "NON_FORM", printed_form: null }, "FAX COVER")).toBe(
+      "NON_FORM",
+    );
+    expect(
+      validateLlmClaim({ form_family: "PNL", printed_form: null }, "Statement of Operations"),
+    ).toBe("PNL");
+  });
+
+  it("image-only evidence stands: a W-2 claim survives an absent text token", () => {
+    // Garbled scan - the text layer never says W-2; the vision model saw it.
+    expect(validateLlmClaim({ form_family: "W2", printed_form: "W-2" }, "22222 gar bled")).toBe(
+      "W2",
+    );
+  });
+
+  it("an unknown family string abstains", () => {
+    expect(validateLlmClaim({ form_family: "8949", printed_form: "8949" }, "Form 8949")).toBeNull();
+  });
+});
+
+describe("AnthropicPageClassifier applies the guards to model output", () => {
+  const vetoResponse = {
+    ...RECORDED_RESPONSE,
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({
+          pages: [
+            {
+              page: 2,
+              form_family: "1125E",
+              printed_form: "1125-E",
+              tax_year: 2023,
+              is_document_start: true,
+              confidence: 0.85,
+            },
+          ],
+        }),
+      },
+    ],
+  };
+
+  it("a vetoed claim comes back null with the veto recorded", async () => {
+    const classifier = new AnthropicPageClassifier({
+      apiKey: "test",
+      fetch: async () =>
+        new Response(JSON.stringify(vetoResponse), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+    });
+    const [r] = await classifier.classifyPages([{ page: 2, text: F1120_PAGE1_TEXT }]);
+    expect(r).toMatchObject({
+      page: 2,
+      formFamily: null,
+      confidence: 0,
+      isDocumentStart: false,
+    });
+    expect(r?.matched).toContain("llm-vetoed:1125E");
   });
 });

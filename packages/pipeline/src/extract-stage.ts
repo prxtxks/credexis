@@ -122,6 +122,11 @@ export interface ExtractStageResult {
 
 const STATEMENT_FAMILIES = new Set(["PNL", "BALANCE_SHEET", "DEBT_SCHEDULE"]);
 
+/** Honesty labels (M13.1): recognized so pages stop being relabelled as
+ *  the nearest extractable form, and excluded from extraction on purpose.
+ *  4626 = corporate AMT (no registry); NON_FORM = cover sheets, banners. */
+const UNSUPPORTED_FAMILIES = new Set(["4626", "NON_FORM"]);
+
 /* ── the stage ────────────────────────────────────────────────────────── */
 
 export async function runExtractStage(
@@ -139,7 +144,12 @@ export async function runExtractStage(
   // primary (earliest) span - 4 fragments must not mean 4 vendor bills.
   const primaryByKey = new Map<string, string>();
   for (const ld of input.logicalDocuments) {
-    if (STATEMENT_FAMILIES.has(ld.formFamily) || ld.formFamily === "UNKNOWN") continue;
+    if (
+      STATEMENT_FAMILIES.has(ld.formFamily) ||
+      UNSUPPORTED_FAMILIES.has(ld.formFamily) ||
+      ld.formFamily === "UNKNOWN"
+    )
+      continue;
     const key = `${ld.formFamily}|${ld.taxYear}`;
     const current = primaryByKey.get(key);
     const currentStart =
@@ -161,7 +171,13 @@ export async function runExtractStage(
     }
 
     try {
-      if (STATEMENT_FAMILIES.has(ld.formFamily)) {
+      if (UNSUPPORTED_FAMILIES.has(ld.formFamily)) {
+        result.perDocument.push({
+          logicalDocumentId: ld.id,
+          facts: 0,
+          skipped: `${ld.formFamily}: known but not extracted (no registry by design)`,
+        });
+      } else if (STATEMENT_FAMILIES.has(ld.formFamily)) {
         const n = await extractStatement(deps, input, ld, entityId, now);
         result.factsInserted += n;
         result.perDocument.push({ logicalDocumentId: ld.id, facts: n });

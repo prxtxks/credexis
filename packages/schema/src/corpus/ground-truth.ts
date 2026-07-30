@@ -38,7 +38,11 @@ export const bboxSchema = z
     message: "bbox must lie inside the page (x+w ≤ 1 and y+h ≤ 1)",
   });
 
-/** MVP form families (frozen list — Blueprint §1). Statements have no form. */
+/** MVP form families (Blueprint §1). Statements have no form.
+ *  "4626" and "NON_FORM" are honesty labels, not extraction targets
+ *  (M13.1, first-deal walkthrough): 4626 = known-but-unsupported AMT form
+ *  so its pages stop being relabelled as 4562/1120; NON_FORM = cover
+ *  sheets, fax banners, separators. Both are excluded from extraction. */
 export const formFamilySchema = z.enum([
   "1120",
   "1120S",
@@ -54,6 +58,8 @@ export const formFamilySchema = z.enum([
   "8825",
   "1125E",
   "W2",
+  "4626",
+  "NON_FORM",
   "PNL",
   "BALANCE_SHEET",
   "DEBT_SCHEDULE",
