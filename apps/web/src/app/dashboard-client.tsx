@@ -37,6 +37,7 @@ import {
   Plus,
   Search,
   Star,
+  X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { checklistFor } from "@/lib/doc-checklist";
@@ -116,76 +117,146 @@ function NewDealWizard({ onDone }: { onDone: (dealId: string) => void }) {
   );
   const create = trpc.deals.create.useMutation({ onSuccess: (r) => onDone(r.dealId) });
 
+  const TYPE_META: Record<(typeof DEAL_TYPES)[number], { label: string; hint: string }> = {
+    business_acquisition: { label: "Business acquisition", hint: "Buying an operating company" },
+    working_capital: { label: "Working capital", hint: "Operating liquidity" },
+    real_estate: { label: "Real estate", hint: "Owner-occupied CRE" },
+    refinance: { label: "Refinance", hint: "Restructure existing debt" },
+  };
+  const TYPE_CARDS = DEAL_TYPES.map((value) => ({ value, ...TYPE_META[value] }));
+
   return (
-    <div className="space-y-4 text-sm">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="deal-name">Deal name</Label>
-          <Input
-            id="deal-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Acme Holdings acquisition"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="deal-type">Type</Label>
-          <FieldSelect
-            ariaLabel="Deal type"
-            value={type}
-            onChange={(v) => setType(v as (typeof DEAL_TYPES)[number])}
-            options={DEAL_TYPES.map((t) => ({ value: t, label: t.replaceAll("_", " ") }))}
-            size="default"
-            className="w-full"
-          />
-        </div>
-      </div>
+    <div className="space-y-5 text-sm">
+      <p className="text-muted-foreground -mt-2 text-[13px]">
+        Name the file, pick the loan type, and add the entities on it — the document checklist
+        follows the type.
+      </p>
 
       <div className="space-y-1.5">
-        <span className="text-sm font-medium">Entities</span>
-        {entities.map((e, i) => (
-          <div key={i} className="flex gap-2">
-            <Input
-              value={e.name}
-              onChange={(ev) =>
-                setEntities(entities.map((x, j) => (j === i ? { ...x, name: ev.target.value } : x)))
-              }
-              placeholder="Entity legal name"
-            />
-            <FieldSelect
-              ariaLabel="Entity kind"
-              value={e.kind}
-              onChange={(v) =>
-                setEntities(
-                  entities.map((x, j) =>
-                    j === i ? { ...x, kind: v as (typeof ENTITY_KINDS)[number] } : x,
-                  ),
-                )
-              }
-              options={ENTITY_KINDS.map((k) => ({ value: k, label: k }))}
-              size="default"
-            />
-          </div>
-        ))}
-        <button
-          onClick={() => setEntities([...entities, { name: "", kind: "guarantor" }])}
-          className="text-xs text-primary underline underline-offset-2"
-        >
-          + add entity
-        </button>
+        <Label htmlFor="deal-name">Deal name</Label>
+        <Input
+          id="deal-name"
+          autoFocus
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Acme Holdings acquisition"
+        />
       </div>
 
-      <div className="rounded-lg bg-muted p-3 text-xs">
-        <span className="font-semibold">Document checklist for this type:</span>
-        <ul className="mt-1 list-inside list-disc text-muted-foreground">
-          {checklistFor(type).map((c) => (
-            <li key={c.label}>{c.label}</li>
+      {/* ── Loan type: radio cards, not a dropdown ── */}
+      <fieldset>
+        <legend className="mb-1.5 text-sm font-medium">Loan type</legend>
+        <div role="radiogroup" aria-label="Deal type" className="grid grid-cols-2 gap-2">
+          {TYPE_CARDS.map((t) => {
+            const active = type === t.value;
+            return (
+              <button
+                key={t.value}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => setType(t.value)}
+                className={cn(
+                  "rounded-lg border p-3 text-left transition-colors duration-150",
+                  active
+                    ? "border-primary/60 bg-primary/10"
+                    : "border-border hover:border-primary/30 hover:bg-accent/40",
+                )}
+              >
+                <span className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "flex size-3.5 items-center justify-center rounded-full border",
+                      active ? "border-primary" : "border-border",
+                    )}
+                  >
+                    {active ? <span className="bg-primary size-2 rounded-full" /> : null}
+                  </span>
+                  <span className="text-[13px] font-semibold">{t.label}</span>
+                </span>
+                <span className="text-muted-foreground mt-1 block pl-5.5 text-[11px]">
+                  {t.hint}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      {/* ── Entities ── */}
+      <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="text-sm font-medium">
+            Entities
+            <span className="text-muted-foreground ml-1.5 text-[13px] tabular-nums">
+              {entities.length}
+            </span>
+          </span>
+          <Button
+            size="xs"
+            variant="ghost"
+            className="text-muted-foreground gap-1"
+            onClick={() => setEntities([...entities, { name: "", kind: "guarantor" }])}
+          >
+            <Plus className="h-3 w-3" />
+            Add entity
+          </Button>
+        </div>
+        <div className="border-border divide-border/70 divide-y rounded-lg border">
+          {entities.map((e, i) => (
+            <div key={i} className="flex items-center gap-2 p-2">
+              <Input
+                value={e.name}
+                aria-label={`Entity ${i + 1} legal name`}
+                onChange={(ev) =>
+                  setEntities(
+                    entities.map((x, j) => (j === i ? { ...x, name: ev.target.value } : x)),
+                  )
+                }
+                placeholder={i === 0 ? "Applicant legal name" : "Entity legal name"}
+                className="border-0 bg-transparent shadow-none"
+              />
+              <FieldSelect
+                ariaLabel="Entity kind"
+                value={e.kind}
+                onChange={(v) =>
+                  setEntities(
+                    entities.map((x, j) =>
+                      j === i ? { ...x, kind: v as (typeof ENTITY_KINDS)[number] } : x,
+                    ),
+                  )
+                }
+                options={ENTITY_KINDS.map((k) => ({ value: k, label: k }))}
+              />
+              <button
+                type="button"
+                aria-label={`Remove entity ${i + 1}`}
+                disabled={entities.length === 1}
+                onClick={() => setEntities(entities.filter((_, j) => j !== i))}
+                className="hover:bg-accent text-muted-foreground rounded-md p-1.5 transition-colors duration-150 disabled:opacity-30"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
           ))}
-        </ul>
+        </div>
+      </div>
+
+      {/* ── Checklist preview as chips ── */}
+      <div className="bg-accent/30 rounded-lg p-3">
+        <p className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
+          This type expects
+        </p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {checklistFor(type).map((c) => (
+            <Pill key={c.label}>{c.label}</Pill>
+          ))}
+        </div>
       </div>
 
       {create.error && (
-        <p role="alert" className="text-xs text-destructive">
+        <p role="alert" className="text-destructive text-xs">
           {create.error.message}
         </p>
       )}
@@ -197,6 +268,7 @@ function NewDealWizard({ onDone }: { onDone: (dealId: string) => void }) {
         </DialogClose>
         <Button
           size="sm"
+          variant="brand"
           onClick={() =>
             create.mutate({ name, type, entities: entities.filter((e) => e.name.trim() !== "") })
           }
