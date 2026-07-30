@@ -1,112 +1,80 @@
-# Handoff — state of play, 2026-07-29
+# Handoff — state of play, 2026-07-30 (post ui-17/ui-18)
 
 Written so a fresh session (or a fresh person) can pick up without reading a
 day of chat. Keep it short and current; delete anything that stops being true.
 
 ## Where the product actually is
 
-Shipped and live on main today (PRs #128–#139):
+The Vercel-derived redesign SHIPPED: PRs #151–#156, #158–#166 are on main,
+every one CI-green (5 required checks; the "Vercel" check is a deploy status,
+not required — it rate-limits on Hobby at ~10 deploys/day). The binding design
+spec is `docs/design/ui-overhaul/02-VERCEL-DERIVATION.md`; Pratik's directive
+was "match 100%, just our colors" measured from 35 captures (gitignored in
+`docs/Vercel-ui/`, reference only).
 
-- **CI now proves a real production build renders.** Every PR builds for
-  production, serves it, and asserts in a browser that the app hydrates with
-  no stuck loading state and no blocked scripts. This exists because the app
-  shipped broken to production twice in one day while every gate passed — the
-  dev server renders differently, and both defects lived only in the
-  production path.
-- **Borrower portal, database layer: complete.** Migrations 0025–0032. A
-  borrower is an `auth.users` row with **no `profiles` row, ever**; their
-  whole authority is their invite. They match exactly two policies in the
-  entire database, both on `storage.objects`, both pinned to their own upload
-  folder. See `docs/design/platform/05-borrower-portal.md` (binding) and the
-  memory note `borrower-portal-spine`.
-- **Borrower portal, app layer:** `apps/portal` exists (claim → OTP → curated
-  single screen), and brokers can invite/extend/revoke/request documents from
-  `/deals/[dealId]/borrower`. **Uploads are not wired yet** — see below.
-- **Product completeness (Tier 1 of the density plan):** account menu with
-  identity, deal-status control, audit-log viewer, 267 lines of dead UI
-  deleted. Plan: `docs/design/ui-overhaul/01-DENSITY-AND-COMPLETENESS.md`.
+What exists now, all production-verified: token system (near-black canvas,
+hairlines, flat inverse primaries, emerald-as-accent, brand-teal CTAs);
+sidebar shell with Find palette (F), contextual takeovers (settings sub-nav,
+deal rail), identity footer; mobile Find/menu pill (tab bar is gone); deals
+home with grid/list toggle, filter/sort menu, usage + activity rail,
+pin/unpin (localStorage), per-card menus (delete staged); Deal Overview page
+(state hero, checklist widget, extraction/validation widgets); settings
+section (General, Members in the reference layout, Notifications matrix,
+Security incl. real password change / sign-out-everywhere / audit CSV export,
+Audit log, Plan & Usage); /notifications page with REAL archive (the existing
+`dismissed` state; `list` gained a view param, `archiveAll` added +
+tier-test exception); /support with the agent-chat stub (honest handoff to
+support@credexis.co); /logs on `extraction_runs` (`pipeline.runs`); Costs →
+Usage rename; redesigned New-deal modal (radio-card types, entity rows,
+checklist chips).
 
-## Two pre-existing bugs found today, both fixed
+## THE lesson of 2026-07-30 — do not relearn it
 
-Worth knowing because both were invisible and would have hit the first real
-customer:
+**Never add a route-segment `loading.tsx` in this app.** Any such Suspense
+boundary above the client pages wedges react-query/uSES updates under
+Next 15.5 production streaming: hooks stay `isLoading` forever while the
+network returns 200s and React stays interactive. It reproduced
+deterministically and burned hours twice (first misdiagnosed as preview-tab
+cookie races — wrong). Fixed in #162 by deleting every route boundary;
+loading states live INSIDE pages (Skeleton components; the nine-dot
+`GridLoader` is the brand moment for the workspace spread grids only).
+`prod-smoke`'s `expectNoStuckFallback` guards BOTH vocabularies
+(`[data-slot=page-skeleton]` and `.grid-loader`).
 
-1. **Org owners could not write anything** (fixed in 0032). Every tenant
-   write policy listed `('admin','underwriter')`; `org_owner` arrived later
-   and no migration amended them — but `create_organization()` stamps every
-   signup `org_owner`. 29 policies. Now expressed as `role_tier(...) >= 2`,
-   so a future role slots in by rank instead of needing 29 more edits.
-2. **The audit log out-ranked the tables it audits** (also 0032). It had no
-   role predicate while `invites_select` needs admin tier, so a viewer could
-   read invitee emails and token hashes out of audit rows. Narrowed.
+Other traps that cost time today, still true:
 
-Also fixed earlier: the audit trigger broke every `tenants` write, which had
-silently broken new-org signup (0020); and pipeline notifications had never
-worked because an `ON CONFLICT` could not infer a partial index (0022).
+- Verify on ONE clean tab against `web-prod` (pinned to port **3100**;
+  never `rm -rf .next` or rebuild while a server is running).
+- A Bash `cd` persists for later calls — git pathspecs are cwd-relative;
+  Pratik's private `docs/instructions/` PDFs got committed twice that way
+  (both scrubbed; verify with `git cat-file -e HEAD:<path>`).
+- `gh pr checks --watch --fail-fast` trips on the non-required Vercel check;
+  gate merges on `mergeStateStatus` ∈ {CLEAN, UNSTABLE} instead.
+- The M10.3 mutation-tier test requires every new mutation to be
+  underwriter+ or an explicit self-scoped exception — it caught `archiveAll`
+  correctly; add exceptions WITH rationale.
 
-## What is NOT done
+## What is NOT done (in order)
 
-- **Borrower uploads.** The worker half was written, reviewed, and
-  **rejected** — it called `invite_extraction_spend()` and cited a
-  `documents_invite_path_guard` trigger that did not exist. Both now exist
-  (migration 0031), so this is a clean rewrite against real guards, not a
-  patch. This is the top of the queue.
-- **Density work (Tier 2+ of the plan):** the phone home screen still spends
-  three cards on three numbers. Plan is written and ordered; nothing built.
-- `NEXT_PUBLIC_PORTAL_URL` must be set in Vercel and Trigger before any
-  borrower sees a link, or broker-copied links and chase reminders point at
-  the wrong origin (the chase task withholds sends rather than guessing).
-- Key rotation before real borrower documents arrive — a launch-checklist
-  item, not a code blocker (Pratik's call, 2026-07-29).
+1. **Audit feed presentation** (02 §4): month-grouped sentence feed over the
+   existing audit table; then the 375→1440 screenshot sweep (02 PR-H).
+2. **Staged UI awaiting backends** (all labeled "Soon"/disabled in the UI —
+   Pratik will order them explicitly): delete deal, bulk member actions,
+   org-settings writes (plan-01 step 16), per-category notification matrix
+   writes (step 18), TOTP enroll/enforce (step 13), retention (D6), Logs
+   live-tail, support agent chat wiring, "New integration".
+3. **Pratik's sequence after UI:** (a) portal reachability —
+   `NEXT_PUBLIC_PORTAL_URL` must be set in Vercel AND Trigger before anyone
+   tests borrower links; (b) his end-to-end deal run (top up the Anthropic
+   API balance first — extraction fails on credits, see memory); (c) full
+   interaction audit (every control clickable and sensible, no dead ends).
+4. Known debt: `deals.board` unpaginated (fine at pilot scale); middleware's
+   signed-in `/login` redirect drops `?next=` (memory:
+   middleware-login-next-param); CI minutes burn fast at this PR cadence.
 
-## UI state, 2026-07-29 evening — READ THIS FIRST if you are picking up UI
+## Scratch data
 
-Pratik's standing verdict: the app still does not look like a finished
-product, and UI is the top priority. His reference is Vercel's dashboard
-(he is logged in and can supply screenshots of any view).
-
-What has been done: `docs/design/ui-overhaul/00-DESIGN-LANGUAGE.md` (the
-"Precision Instrument" language) and `01-DENSITY-AND-COMPLETENESS.md` (the
-ordered plan, with a delete/merge ledger and a forbidden list worth reading
-before adding anything). Tier 1 shipped: account menu, deal-status control,
-audit viewer, 267 lines of dead UI deleted. Tier 2 partly shipped: the phone
-home now leads with the work (first deal row 484px -> 182px), and a craft
-pass added row surfaces, metadata pills, one shared loader, an always-present
-logo, and removed a duplicated nav entry.
-
-**What Pratik has explicitly rejected as still wrong:**
-
-1. Desktop has had almost no attention — the whole density/craft effort so far
-   has been phone-first. He wants Vercel-grade on BOTH.
-2. `/settings` is still three stacked icon+title cards — the exact repetitive
-   pattern he named twice. Plan step 11 (settings shell + sub-nav + grouped
-   rows, delete `card.tsx`) is written and not started.
-3. "I told you to add world class UI and this is what you changed?" — the
-   honest read is that most of the day went into security and plumbing, and
-   the visible surface still trails the engineering underneath.
-
-**Lessons that cost real time today, do not relearn them:**
-
-- Optimising for a pixel metric produced a bare screen. Dense != bare. Every
-  row needs a surface, an edge, and right-aligned scannable data.
-- Verify UI in a browser at 375px AND at desktop width, against a PRODUCTION
-  build. The dev server renders differently and hid two outages.
-- NEVER `rm -rf .next` while the dev server runs — it corrupts the build and
-  produces blank pages that look like real bugs. I did this twice and once
-  reported a false "users cannot sign in" alarm from it.
-- An agent's confident report is not evidence. Two builds this week called
-  database functions that did not exist. Read the files.
-
-## Working rules learned the hard way
-
-- **Verify against a production build, never the dev server**, for anything
-  touching rendering, headers, or routing. That is now a CI gate.
-- **When a fix makes a failure disappear, ask what it removed.** A "fix" to
-  the harness grant-replay silently dropped ten real REVOKEs, which would
-  have left the test environment more permissive than production.
-- **An agent's confident report is not evidence.** Two builds this session
-  claimed working code that called functions which did not exist. Every
-  builder gets a reviewer that reads the actual files.
-- **Check the exit status, not the log line.** A watch script printed
-  "MERGED" after a pipe, so it fired even when the merge failed — PR #130 was
-  reported merged when it was not. Use `&&`, not `;`.
+Tenant "Meridian Bank SBA" / ui-audit@credexis.test (deterministic c0ffee
+IDs, 8 deals) exists in the LIVE db for UI verification. Cleanup:
+`node seed-ui-audit.mjs --clean` (script in the session scratchpad; recreate
+from the live-e2e helpers if lost). Delete before real-customer data lands.
