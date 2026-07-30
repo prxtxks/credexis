@@ -8,9 +8,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bell, CheckCheck, Inbox } from "lucide-react";
+import { Archive, Bell, CheckCheck, Inbox } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 const KIND_DOT: Record<string, string> = {
@@ -85,7 +86,19 @@ export function NotificationsBell() {
             </div>
 
             <div className="scroll-pane max-h-96 overflow-y-auto">
-              {(list.data ?? []).length === 0 ? (
+              {list.isLoading ? (
+                <div className="space-y-1 px-2 py-1">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="flex gap-2.5 px-2 py-2">
+                      <Skeleton className="mt-1.5 size-2 rounded-full" />
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <Skeleton className="h-3.5 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (list.data ?? []).length === 0 ? (
                 <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
                   <Inbox className="h-6 w-6 text-muted-foreground/60" />
                   <p className="text-xs text-muted-foreground">
@@ -94,13 +107,28 @@ export function NotificationsBell() {
                 </div>
               ) : (
                 (list.data ?? []).map((n) => {
+                  const archiveBtn = (
+                    <button
+                      type="button"
+                      aria-label={`Archive: ${n.title}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setState.mutate({ notificationId: n.id, state: "dismissed" });
+                      }}
+                      className="hover:bg-accent text-muted-foreground absolute top-1.5 right-1.5 rounded-md p-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                    >
+                      <Archive className="h-3 w-3" />
+                    </button>
+                  );
                   const inner = (
                     <div
                       className={cn(
-                        "flex gap-2.5 rounded-lg px-2 py-2 text-left transition-colors duration-200 hover:bg-accent/50",
+                        "group relative flex gap-2.5 rounded-lg px-2 py-2 text-left transition-colors duration-200 hover:bg-accent/50",
                         n.state === "unread" ? "" : "opacity-60",
                       )}
                     >
+                      {archiveBtn}
                       <span
                         className={cn(
                           "mt-1.5 h-2 w-2 shrink-0 rounded-full",
@@ -141,6 +169,16 @@ export function NotificationsBell() {
                   );
                 })
               )}
+            </div>
+
+            <div className="border-border/70 border-t px-2 pt-1.5 pb-0.5">
+              <Link
+                href="/notifications"
+                onClick={() => setOpen(false)}
+                className="text-muted-foreground hover:text-foreground block rounded-lg px-2 py-1.5 text-xs transition-colors duration-150"
+              >
+                View all notifications →
+              </Link>
             </div>
           </div>
         </>

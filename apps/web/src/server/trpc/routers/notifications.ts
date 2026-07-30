@@ -12,14 +12,27 @@ import { protectedProcedure, router } from "../init";
 
 export const notificationsRouter = router({
   list: protectedProcedure
-    .input(z.object({ limit: z.number().int().min(1).max(100).default(30) }).optional())
+    .input(
+      z
+        .object({
+          limit: z.number().int().min(1).max(100).default(30),
+          /** ui-18: the notifications page shows the archive; "dismissed"
+           *  is the archive state (existing enum — no migration). */
+          view: z.enum(["inbox", "archived"]).default("inbox"),
+        })
+        .optional(),
+    )
     .query(async ({ ctx, input }) => {
-      const { data, error } = await ctx.supabase
+      let query = ctx.supabase
         .from("notifications")
         .select("id, kind, title, body, action_url, deal_id, state, created_at")
-        .neq("state", "dismissed")
         .order("created_at", { ascending: false })
         .limit(input?.limit ?? 30);
+      query =
+        (input?.view ?? "inbox") === "archived"
+          ? query.eq("state", "dismissed")
+          : query.neq("state", "dismissed");
+      const { data, error } = await query;
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       return (data ?? []).map((n) => ({
         id: n.id as string,
@@ -60,6 +73,16 @@ export const notificationsRouter = router({
       if (!data) throw new TRPCError({ code: "NOT_FOUND", message: "notification not found" });
       return { id: data.id as string, state: input.state };
     }),
+
+  /** ui-18: archive everything in the inbox (dismissed = archived). */
+  archiveAll: protectedProcedure.mutation(async ({ ctx }) => {
+    const { error } = await ctx.supabase
+      .from("notifications")
+      .update({ state: "dismissed" })
+      .neq("state", "dismissed");
+    if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+    return { ok: true };
+  }),
 
   markAllRead: protectedProcedure.mutation(async ({ ctx }) => {
     const { error } = await ctx.supabase
