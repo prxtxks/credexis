@@ -58,7 +58,10 @@ import {
 import { FieldSelect } from "@/components/ui/field-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
+import { List } from "@/components/ui/list";
+import { SectionHeader } from "@/components/ui/section-header";
+import { Segmented } from "@/components/ui/segmented";
+import { Skeleton, SkeletonLines } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 /** Phone list order: most urgent first - a phone is a triage surface. */
@@ -533,36 +536,25 @@ export default function DashboardClient() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div
-            role="group"
-            aria-label="Board view"
-            className="flex h-9 shrink-0 items-center rounded-lg border border-border p-0.5 max-md:hidden"
-          >
-            <button
-              type="button"
-              aria-label="Grid view"
-              aria-pressed={view === "grid"}
-              onClick={() => pickView("grid")}
-              className={cn(
-                "flex h-full items-center rounded-[6px] px-2.5 transition-colors duration-150",
-                view === "grid" ? "bg-accent text-foreground" : "text-muted-foreground",
-              )}
-            >
-              <LayoutGrid aria-hidden="true" className="size-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="List view"
-              aria-pressed={view === "list"}
-              onClick={() => pickView("list")}
-              className={cn(
-                "flex h-full items-center rounded-[6px] px-2.5 transition-colors duration-150",
-                view === "list" ? "bg-accent text-foreground" : "text-muted-foreground",
-              )}
-            >
-              <ListIcon aria-hidden="true" className="size-4" />
-            </button>
-          </div>
+          <Segmented
+            ariaLabel="Board view"
+            size="md"
+            value={view}
+            onChange={pickView}
+            options={[
+              {
+                value: "grid",
+                ariaLabel: "Grid view",
+                label: <LayoutGrid aria-hidden="true" className="size-4" />,
+              },
+              {
+                value: "list",
+                ariaLabel: "List view",
+                label: <ListIcon aria-hidden="true" className="size-4" />,
+              },
+            ]}
+            className="shrink-0 max-md:hidden"
+          />
 
           {/* Add New ▾ - the reference's split-CTA in OUR teal (Pratik
               2026-07-30: brand colour on the primary create action). Menu
@@ -596,38 +588,28 @@ export default function DashboardClient() {
         </div>
 
         {/* ── Phone: counts as filter (ui-14-6, unchanged) ── */}
-        <div
-          role="group"
-          aria-label="Filter deals"
-          className="border-border/60 mt-3 inline-flex rounded-lg border p-0.5 md:hidden"
-        >
-          {(
+        <Segmented
+          ariaLabel="Filter deals"
+          size="auto"
+          value={filter === "all" || filter === "review" || filter === "complete" ? filter : "all"}
+          onChange={(v) => setFilter(v)}
+          options={(
             [
               { key: "all", label: "All" },
               { key: "review", label: "Review" },
               { key: "complete", label: "Complete" },
             ] as const
-          ).map((tab) => {
-            const active = filter === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setFilter(tab.key)}
-                className={cn(
-                  "rounded-[6px] px-3 py-1.5 text-[13px] font-medium transition-colors duration-150",
-                  active
-                    ? "bg-accent text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
+          ).map((tab) => ({
+            value: tab.key,
+            label: (
+              <>
                 {tab.label}
                 <span className="ml-1.5 tabular-nums opacity-70">{counts[tab.key]}</span>
-              </button>
-            );
-          })}
-        </div>
+              </>
+            ),
+          }))}
+          className="border-border/60 mt-3 inline-flex md:hidden"
+        />
 
         {/* ── Desktop: rail + deals ── */}
         <div className="mt-6 gap-8 max-md:hidden xl:grid xl:grid-cols-[300px_1fr]">
@@ -637,7 +619,7 @@ export default function DashboardClient() {
           </div>
 
           <section>
-            <h2 className="text-heading mb-3">Deals</h2>
+            <SectionHeader>Deals</SectionHeader>
             {board.isLoading ? (
               <DealsSkeleton view={view} />
             ) : matched.length === 0 ? (
@@ -654,7 +636,7 @@ export default function DashboardClient() {
                 ))}
               </div>
             ) : (
-              <ul className="glass-card divide-border/70 divide-y rounded-lg">
+              <List>
                 {matched.map((d) => (
                   <DealListRow
                     key={d.id}
@@ -663,7 +645,7 @@ export default function DashboardClient() {
                     onTogglePin={() => togglePin(d.id)}
                   />
                 ))}
-              </ul>
+              </List>
             )}
           </section>
         </div>
@@ -1004,7 +986,7 @@ function UsageRail() {
   const hasMore = (costs.data?.length ?? 0) > 4;
   return (
     <section>
-      <h2 className="text-heading mb-3">Usage</h2>
+      <SectionHeader>Usage</SectionHeader>
       <div className="glass-card relative rounded-lg pb-1">
         <div className="flex items-center justify-between px-4 py-3">
           <span className="text-sm font-medium">Extraction spend</span>
@@ -1016,11 +998,7 @@ function UsageRail() {
           </Link>
         </div>
         {costs.isLoading ? (
-          <div className="space-y-2 px-4 pb-4">
-            <Skeleton className="h-4" />
-            <Skeleton className="h-4" />
-            <Skeleton className="h-4 w-2/3" />
-          </div>
+          <SkeletonLines className="px-4 pb-4" />
         ) : rows.length === 0 ? (
           <p className="text-muted-foreground px-4 pb-4 text-[13px]">
             No extraction runs yet - spend appears once the pipeline processes documents.
@@ -1115,14 +1093,10 @@ function ActivityRail() {
   if (activity.error) return null;
   return (
     <section>
-      <h2 className="text-heading mb-3">Recent activity</h2>
+      <SectionHeader>Recent activity</SectionHeader>
       <div className="glass-card rounded-lg px-4 py-1">
         {activity.isLoading ? (
-          <div className="space-y-2 py-3">
-            <Skeleton className="h-4" />
-            <Skeleton className="h-4" />
-            <Skeleton className="h-4 w-2/3" />
-          </div>
+          <SkeletonLines className="py-3" />
         ) : (activity.data?.entries.length ?? 0) === 0 ? (
           <p className="text-muted-foreground py-3 text-[13px]">
             Nothing yet - changes to deals, facts, and members land here.

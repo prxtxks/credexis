@@ -16,6 +16,7 @@ import { Archive, ArchiveRestore, Check, CheckCheck, Settings } from "lucide-rea
 import { trpc } from "@/lib/trpc/client";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { ListRow } from "@/components/ui/list";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -239,9 +240,9 @@ export default function NotificationsPage() {
           ) : (
             <ul className="divide-border/70 divide-y">
               {rows.map((n) => (
-                <li
+                <ListRow
                   key={n.id}
-                  className="group hover:bg-accent/30 flex items-start gap-3 px-4 py-3.5 transition-colors duration-150"
+                  className="group hover:bg-accent/30 transition-colors duration-150"
                 >
                   <span
                     aria-hidden="true"
@@ -314,7 +315,7 @@ export default function NotificationsPage() {
                       </button>
                     )}
                   </div>
-                </li>
+                </ListRow>
               ))}
             </ul>
           )}
