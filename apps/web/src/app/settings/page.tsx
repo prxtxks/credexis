@@ -58,6 +58,7 @@ export default function SettingsGeneralPage() {
             footerAction={
               <Button
                 size="sm"
+                variant="brand"
                 disabled={!nameDirty || fullName.trim().length === 0 || update.isPending}
                 onClick={() => update.mutate({ fullName: fullName.trim() })}
               >

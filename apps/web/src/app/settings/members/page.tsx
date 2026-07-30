@@ -134,6 +134,7 @@ export default function MembersPage() {
               footerAction={
                 <Button
                   size="sm"
+                  variant="brand"
                   onClick={() => createInvite.mutate({ email, role })}
                   disabled={createInvite.isPending || !email.includes("@")}
                 >

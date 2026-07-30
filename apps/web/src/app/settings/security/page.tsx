@@ -136,6 +136,7 @@ export default function SettingsSecurityPage() {
             footerAction={
               <Button
                 size="sm"
+                variant="brand"
                 disabled={pwSaving || pw.length === 0 || pw2.length === 0}
                 onClick={() => void changePassword()}
               >

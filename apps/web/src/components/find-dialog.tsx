@@ -80,7 +80,7 @@ export function FindDialog({
         showCloseButton={false}
         // Anchored where the sidebar's Find sits — the panel expands in
         // place over the rail (reference behavior), not center-screen.
-        className="top-3 left-3 max-w-[calc(100vw-1.5rem)] translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-xl p-0 data-[state=open]:slide-in-from-left-1 sm:max-w-md"
+        className="top-3 left-3 max-w-[calc(100vw-1.5rem)] translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-xl p-0 outline-none focus-visible:outline-none data-[state=open]:slide-in-from-left-1 sm:max-w-md"
       >
         <DialogTitle className="sr-only">Find a page or deal</DialogTitle>
         <div className="flex items-center gap-2.5 border-b border-border px-4">
@@ -107,7 +107,7 @@ export function FindDialog({
             }}
             placeholder="Find a page or deal…"
             aria-label="Find a page or deal"
-            className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="placeholder:text-muted-foreground h-12 w-full bg-transparent text-sm outline-none focus-visible:outline-none"
           />
           <kbd className="rounded-md border border-border px-1.5 py-0.5 text-[11px] text-muted-foreground">
             esc
