@@ -16,7 +16,6 @@ import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -51,15 +50,15 @@ export default function ResetPasswordPage() {
         <div className="flex justify-center">
           <Logo size="md" />
         </div>
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+        <section className="glass-card rounded-xl p-5">
+          <div className="mb-4">
+            <h1 className="flex items-center gap-2 text-base font-semibold">
               <KeyRound className="h-4 w-4 text-primary" />
               Set a new password
-            </CardTitle>
-            <CardDescription>At least 8 characters.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">At least 8 characters.</p>
+          </div>
+          <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="password">New password</Label>
               <Input
@@ -86,8 +85,8 @@ export default function ResetPasswordPage() {
                 Update password
               </span>
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       </div>
     </div>
   );

@@ -17,11 +17,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
 import { AccountMenu } from "@/components/account-menu";
 import { FindDialog } from "@/components/find-dialog";
 import { Logo } from "@/components/logo";
 import { MobileNav } from "@/components/mobile-nav";
-import { NAV_MAIN, NAV_ORG, isActive, type NavItem } from "@/components/nav-config";
+import { NAV_MAIN, NAV_ORG, NAV_SETTINGS, isActive, type NavItem } from "@/components/nav-config";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { cn } from "@/lib/utils";
 
@@ -108,15 +109,51 @@ export function AppShell({
           </button>
         </div>
 
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
-          {NAV_MAIN.map((item) => (
-            <NavRow key={item.href} item={item} pathname={pathname} />
-          ))}
-          <div className="my-2 border-t border-sidebar-border" />
-          {NAV_ORG.map((item) => (
-            <NavRow key={item.href} item={item} pathname={pathname} />
-          ))}
-        </nav>
+        {/* Contextual takeover (02 §3.1): inside /settings the rail becomes
+            the settings sub-nav under a back header, as the reference does. */}
+        {pathname.startsWith("/settings") ? (
+          <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
+            <Link
+              href="/"
+              className="text-foreground mb-2 flex h-9 items-center gap-1 rounded-lg px-1.5 text-sm font-semibold transition-colors duration-150 hover:bg-sidebar-accent/60"
+            >
+              <ChevronLeft aria-hidden="true" className="size-4 shrink-0" />
+              <span className="flex-1 text-center">Settings</span>
+              <span aria-hidden="true" className="size-4" />
+            </Link>
+            {NAV_SETTINGS.map((item) => {
+              const active =
+                item.href === "/settings"
+                  ? pathname === "/settings"
+                  : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex h-9 items-center rounded-lg px-2.5 text-sm font-medium transition-colors duration-150",
+                    active
+                      ? "bg-sidebar-accent text-foreground"
+                      : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        ) : (
+          <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
+            {NAV_MAIN.map((item) => (
+              <NavRow key={item.href} item={item} pathname={pathname} />
+            ))}
+            <div className="my-2 border-t border-sidebar-border" />
+            {NAV_ORG.map((item) => (
+              <NavRow key={item.href} item={item} pathname={pathname} />
+            ))}
+          </nav>
+        )}
 
         {/* Identity footer — the reference anchors the person bottom-left,
             with notifications beside them. */}
