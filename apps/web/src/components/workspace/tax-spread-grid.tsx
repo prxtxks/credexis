@@ -3,9 +3,13 @@
 /**
  * Tax Spread grid (M8.3 tax tab, ADR-0002 follow-up): registry-line rows
  * grouped by form family × period columns. Renders integer-cent strings
- * only (Iron Law #3 - zero client math). Derived registry-only lines
- * (AGI, taxable income) carry a "derived" chip: they exist for G4/G5
- * verification and never aggregate into statements.
+ * only (Iron Law #3 - zero client math). Registry-only lines (no taxonomy
+ * placement - line 1a when 1c is the mapped line, AGI, taxable income)
+ * carry a "tax-only" chip: they exist for G4/G5 verification and never
+ * aggregate into statements. The chip was renamed from "derived" (M13.2,
+ * first-deal walkthrough): these values are read off the page, and
+ * telling an underwriter otherwise inverts the truth - "derived" is
+ * reserved for values the engine computes.
  */
 
 import { useMemo } from "react";
@@ -15,7 +19,12 @@ import { AllCommunityModule, ModuleRegistry, type ColDef } from "ag-grid-communi
 import { trpc } from "@/lib/trpc/client";
 import { formatCents } from "@/lib/money-display";
 import type { CellSelection } from "./spread-grid";
-import { credexisGridTheme, GRID_HEADER_HEIGHT, GRID_ROW_HEIGHT } from "@/lib/ag-grid-theme";
+import {
+  credexisGridTheme,
+  GRID_HEADER_HEIGHT,
+  GRID_ROW_HEIGHT,
+  moneyColumnWidth,
+} from "@/lib/ag-grid-theme";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -99,19 +108,27 @@ export function TaxSpreadGrid({
             >
               {p.value ?? ""}
               {d.registryOnly ? (
-                <span className="rounded bg-muted px-1 text-[10px] text-muted-foreground">
-                  derived
+                <span
+                  title="On the tax form only - no statement placement"
+                  className="rounded bg-muted px-1 text-[10px] text-muted-foreground"
+                >
+                  tax-only
                 </span>
               ) : null}
             </span>
           );
         },
       },
-      ...data.periods.map(
-        (p): ColDef<TaxGridRow> => ({
+      ...data.periods.map((p): ColDef<TaxGridRow> => {
+        // Sized to the longest rendered value - currency never clips (M13.2).
+        const maxChars = rows.reduce((m, r) => {
+          const c = r.cells[p];
+          return c ? Math.max(m, c.display.length + (c.verified ? 5 : 0)) : m;
+        }, p.length);
+        return {
           colId: p,
           headerName: p,
-          width: 130,
+          width: moneyColumnWidth(maxChars),
           type: "rightAligned",
           valueGetter: (params) => {
             const cell = params.data?.cells[p];
@@ -129,8 +146,8 @@ export function TaxSpreadGrid({
             const base = `${cell.status} · confidence ${cell.confidence ?? "-"}`;
             return cell.verified ? `${base} · verified by IRS transcript` : base;
           },
-        }),
-      ),
+        };
+      }),
     ];
     return { rowData: rows, columnDefs: cols };
   }, [spread.data]);

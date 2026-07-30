@@ -23,7 +23,12 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { formatCents } from "@/lib/money-display";
 import { formatRatio } from "./metrics-strip";
-import { credexisGridTheme, GRID_HEADER_HEIGHT, GRID_ROW_HEIGHT } from "@/lib/ag-grid-theme";
+import {
+  credexisGridTheme,
+  GRID_HEADER_HEIGHT,
+  GRID_ROW_HEIGHT,
+  moneyColumnWidth,
+} from "@/lib/ag-grid-theme";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -200,11 +205,16 @@ export function SpreadGrid({
           );
         },
       },
-      ...[...periodSet].sort().map(
-        (p): ColDef<GridRow> => ({
+      ...[...periodSet].sort().map((p): ColDef<GridRow> => {
+        // Sized to the longest rendered value - currency never clips (M13.2).
+        const maxChars = rows.reduce((m, r) => {
+          const c = r.cells[p];
+          return c ? Math.max(m, c.display.length + (c.verified ? 5 : 2)) : m;
+        }, p.length);
+        return {
           colId: p,
           headerName: p,
-          width: 130,
+          width: moneyColumnWidth(maxChars),
           type: "rightAligned",
           valueGetter: (params) => {
             const cell = params.data?.cells[p];
@@ -235,8 +245,8 @@ export function SpreadGrid({
             const base = `${cell.status} · confidence ${cell.confidence ?? "-"}`;
             return cell.verified ? `${base} · verified by IRS transcript` : base;
           },
-        }),
-      ),
+        };
+      }),
     ];
     return { rowData: rows, columnDefs: cols };
   }, [spread.data, collapsed, statement]);
