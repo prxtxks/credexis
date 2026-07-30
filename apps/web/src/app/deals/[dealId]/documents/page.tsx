@@ -207,7 +207,7 @@ export default function DocumentsPage() {
               <PageLoading />
             </div>
           ) : rows.length === 0 ? (
-            <div className="glass-card rounded-xl px-6 py-12 text-center text-sm text-muted-foreground">
+            <div className="glass-card rounded-lg px-6 py-12 text-center text-sm text-muted-foreground">
               No documents yet — upload the deal&apos;s tax returns and statements above.
             </div>
           ) : (

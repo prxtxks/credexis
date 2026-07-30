@@ -43,8 +43,8 @@ export default function SettingsNotificationsPage() {
 
   return (
     <AppShell breadcrumb="Settings · Notifications">
-      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
-        <h1 className="text-display">Notifications</h1>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <h1 className="text-title">Notifications</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           How Credexis reaches you about approvals, documents, and borrower activity.
         </p>

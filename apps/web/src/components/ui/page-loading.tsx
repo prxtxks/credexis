@@ -1,39 +1,41 @@
-/**
- * The ONE loading surface. Every route uses it, at the same offset, so
- * navigation never jumps.
- *
- * The bug this fixes: `deals/[dealId]/loading.tsx` rendered a centred loader
- * while the route segment loaded, then the page's own `isLoading` branch
- * rendered a second one with different padding — so opening the review queue
- * showed a spinner mid-screen, then snapped it to the upper third. Two
- * loaders in two places is one loader too many.
- *
- * Top-aligned on purpose: the content that replaces it starts at the top of
- * the container, so a centred spinner guarantees a jump no matter how the
- * padding is tuned.
- */
+import { Skeleton } from "@/components/ui/skeleton";
 
-export function PageLoading({ label = "Loading…" }: { label?: string }) {
+/**
+ * The ONE loading surface (ui-17-feedback: skeletons, not spinners — the
+ * reference paints the page's anatomy immediately and pulses it). Every
+ * route that hasn't shipped a bespoke skeleton uses this generic page
+ * shape: a title line, a toolbar line, then a grouped list surface.
+ *
+ * Top-aligned on purpose: the content that replaces it starts at the top
+ * of the container, so the swap moves nothing (the two-loaders-two-offsets
+ * bug this file originally fixed stays fixed — and the doubled
+ * "Loading…"/"Loading workspace…" text is gone with the label).
+ *
+ * `data-slot="page-skeleton"` is the outage-detector hook: prod-smoke's
+ * expectNoStuckFallback asserts ZERO of these remain after hydration.
+ */
+export function PageLoading({ label = "Loading" }: { label?: string }) {
   return (
     <div
       role="status"
-      aria-live="polite"
-      // pt-16 matches the vertical rhythm of a page's first content block, so
-      // the swap from loader to content moves nothing.
-      className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 pt-16 sm:px-6 lg:px-8"
+      aria-label={label}
+      data-slot="page-skeleton"
+      className="mx-auto w-full max-w-5xl px-4 pt-8 sm:px-6 lg:px-8"
     >
-      <div className="grid-loader" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
+      <Skeleton className="h-7 w-48" />
+      <Skeleton className="mt-2 h-4 w-72" />
+      <div className="border-border bg-card mt-6 rounded-lg border">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="border-border/70 flex items-center gap-3 border-b px-4 py-3.5 last:border-b-0"
+          >
+            <Skeleton className="size-2 rounded-full" />
+            <Skeleton className="h-4 flex-1" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        ))}
       </div>
-      <p className="text-muted-foreground text-[13px]">{label}</p>
     </div>
   );
 }

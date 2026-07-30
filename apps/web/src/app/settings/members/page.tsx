@@ -82,14 +82,14 @@ export default function MembersPage() {
 
   return (
     <AppShell breadcrumb="Settings · Members">
-      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
         <PageHeader
           title="Members & invites"
           description="Delegated access on the role lattice — originators originate, underwriters decide."
         />
 
         {canManage ? (
-          <section className="glass-card mb-6 rounded-xl p-4">
+          <section className="glass-card mb-6 rounded-lg p-4">
             <h2 className="mb-3 text-sm font-semibold">Invite a member</h2>
             <div className="flex flex-wrap items-end gap-3">
               <div className="min-w-56 flex-1 space-y-1.5">
@@ -140,7 +140,7 @@ export default function MembersPage() {
           </section>
         ) : null}
 
-        <section className="glass-card rounded-xl p-4">
+        <section className="glass-card rounded-lg p-4">
           <h2 className="mb-3 text-sm font-semibold">Members ({(members.data ?? []).length})</h2>
           <div className="divide-y divide-border/60">
             {(members.data ?? []).map((m) => (

@@ -84,7 +84,7 @@ export default function DealOverviewPage() {
     >
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
         {/* ── State hero ── */}
-        <section className="glass-card rounded-xl">
+        <section className="glass-card rounded-lg">
           <div className="border-border/70 flex items-center justify-between gap-3 border-b px-5 py-3.5">
             <h1 className="text-heading">Underwriting state</h1>
             <div className="flex items-center gap-2">
@@ -158,7 +158,7 @@ export default function DealOverviewPage() {
         {/* ── Widgets ── */}
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
           {/* Checklist — the reference's Production Checklist pattern */}
-          <section className="glass-card rounded-xl p-4">
+          <section className="glass-card rounded-lg p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-heading">Document checklist</h2>
               <span className="text-muted-foreground text-[13px] tabular-nums">
@@ -203,7 +203,7 @@ export default function DealOverviewPage() {
           </section>
 
           {/* Extraction — real pipeline totals for this deal */}
-          <section className="glass-card rounded-xl p-4">
+          <section className="glass-card rounded-lg p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-heading">Extraction</h2>
               <Link
@@ -254,7 +254,7 @@ export default function DealOverviewPage() {
           </section>
 
           {/* Validation — open issues by gate */}
-          <section className="glass-card rounded-xl p-4">
+          <section className="glass-card rounded-lg p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-heading">Validation</h2>
               <Link
@@ -321,7 +321,7 @@ export default function DealOverviewPage() {
               </div>
             </div>
           ) : (
-            <ul className="glass-card divide-border/70 divide-y rounded-xl">
+            <ul className="glass-card divide-border/70 divide-y rounded-lg">
               {(docs.data ?? []).slice(0, 5).map((d) => (
                 <li key={d.id}>
                   <Link

@@ -247,7 +247,7 @@ export function AppShell({
             </span>
           </div>
         </header>
-        <div className="min-w-0 flex-1 max-md:pb-24">{children}</div>
+        <div className="gradient-mesh min-w-0 flex-1 max-md:pb-24">{children}</div>
       </div>
 
       {/* ── Mobile: floating Find/menu pill + nav sheet ── */}
