@@ -20,7 +20,7 @@
  */
 
 import Link from "next/link";
-import { LogOut, Moon, Settings, Sun, UserRound } from "lucide-react";
+import { Bug, LifeBuoy, LogOut, Moon, Settings, Sun, UserRound } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { useIsDark } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -153,6 +153,20 @@ export function AccountMenu({ variant = "avatar" }: { variant?: "avatar" | "row"
             <Link href="/settings">
               <Settings />
               <span>Settings</span>
+            </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem asChild className="rounded-lg text-[13px]">
+            <Link href="/support">
+              <LifeBuoy />
+              <span>Support</span>
+            </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem asChild className="rounded-lg text-[13px]">
+            <Link href="/support?topic=bug">
+              <Bug />
+              <span>Feedback / report a bug</span>
             </Link>
           </DropdownMenuItem>
 
