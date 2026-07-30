@@ -273,6 +273,9 @@ importers:
 
   packages/eval:
     dependencies:
+      '@credexis/corpus-tools':
+        specifier: workspace:*
+        version: link:../corpus-tools
       '@credexis/engine':
         specifier: workspace:*
         version: link:../engine

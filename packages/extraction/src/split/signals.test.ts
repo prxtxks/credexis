@@ -186,3 +186,96 @@ describe("false-confidence probes (2026-07-30 adversarial review)", () => {
     expect(s.formFamily).toBeNull();
   });
 });
+
+describe("IRS corpus sweep regressions (corpus-1: 69 docs / 1153 pages, 2026-07-30)", () => {
+  // 2019-era revisions title schedules "(Form 1040 or 1040-SR)" - those
+  // pages fell through to the bare-1040 pattern before the sweep.
+  it("2019 '(Form 1040 or 1040-SR)' schedule pages classify as the schedule", () => {
+    expect(
+      detectPageSignals("Schedule C (Form 1040 or 1040-SR) 2019 Page 2 Part III Cost of Goods Sold")
+        .formFamily,
+    ).toBe("1040_SCH_C");
+    const s1 = detectPageSignals(
+      "SCHEDULE 1 (Form 1040 or 1040-SR) Department of the Treasury " +
+        "Additional Income and Adjustments to Income OMB No. 1545-0074",
+    );
+    expect(s1.formFamily).toBe("1040_SCH_1");
+    expect(s1.confidence).toBeCloseTo(0.98);
+  });
+
+  // W-2 PDFs ship instruction pages that discuss "the Form 1040
+  // instructions" - references, not identity. They abstained after the fix.
+  it("W-2 employee-instruction pages do not classify as 1040", () => {
+    const s = detectPageSignals(
+      "Notice to Employee Do you have to file? Refer to the Form 1040 instructions " +
+        "to determine if you are required to file a tax return.",
+    );
+    expect(s.formFamily).toBeNull();
+  });
+
+  // Attachment cover forms cite the returns they attach to - verbatim
+  // phrasings from Form 8916-A and Form 8453-CORP in the ATS bundles.
+  it("forms citing their parent returns do not classify as the parent", () => {
+    expect(
+      detectPageSignals(
+        "Form 8916-A (Rev. November 2019) Department of the Treasury " +
+          "Supplemental Attachment to Schedule M-3 Attach to Schedule M-3 for " +
+          "Form 1065, 1120, 1120-L, 1120-PC, or 1120-S. OMB No. 1545-0123",
+      ).formFamily,
+    ).toBeNull();
+    expect(
+      detectPageSignals(
+        "Form 8453-CORP (December 2022) E-file Declaration for Corporations " +
+          "File electronically with Form 1120, 1120-F, or 1120-S. OMB No. 1545-0123",
+      ).formFamily,
+    ).toBeNull();
+  });
+
+  // Form 1120-F is a DIFFERENT, unsupported form - a 42-page 1120-F return
+  // classified as 1120 at 0.98 before the suffix lookahead.
+  it("Form 1120-F pages abstain instead of classifying as 1120", () => {
+    expect(
+      detectPageSignals("Form 1120-F (2023) Page 2 Additional Information").formFamily,
+    ).toBeNull();
+    expect(
+      detectPageSignals(
+        "Form 1120-F U.S. Income Tax Return of a Foreign Corporation OMB No. 1545-0123",
+      ).formFamily,
+    ).toBeNull();
+  });
+
+  it("Form 1040-SR is the 1040 family; 1040-NR and 1040-X are not", () => {
+    expect(
+      detectPageSignals("Form 1040-SR U.S. Tax Return for Seniors 2023 OMB No. 1545-0074")
+        .formFamily,
+    ).toBe("1040");
+    expect(
+      detectPageSignals("Form 1040-NR U.S. Nonresident Alien Income Tax Return").formFamily,
+    ).toBeNull();
+    expect(
+      detectPageSignals("Form 1040-X Amended U.S. Individual Income Tax Return").formFamily,
+    ).toBeNull();
+  });
+
+  // The current W-2 revision prints OMB 1545-0029 (the W-2/W-3 series
+  // number), and the W-2 title sits at the BOTTOM of the form - the OMB
+  // number is the working signal.
+  it("current-revision W-2 classifies from OMB 1545-0029", () => {
+    const s = detectPageSignals(
+      "22222 a Employee's social security number OMB No. 1545-0029 " +
+        "b Employer identification number (EIN) 1 Wages, tips, other compensation",
+    );
+    expect(s.formFamily).toBe("W2");
+    expect(s.confidence).toBeCloseTo(0.95);
+  });
+
+  // An unrecognized IRS page must not be keyword-guessed as a CPA
+  // statement: 1120-F's Schedule L is not a freeform balance sheet.
+  it("IRS-marked pages never fall to statement keywords", () => {
+    const s = detectPageSignals(
+      "Form 1120-F (2023) Page 5 SECTION II Schedule L Balance Sheets per Books",
+    );
+    expect(s.formFamily).toBeNull();
+    expect(s.confidence).toBe(0);
+  });
+});

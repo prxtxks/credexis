@@ -89,6 +89,20 @@ if invite links on production still show localhost, redeploy.
    signed-in `/login` redirect drops `?next=` (memory:
    middleware-login-next-param); CI minutes burn fast at this PR cadence.
 
+## Signal-sweep corpus (corpus-1, 2026-07-30)
+
+The deterministic split signals are adversarially tested against 69 public
+IRS documents / 1153 pages: every prior-year revision of each supported
+form plus the IRS's MeF ATS FILLED test scenarios (realistic complete
+returns, zero PII). `pnpm --filter @credexis/eval signals download` fetches
+them (gitignored, re-downloadable); `... signals run` sweeps and exits 1 on
+any confident wrong-family hit. The sweep found and fixed four bug classes
+(citation tokens, "(Form 1040 or 1040-SR)" titles, the 1120-F/1040-NR
+suffix boundary, the current W-2's changed OMB number) - all locked as unit
+regressions in signals.test.ts. Current state: 0 wrong, 0 suspect.
+Public docs are NEVER counted in accuracy claims (Iron Law #9) - the
+golden corpus of real labeled bundles remains the accuracy measure.
+
 ## Scratch data
 
 Tenant "Meridian Bank SBA" / ui-audit@credexis.test (deterministic c0ffee

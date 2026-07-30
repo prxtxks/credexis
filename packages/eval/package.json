@@ -15,9 +15,11 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "eval": "node dist/run-eval.js",
+    "signals": "node dist/signal-sweep/cli.js",
     "clean": "rm -rf dist .turbo *.tsbuildinfo"
   },
   "dependencies": {
+    "@credexis/corpus-tools": "workspace:*",
     "@credexis/engine": "workspace:*",
     "@credexis/extraction": "workspace:*",
     "@credexis/pipeline": "workspace:*",
