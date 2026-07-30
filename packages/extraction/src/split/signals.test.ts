@@ -109,3 +109,80 @@ describe("real-document regressions (2026-07-19 testing-docs trial)", () => {
     expect(s.confidence).toBeLessThan(0.98);
   });
 });
+
+describe("false-confidence probes (2026-07-30 adversarial review)", () => {
+  // A real 1120-S page 1 prints "Compensation of officers" as LINE 7 and
+  // "(attach Form 4562)" as a line-14 citation. Before this suite existed,
+  // the page classified as its own 1125-E attachment at 0.98 - the
+  // attachment title-phrase alternate matched a parent line label and the
+  // family-shared OMB "corroborated" it. Line labels and citations are not
+  // identity.
+  it("a real 1120-S page 1 is an 1120-S, not its own attachment", () => {
+    const s = detectPageSignals(
+      "Form 1120-S U.S. Income Tax Return for an S Corporation\n" +
+        "OMB No. 1545-0123  2023\n" +
+        "1a Gross receipts or sales\n" +
+        "2 Cost of goods sold (attach Form 1125-A)\n" +
+        "3 Gross profit\n" +
+        "7 Compensation of officers\n" +
+        "8 Salaries and wages\n" +
+        "14 Depreciation not claimed on Form 1125-A or elsewhere (attach Form 4562)",
+    );
+    expect(s.formFamily).toBe("1120S");
+    expect(s.confidence).toBeCloseTo(0.98);
+  });
+
+  it("a real 1120 page 1 is an 1120 despite officer-comp and 4562 citations", () => {
+    const s = detectPageSignals(
+      "Form 1120 U.S. Corporation Income Tax Return OMB No. 1545-0123 2023\n" +
+        "12 Compensation of officers (see instructions - attach Form 1125-E)\n" +
+        "20 Depreciation from Form 4562 not claimed elsewhere (attach Form 4562)",
+    );
+    expect(s.formFamily).toBe("1120");
+  });
+
+  // A CPA-prepared P&L lists "Depreciation and amortization" as an expense
+  // line. Before this suite it classified as Form 4562 at 0.9 - a generic
+  // accounting phrase acting as an IRS identity signal.
+  it("a CPA P&L with a depreciation line is a statement, not Form 4562", () => {
+    const s = detectPageSignals(
+      "ACME HOLDINGS LLC\nStatement of Operations\nFor the Year Ended December 31, 2023\n" +
+        "Revenue\nCost of Goods Sold\nGross Profit\nOperating Expenses\n" +
+        "Depreciation and amortization\nRent\nNet Income",
+    );
+    expect(s.formFamily).toBe("PNL");
+    expect(s.confidence).toBeCloseTo(0.75);
+  });
+
+  // The real attachments must still classify by their own printed headers.
+  it("a real 1125-E page still classifies", () => {
+    const s = detectPageSignals(
+      "Form 1125-E Compensation of Officers OMB No. 1545-0123\nAttach to Form 1120, 1120-C, 1120-F, or 1120-S.",
+    );
+    expect(s.formFamily).toBe("1125E");
+    expect(s.confidence).toBeCloseTo(0.98);
+  });
+
+  it("a real 4562 page still classifies", () => {
+    const s = detectPageSignals(
+      "Form 4562 Depreciation and Amortization (Including Information on Listed Property) OMB No. 1545-0172 2023",
+    );
+    expect(s.formFamily).toBe("4562");
+  });
+
+  // A citation is never an identity: a cover note pointing at an attached
+  // form must fall through to the LLM/review, not classify.
+  it("a page that only cites a form does not classify as it", () => {
+    const s = detectPageSignals("See attached Form 4562 for the depreciation detail.");
+    expect(s.formFamily).toBeNull();
+    expect(s.confidence).toBe(0);
+  });
+
+  // Identity lives in the header region. A form number buried deep in body
+  // text (an engagement letter discussing the return) is not a header.
+  it("a form number outside the header region does not classify", () => {
+    const filler = "This letter summarizes the services provided during the engagement. ".repeat(8);
+    const s = detectPageSignals(`${filler}We prepared and filed Form 1120-S for the year.`);
+    expect(s.formFamily).toBeNull();
+  });
+});
