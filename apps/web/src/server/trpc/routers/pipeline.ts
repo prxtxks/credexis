@@ -74,6 +74,44 @@ export const pipelineRouter = router({
   }),
 
   /**
+   * Daily usage series, last 30 days (ui-19 Usage graphs): the SERVER
+   * aggregates runs/pages/spend per day (Iron Law #3 — the client draws,
+   * it never sums). Days with no runs are zero-filled so the chart's
+   * x-axis is honest about quiet days.
+   */
+  usageSeries: protectedProcedure.query(async ({ ctx }) => {
+    const since = new Date(Date.now() - 30 * 24 * 3600 * 1000);
+    const { data, error } = await ctx.supabase
+      .from("extraction_runs")
+      .select("started_at, page_count, cost_micro_usd, status")
+      .gte("started_at", since.toISOString())
+      .limit(5000);
+    if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+
+    const byDay = new Map<string, { runs: number; failed: number; pages: number; micro: bigint }>();
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(since.getTime() + i * 24 * 3600 * 1000);
+      byDay.set(d.toISOString().slice(0, 10), { runs: 0, failed: 0, pages: 0, micro: 0n });
+    }
+    for (const r of data ?? []) {
+      const key = String(r.started_at).slice(0, 10);
+      const b = byDay.get(key);
+      if (!b) continue;
+      b.runs += 1;
+      if (r.status === "failed") b.failed += 1;
+      b.pages += (r.page_count as number | null) ?? 0;
+      b.micro += BigInt(String(r.cost_micro_usd ?? 0));
+    }
+    return [...byDay.entries()].map(([date, b]) => ({
+      date,
+      runs: b.runs,
+      failed: b.failed,
+      pages: b.pages,
+      microUsd: b.micro.toString(),
+    }));
+  }),
+
+  /**
    * Org-wide run log (ui-18 /logs, 02-VERCEL-DERIVATION §4): newest-first
    * extraction runs with optional stage/status filters. RLS scopes to the
    * caller's tenant; read-only.

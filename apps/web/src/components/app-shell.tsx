@@ -220,7 +220,7 @@ export function AppShell({
             with notifications beside them. */}
         <div className="flex items-center gap-1.5 border-t border-sidebar-border p-3">
           <AccountMenu variant="row" />
-          <NotificationsBell />
+          <NotificationsBell side="up" />
         </div>
       </aside>
 

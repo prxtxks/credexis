@@ -194,7 +194,7 @@ export default function SettingsSecurityPage() {
             description="Require a one-time code from an authenticator app at sign-in."
             footer="TOTP enrollment ships next (m12-3-mfa-enroll); org-wide enforcement follows it."
             footerAction={
-              <Button size="sm" disabled>
+              <Button size="sm" variant="brand" disabled>
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck className="h-3.5 w-3.5" />
                   Set up authenticator

@@ -45,13 +45,15 @@ export function FindDialog({
     const q = query.trim().toLowerCase();
     const nav: { label: string; meta: string; href: string }[] = [
       { label: "Deals", meta: "Page", href: "/" },
-      { label: "Costs", meta: "Page", href: "/costs" },
-      { label: "Members", meta: "Settings", href: "/settings/members" },
+      { label: "Logs", meta: "Page", href: "/logs" },
+      { label: "Usage", meta: "Page", href: "/costs" },
+      { label: "Members", meta: "Page", href: "/members" },
+      { label: "Audit log", meta: "Page", href: "/audit" },
+      { label: "Support", meta: "Page", href: "/support" },
+      { label: "Notifications", meta: "Page", href: "/notifications" },
       { label: "Settings · General", meta: "Settings", href: "/settings" },
-      { label: "Notifications", meta: "Settings", href: "/settings/notifications" },
+      { label: "Notification settings", meta: "Settings", href: "/settings/notifications" },
       { label: "Security", meta: "Settings", href: "/settings/security" },
-      { label: "Audit log", meta: "Settings", href: "/settings/audit" },
-      { label: "Plan & Usage", meta: "Settings", href: "/settings/plan" },
     ];
     const deals = (board.data ?? []).map((d) => ({
       label: d.name,
@@ -59,7 +61,7 @@ export function FindDialog({
       href: `/deals/${d.id}/overview`,
     }));
     const all = [...nav, ...deals];
-    return (q === "" ? all : all.filter((i) => i.label.toLowerCase().includes(q))).slice(0, 9);
+    return (q === "" ? all : all.filter((i) => i.label.toLowerCase().includes(q))).slice(0, 7);
   }, [board.data, query]);
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export function FindDialog({
         showCloseButton={false}
         // Anchored where the sidebar's Find sits — the panel expands in
         // place over the rail (reference behavior), not center-screen.
-        className="top-3 left-3 max-w-[calc(100vw-1.5rem)] translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-xl p-0 outline-none focus-visible:outline-none data-[state=open]:slide-in-from-left-1 sm:max-w-md"
+        className="top-3 left-3 w-96 max-w-[calc(100vw-1.5rem)] translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-xl p-0 outline-none focus-visible:outline-none data-[state=open]:slide-in-from-left-1 sm:max-w-sm"
       >
         <DialogTitle className="sr-only">Find a page or deal</DialogTitle>
         <div className="flex items-center gap-2.5 border-b border-border px-4">
@@ -114,9 +116,12 @@ export function FindDialog({
           </kbd>
         </div>
 
-        <div className="max-h-80 overflow-y-auto p-1.5">
-          {board.isLoading ? (
-            <p className="px-3 py-6 text-center text-[13px] text-muted-foreground">Loading…</p>
+        <div className="max-h-72 overflow-y-auto p-1">
+          {/* Nav entries are static — render them instantly; deal rows join
+              when the board query lands (never hide known results behind a
+              loading state). */}
+          {matches.length === 0 && board.isLoading ? (
+            <p className="text-muted-foreground px-3 py-6 text-center text-[13px]">Loading…</p>
           ) : matches.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-3 py-8 text-center">
               <span className="flex size-10 items-center justify-center rounded-[10px] border border-border bg-popover">
@@ -135,7 +140,7 @@ export function FindDialog({
                     onClick={() => go(d.href)}
                     onMouseEnter={() => setActive(i)}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm transition-colors duration-150",
+                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors duration-150",
                       i === active ? "bg-accent text-foreground" : "text-foreground/80",
                     )}
                   >

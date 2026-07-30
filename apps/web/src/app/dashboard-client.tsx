@@ -985,7 +985,7 @@ function ActivityRail() {
         )}
         <div className="border-border/70 border-t py-2">
           <Link
-            href="/settings/audit"
+            href="/audit"
             className="text-muted-foreground hover:text-foreground text-[13px] transition-colors duration-150"
           >
             Open audit log →

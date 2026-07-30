@@ -102,7 +102,7 @@ export default function SettingsGeneralPage() {
             description="The workspace name your team and borrowers see."
             footer="Editing ships with the owner write path (update_org_settings) — these fields are a preview, not a save."
             footerAction={
-              <Button size="sm" disabled>
+              <Button size="sm" variant="brand" disabled>
                 Save
               </Button>
             }
