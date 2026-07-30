@@ -33,8 +33,10 @@ import {
   LayoutGrid,
   ListFilter,
   List as ListIcon,
+  MoreHorizontal,
   Plus,
   Search,
+  Star,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { checklistFor } from "@/lib/doc-checklist";
@@ -77,6 +79,31 @@ type BoardSort = "activity" | "name";
 type BoardView = "grid" | "list";
 
 const VIEW_STORAGE_KEY = "credexis-deals-view";
+const PIN_STORAGE_KEY = "credexis-pinned-deals";
+
+/** Pinned deals (ui-17: Pratik queue item) — a per-browser preference, so
+ *  localStorage is the right home; ordering is presentation, not truth. */
+function usePinnedDeals() {
+  const [pinned, setPinned] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PIN_STORAGE_KEY);
+      if (raw) setPinned(new Set(JSON.parse(raw) as string[]));
+    } catch {
+      /* corrupt store → start empty */
+    }
+  }, []);
+  function toggle(dealId: string) {
+    setPinned((prev) => {
+      const next = new Set(prev);
+      if (next.has(dealId)) next.delete(dealId);
+      else next.add(dealId);
+      localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  }
+  return { pinned, toggle };
+}
 
 const ENTITY_KINDS = ["applicant", "target", "guarantor", "spouse", "epc", "oc"] as const;
 const DEAL_TYPES = ["business_acquisition", "working_capital", "real_estate", "refinance"] as const;
@@ -191,6 +218,7 @@ export default function DashboardClient() {
   const [view, setView] = useState<BoardView>("grid");
   const [search, setSearch] = useState("");
   const utils = trpc.useUtils();
+  const { pinned, toggle: togglePin } = usePinnedDeals();
 
   // View preference survives reloads; reading localStorage in an effect
   // keeps SSR markup stable.
@@ -231,10 +259,10 @@ export default function DashboardClient() {
     let rows = filter === "all" ? deals : deals.filter((d) => d.status === filter);
     if (query !== "") rows = rows.filter((d) => d.name.toLowerCase().includes(query));
     if (sort === "name") rows = [...rows].sort((a, b) => a.name.localeCompare(b.name));
-    // "activity" keeps server order (updated_at desc comes newest-first from
-    // created_at ordering; row order is presentation, not truth).
-    return rows;
-  }, [deals, filter, query, sort]);
+    // "activity" keeps server order; pinned deals float first either way
+    // (stable partition — presentation, not truth).
+    return [...rows.filter((d) => pinned.has(d.id)), ...rows.filter((d) => !pinned.has(d.id))];
+  }, [deals, filter, query, sort, pinned]);
 
   const filterActive = filter !== "all" || sort !== "activity";
 
@@ -428,13 +456,23 @@ export default function DashboardClient() {
             ) : view === "grid" ? (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                 {matched.map((d) => (
-                  <DealGridCard key={d.id} deal={d} />
+                  <DealGridCard
+                    key={d.id}
+                    deal={d}
+                    pinned={pinned.has(d.id)}
+                    onTogglePin={() => togglePin(d.id)}
+                  />
                 ))}
               </div>
             ) : (
               <ul className="glass-card divide-border/70 divide-y rounded-lg">
                 {matched.map((d) => (
-                  <DealListRow key={d.id} deal={d} />
+                  <DealListRow
+                    key={d.id}
+                    deal={d}
+                    pinned={pinned.has(d.id)}
+                    onTogglePin={() => togglePin(d.id)}
+                  />
                 ))}
               </ul>
             )}
@@ -554,12 +592,20 @@ function DocRing({ have, need }: { have: number; need: number }) {
 }
 
 /** The desktop grid card — the reference's project-card anatomy, our facts. */
-function DealGridCard({ deal }: { deal: BoardDeal }) {
+function DealGridCard({
+  deal,
+  pinned,
+  onTogglePin,
+}: {
+  deal: BoardDeal;
+  pinned: boolean;
+  onTogglePin: () => void;
+}) {
   const { have, need } = docProgress(deal);
   return (
     <Link
       href={`/deals/${deal.id}/workspace`}
-      className="glass-card hover:border-primary/40 group block rounded-xl p-4 transition-[border-color] duration-150"
+      className="glass-card hover:border-primary/40 group block rounded-lg p-4 transition-[border-color] duration-150"
     >
       <div className="flex items-start gap-2.5">
         <span
@@ -570,11 +616,17 @@ function DealGridCard({ deal }: { deal: BoardDeal }) {
           )}
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] leading-tight font-semibold">{deal.name}</p>
+          <p className="flex items-center gap-1.5 truncate text-[15px] leading-tight font-semibold">
+            {pinned ? (
+              <Star aria-label="Pinned" className="fill-primary text-primary size-3 shrink-0" />
+            ) : null}
+            {deal.name}
+          </p>
           <p className="text-muted-foreground mt-0.5 text-[13px]">
             {deal.type.replaceAll("_", " ")}
           </p>
         </div>
+        <DealMenu deal={deal} pinned={pinned} onTogglePin={onTogglePin} />
         {deal.dscr ? (
           <span
             className="shrink-0 text-[15px] font-semibold tabular-nums"
@@ -613,7 +665,15 @@ function DealGridCard({ deal }: { deal: BoardDeal }) {
 }
 
 /** List view: one surface, hairline rows (the reference's list toggle). */
-function DealListRow({ deal }: { deal: BoardDeal }) {
+function DealListRow({
+  deal,
+  pinned,
+  onTogglePin,
+}: {
+  deal: BoardDeal;
+  pinned: boolean;
+  onTogglePin: () => void;
+}) {
   const { have, need } = docProgress(deal);
   return (
     <li>
@@ -625,7 +685,12 @@ function DealListRow({ deal }: { deal: BoardDeal }) {
           aria-hidden="true"
           className={cn("size-2 shrink-0 rounded-full", STATUS_DOT[deal.status] ?? "bg-border")}
         />
-        <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{deal.name}</span>
+        <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-[15px] font-medium">
+          {pinned ? (
+            <Star aria-label="Pinned" className="fill-primary text-primary size-3 shrink-0" />
+          ) : null}
+          {deal.name}
+        </span>
         <span className="text-muted-foreground shrink-0 text-[13px] max-lg:hidden">
           {deal.type.replaceAll("_", " ")}
         </span>
@@ -651,12 +716,49 @@ function DealListRow({ deal }: { deal: BoardDeal }) {
         <span className="text-muted-foreground w-16 shrink-0 text-right text-[11px]">
           {relativeTime(deal.updatedAt)}
         </span>
-        <ChevronRight
-          aria-hidden="true"
-          className="text-muted-foreground/40 group-hover:text-muted-foreground size-4 shrink-0 transition-colors duration-150"
-        />
+        <DealMenu deal={deal} pinned={pinned} onTogglePin={onTogglePin} />
       </Link>
     </li>
+  );
+}
+
+/**
+ * The per-deal overflow menu (Pratik queue: pin/delete). Lives INSIDE the
+ * row <Link>, so it stops propagation — opening the menu must not navigate.
+ * Delete is staged (no backend removes a deal yet) and says so.
+ */
+function DealMenu({
+  deal,
+  pinned,
+  onTogglePin,
+}: {
+  deal: BoardDeal;
+  pinned: boolean;
+  onTogglePin: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={`actions for ${deal.name}`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        className="hover:bg-accent data-[state=open]:bg-accent flex size-7 shrink-0 items-center justify-center rounded-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 data-[state=open]:opacity-100"
+      >
+        <MoreHorizontal aria-hidden="true" className="text-muted-foreground size-4" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" sideOffset={6} className="w-44 rounded-xl p-1.5">
+        <DropdownMenuItem className="rounded-lg text-[13px]" onSelect={() => onTogglePin()}>
+          <Star className={cn(pinned && "fill-primary text-primary")} />
+          <span>{pinned ? "Unpin deal" : "Pin deal"}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled className="rounded-lg text-[13px]">
+          <span className="flex-1">Delete deal</span>
+          <Pill tone="accent">Soon</Pill>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
