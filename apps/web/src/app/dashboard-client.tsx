@@ -30,6 +30,7 @@ import {
   ChevronDown,
   ChevronRight,
   FileText,
+  LayoutDashboard,
   LayoutGrid,
   ListFilter,
   List as ListIcon,
@@ -37,6 +38,7 @@ import {
   Plus,
   Search,
   Star,
+  Table2,
   X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
@@ -813,6 +815,7 @@ function DealGridCard({
             {deal.type.replaceAll("_", " ")}
           </p>
         </div>
+        <QuickOverview dealId={deal.id} dealName={deal.name} />
         <DealMenu deal={deal} pinned={pinned} onTogglePin={onTogglePin} />
         {deal.dscr ? (
           <span
@@ -903,9 +906,35 @@ function DealListRow({
         <span className="text-muted-foreground w-16 shrink-0 text-right text-[11px]">
           {relativeTime(deal.updatedAt)}
         </span>
+        <QuickOverview dealId={deal.id} dealName={deal.name} />
         <DealMenu deal={deal} pinned={pinned} onTogglePin={onTogglePin} />
       </Link>
     </li>
+  );
+}
+
+/**
+ * One-click overview jump, revealed on row/card hover - the card's own
+ * click opens the workspace, so both landings are a single click
+ * (Pratik: "both options"). Lives INSIDE the row <Link>: preventDefault
+ * keeps the card from also navigating.
+ */
+function QuickOverview({ dealId, dealName }: { dealId: string; dealName: string }) {
+  const router = useRouter();
+  return (
+    <button
+      type="button"
+      aria-label={`Open overview for ${dealName}`}
+      title="Open overview"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        router.push(`/deals/${dealId}/overview`);
+      }}
+      className="hover:bg-accent flex size-7 shrink-0 items-center justify-center rounded-md opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+    >
+      <LayoutDashboard aria-hidden="true" className="text-muted-foreground size-4" />
+    </button>
   );
 }
 
@@ -936,6 +965,21 @@ function DealMenu({
         <MoreHorizontal aria-hidden="true" className="text-muted-foreground size-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={6} className="w-44 rounded-xl p-1.5">
+        {/* Both landings, always one menu away (Pratik: overview dashboard
+            or straight to the workspace - the card itself opens workspace). */}
+        <DropdownMenuItem asChild className="rounded-lg text-[13px]">
+          <Link href={`/deals/${deal.id}/overview`}>
+            <LayoutDashboard />
+            <span>Open overview</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="rounded-lg text-[13px]">
+          <Link href={`/deals/${deal.id}/workspace`}>
+            <Table2 />
+            <span>Open workspace</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem className="rounded-lg text-[13px]" onSelect={() => onTogglePin()}>
           <Star className={cn(pinned && "fill-primary text-primary")} />
           <span>{pinned ? "Unpin deal" : "Pin deal"}</span>
