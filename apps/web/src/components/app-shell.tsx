@@ -22,9 +22,63 @@ import { AccountMenu } from "@/components/account-menu";
 import { FindDialog } from "@/components/find-dialog";
 import { Logo } from "@/components/logo";
 import { MobileNav } from "@/components/mobile-nav";
-import { NAV_MAIN, NAV_ORG, NAV_SETTINGS, isActive, type NavItem } from "@/components/nav-config";
+import {
+  NAV_DEAL,
+  NAV_MAIN,
+  NAV_ORG,
+  NAV_SETTINGS,
+  isActive,
+  type NavItem,
+} from "@/components/nav-config";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { cn } from "@/lib/utils";
+
+/** /deals/[dealId]/… → dealId, else null. */
+function dealIdFrom(pathname: string): string | null {
+  const m = /^\/deals\/([0-9a-f-]{36})(\/|$)/.exec(pathname);
+  return m?.[1] ?? null;
+}
+
+/**
+ * Deal takeover rail (02 §3.1): '< {deal}' header + deal surfaces, the way
+ * the reference scopes its rail to a project. The label is the breadcrumb
+ * the page already passes — the rail runs NO query of its own (the first
+ * build did, and a shell-level query wedged every deal page's hydration).
+ */
+function DealNav({ dealId, label, pathname }: { dealId: string; label: string; pathname: string }) {
+  return (
+    <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
+      <Link
+        href="/"
+        title="All deals"
+        className="text-foreground mb-2 flex h-9 items-center gap-1 rounded-lg px-1.5 text-sm font-semibold transition-colors duration-150 hover:bg-sidebar-accent/60"
+      >
+        <ChevronLeft aria-hidden="true" className="size-4 shrink-0" />
+        <span className="min-w-0 flex-1 truncate text-center">{label}</span>
+        <span aria-hidden="true" className="size-4" />
+      </Link>
+      {NAV_DEAL.map((item) => {
+        const href = `/deals/${dealId}/${item.segment}`;
+        const active = pathname.startsWith(href);
+        return (
+          <Link
+            key={item.segment}
+            href={href}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "flex h-9 items-center rounded-lg px-2.5 text-sm font-medium transition-colors duration-150",
+              active
+                ? "bg-sidebar-accent text-foreground"
+                : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+            )}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
 
 function NavRow({ item, pathname }: { item: NavItem; pathname: string }) {
   const active = isActive(item, pathname);
@@ -110,8 +164,15 @@ export function AppShell({
         </div>
 
         {/* Contextual takeover (02 §3.1): inside /settings the rail becomes
-            the settings sub-nav under a back header, as the reference does. */}
-        {pathname.startsWith("/settings") ? (
+            the settings sub-nav under a back header, as the reference does;
+            inside a deal it scopes to the deal. */}
+        {dealIdFrom(pathname) ? (
+          <DealNav
+            dealId={dealIdFrom(pathname) as string}
+            label={breadcrumb ?? "…"}
+            pathname={pathname}
+          />
+        ) : pathname.startsWith("/settings") ? (
           <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
             <Link
               href="/"
