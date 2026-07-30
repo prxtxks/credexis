@@ -177,7 +177,31 @@ function ChainBanner() {
   );
 }
 
+/** Action verb → readable sentence fragment (feed view). */
+const ACTION_VERB: Record<string, string> = {
+  INSERT: "created a row in",
+  UPDATE: "updated a row in",
+  DELETE: "deleted a row from",
+};
+
+/** "July 2026" group label from an ISO timestamp (feed view). */
+function monthLabel(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+}
+
+function feedRelativeTime(iso: string): string {
+  const ms = Date.now() - Date.parse(iso);
+  if (!Number.isFinite(ms) || ms < 0) return "just now";
+  const m = Math.floor(ms / 60_000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
 export default function AuditClient() {
+  const [view, setView] = useState<"feed" | "table">("feed");
   const [actorId, setActorId] = useState("");
   const [action, setAction] = useState("");
   const [tableName, setTableName] = useState("");
@@ -294,6 +318,33 @@ export default function AuditClient() {
               <span>Clear filters</span>
             </Button>
           ) : null}
+          <div
+            role="group"
+            aria-label="Audit view"
+            className="border-border ml-auto flex h-8 items-center rounded-lg border p-0.5"
+          >
+            {(
+              [
+                { key: "feed", label: "Feed" },
+                { key: "table", label: "Table" },
+              ] as const
+            ).map((v) => (
+              <button
+                key={v.key}
+                type="button"
+                aria-pressed={view === v.key}
+                onClick={() => setView(v.key)}
+                className={cn(
+                  "h-full rounded-[6px] px-2.5 text-[13px] font-medium transition-colors duration-150",
+                  view === v.key
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {log.isLoading ? (
@@ -316,6 +367,72 @@ export default function AuditClient() {
             title="No audit entries"
             description="Entries appear the moment someone overrides a fact, accepts an add-back, changes a scenario, or a member's access changes."
           />
+        ) : view === "feed" ? (
+          /* The reference's Activity feed: month headers, readable sentences,
+             relative time; click a row for the same before/after detail. */
+          <div>
+            {entries.map((e, i) => {
+              const label = monthLabel(e.createdAt);
+              const prev = i > 0 ? monthLabel(entries[i - 1]!.createdAt) : null;
+              const who = actorLabel(e.actorId) ?? "System";
+              const open = expanded === e.id;
+              return (
+                <Fragment key={e.id}>
+                  {label !== prev ? (
+                    <h2 className="text-heading mt-6 mb-3 first:mt-0">{label}</h2>
+                  ) : null}
+                  <div className="group">
+                    <button
+                      type="button"
+                      aria-expanded={open}
+                      aria-controls={`audit-feed-detail-${e.id}`}
+                      onClick={() => setExpanded(open ? null : e.id)}
+                      className="hover:bg-accent/40 flex w-full items-baseline gap-2.5 rounded-lg px-2 py-2 text-left transition-colors duration-150"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "border-border bg-muted mt-0.5 flex size-6 shrink-0 -translate-y-0.5 items-center justify-center self-start rounded-full border text-[9px] font-semibold",
+                        )}
+                      >
+                        {who === "System" ? "SYS" : who.slice(0, 2).toUpperCase()}
+                      </span>
+                      <span className="min-w-0 flex-1 text-sm">
+                        <span className="font-semibold">{who}</span>{" "}
+                        <span className="text-muted-foreground">
+                          {ACTION_VERB[e.action] ?? e.action.toLowerCase()}
+                        </span>{" "}
+                        <span className="font-semibold">{e.tableName.replaceAll("_", " ")}</span>
+                        {e.rowId ? (
+                          <span className="text-muted-foreground ml-1.5 font-mono text-[11px]">
+                            {e.rowId.slice(0, 8)}
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="text-muted-foreground shrink-0 text-[11px] tabular-nums">
+                        {feedRelativeTime(e.createdAt)}
+                      </span>
+                    </button>
+                    {open ? (
+                      <div
+                        id={`audit-feed-detail-${e.id}`}
+                        className="glass-card mt-1 mb-2 ml-8 rounded-lg p-3"
+                      >
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <PayloadPane
+                            label="Before"
+                            absent="the row did not exist yet"
+                            text={e.before}
+                          />
+                          <PayloadPane label="After" absent="the row was deleted" text={e.after} />
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </Fragment>
+              );
+            })}
+          </div>
         ) : (
           <div className="glass-card overflow-hidden rounded-xl p-2">
             <Table aria-label="Audit entries" className="text-[13px]">
