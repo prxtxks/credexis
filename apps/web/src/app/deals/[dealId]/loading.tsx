@@ -1,11 +1,7 @@
 import { PageLoading } from "@/components/ui/page-loading";
+
+/** One skeleton, one label — the doubled "Loading…/Loading workspace…"
+ *  stack was Pratik-reported (2026-07-30). */
 export default function DealLoading() {
-  return (
-    <div className="flex h-screen items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-5">
-        <PageLoading />
-        <p className="text-sm text-muted-foreground">Loading workspace…</p>
-      </div>
-    </div>
-  );
+  return <PageLoading label="Loading workspace" />;
 }

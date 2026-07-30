@@ -38,10 +38,28 @@ export function FindDialog({
   // Fetch only while open — the shell mounts this on every route.
   const board = trpc.deals.board.useQuery(undefined, { enabled: open, staleTime: 30_000 });
 
+  // Find is NAVIGATION search (Pratik 2026-07-30): pages first, then deal
+  // destinations from the cached board. Deal *content* search lives in the
+  // toolbar's "Search deals" input, not here.
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const deals = board.data ?? [];
-    return (q === "" ? deals : deals.filter((d) => d.name.toLowerCase().includes(q))).slice(0, 8);
+    const nav: { label: string; meta: string; href: string }[] = [
+      { label: "Deals", meta: "Page", href: "/" },
+      { label: "Costs", meta: "Page", href: "/costs" },
+      { label: "Members", meta: "Settings", href: "/settings/members" },
+      { label: "Settings · General", meta: "Settings", href: "/settings" },
+      { label: "Notifications", meta: "Settings", href: "/settings/notifications" },
+      { label: "Security", meta: "Settings", href: "/settings/security" },
+      { label: "Audit log", meta: "Settings", href: "/settings/audit" },
+      { label: "Plan & Usage", meta: "Settings", href: "/settings/plan" },
+    ];
+    const deals = (board.data ?? []).map((d) => ({
+      label: d.name,
+      meta: STATUS_LABEL[d.status] ?? d.status,
+      href: `/deals/${d.id}/overview`,
+    }));
+    const all = [...nav, ...deals];
+    return (q === "" ? all : all.filter((i) => i.label.toLowerCase().includes(q))).slice(0, 9);
   }, [board.data, query]);
 
   useEffect(() => {
@@ -51,9 +69,9 @@ export function FindDialog({
     }
   }, [open]);
 
-  function go(dealId: string) {
+  function go(href: string) {
     onOpenChange(false);
-    router.push(`/deals/${dealId}/workspace`);
+    router.push(href);
   }
 
   return (
@@ -62,7 +80,7 @@ export function FindDialog({
         showCloseButton={false}
         className="top-[20%] translate-y-0 gap-0 overflow-hidden rounded-xl p-0 sm:max-w-lg"
       >
-        <DialogTitle className="sr-only">Find a deal</DialogTitle>
+        <DialogTitle className="sr-only">Find a page or deal</DialogTitle>
         <div className="flex items-center gap-2.5 border-b border-border px-4">
           <Search aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
           <input
@@ -82,11 +100,11 @@ export function FindDialog({
                 setActive((a) => Math.max(a - 1, 0));
               } else if (e.key === "Enter") {
                 const hit = matches[active];
-                if (hit) go(hit.id);
+                if (hit) go(hit.href);
               }
             }}
-            placeholder="Find a deal…"
-            aria-label="Find a deal"
+            placeholder="Find a page or deal…"
+            aria-label="Find a page or deal"
             className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           <kbd className="rounded-md border border-border px-1.5 py-0.5 text-[11px] text-muted-foreground">
@@ -103,26 +121,24 @@ export function FindDialog({
                 <FileSearch aria-hidden="true" className="size-4 text-muted-foreground" />
               </span>
               <p className="text-[13px] text-muted-foreground">
-                No deals match &ldquo;{query}&rdquo;.
+                Nothing matches &ldquo;{query}&rdquo;.
               </p>
             </div>
           ) : (
             <ul>
               {matches.map((d, i) => (
-                <li key={d.id}>
+                <li key={d.href + d.label}>
                   <button
                     type="button"
-                    onClick={() => go(d.id)}
+                    onClick={() => go(d.href)}
                     onMouseEnter={() => setActive(i)}
                     className={cn(
                       "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm transition-colors duration-150",
                       i === active ? "bg-accent text-foreground" : "text-foreground/80",
                     )}
                   >
-                    <span className="min-w-0 flex-1 truncate font-medium">{d.name}</span>
-                    <span className="shrink-0 text-[11px] text-muted-foreground">
-                      {STATUS_LABEL[d.status] ?? d.status}
-                    </span>
+                    <span className="min-w-0 flex-1 truncate font-medium">{d.label}</span>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">{d.meta}</span>
                   </button>
                 </li>
               ))}
@@ -131,7 +147,8 @@ export function FindDialog({
         </div>
 
         <p className="border-t border-border px-4 py-2 text-[11px] text-muted-foreground">
-          Searches deals. Documents and facts join when server search lands.
+          Jumps to pages and deals. Deal search also lives in the toolbar; documents and facts join
+          when server search lands.
         </p>
       </DialogContent>
     </Dialog>

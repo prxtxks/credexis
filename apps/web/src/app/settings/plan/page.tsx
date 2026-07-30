@@ -34,8 +34,8 @@ export default function SettingsPlanPage() {
 
   return (
     <AppShell breadcrumb="Settings · Plan & Usage">
-      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
-        <h1 className="text-display">Plan &amp; Usage</h1>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <h1 className="text-title">Plan &amp; Usage</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           What this workspace includes and what it has consumed.
         </p>

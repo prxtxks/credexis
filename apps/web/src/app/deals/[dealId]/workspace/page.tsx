@@ -128,7 +128,7 @@ function WorkspaceInner() {
           phones get status, progress, and the actionable surfaces
           (documents, review), never a 13-column grid. ── */}
       <div className="scroll-pane flex-1 space-y-4 overflow-y-auto p-4 md:hidden">
-        <div className="glass-card rounded-xl p-4">
+        <div className="glass-card rounded-lg p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Deal status
           </p>
@@ -152,7 +152,7 @@ function WorkspaceInner() {
           </p>
         </div>
         {progress.data ? (
-          <div className="glass-card rounded-xl p-4">
+          <div className="glass-card rounded-lg p-4">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Review queue
             </p>
@@ -165,7 +165,7 @@ function WorkspaceInner() {
             </Link>
           </div>
         ) : null}
-        <div className="glass-card rounded-xl p-4">
+        <div className="glass-card rounded-lg p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Documents
           </p>

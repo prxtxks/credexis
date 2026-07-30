@@ -10,6 +10,7 @@
 
 import { useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AllCommunityModule, ModuleRegistry, type ColDef } from "ag-grid-community";
 import { trpc } from "@/lib/trpc/client";
 import { formatCents } from "@/lib/money-display";
@@ -136,18 +137,18 @@ export function TaxSpreadGrid({
 
   if (spread.isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="grid-loader">
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-        </div>
+      <div
+        role="status"
+        aria-label="Loading spread"
+        data-slot="page-skeleton"
+        className="h-full space-y-2 p-4"
+      >
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-6 w-full" />
+        <Skeleton className="h-6 w-11/12" />
+        <Skeleton className="h-6 w-full" />
+        <Skeleton className="h-6 w-10/12" />
+        <Skeleton className="h-6 w-full" />
       </div>
     );
   }

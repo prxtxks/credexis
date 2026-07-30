@@ -44,8 +44,8 @@ export default function SettingsGeneralPage() {
 
   return (
     <AppShell breadcrumb="Settings · General">
-      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
-        <h1 className="text-display">General</h1>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <h1 className="text-title">General</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Your profile and this organization&apos;s identity.
         </p>

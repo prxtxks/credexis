@@ -113,8 +113,8 @@ export default function SettingsSecurityPage() {
 
   return (
     <AppShell breadcrumb="Settings · Security">
-      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
-        <h1 className="text-display">Security</h1>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <h1 className="text-title">Security</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Credentials, sessions, and the audit trail.
         </p>

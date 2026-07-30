@@ -33,7 +33,7 @@ export function SettingsCard({
   return (
     <section
       className={cn(
-        "rounded-xl border bg-card shadow-sm",
+        "rounded-lg border bg-card shadow-sm",
         danger ? "border-severity-critical/40" : "border-border",
         className,
       )}
@@ -48,7 +48,7 @@ export function SettingsCard({
       {footer !== undefined || footerAction !== undefined ? (
         <div
           className={cn(
-            "flex min-h-12 items-center justify-between gap-3 rounded-b-xl border-t px-5 py-2.5 sm:px-6",
+            "flex min-h-12 items-center justify-between gap-3 rounded-b-lg border-t px-5 py-2.5 sm:px-6",
             danger
               ? "border-severity-critical/40 bg-severity-critical/10"
               : "border-border bg-accent/20",
