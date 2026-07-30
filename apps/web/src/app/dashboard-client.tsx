@@ -666,11 +666,13 @@ function DealListRow({ deal }: { deal: BoardDeal }) {
  */
 function UsageRail() {
   const costs = trpc.pipeline.costs.useQuery(undefined, { staleTime: 60_000 });
-  const rows = (costs.data ?? []).slice(0, 4);
+  const [expanded, setExpanded] = useState(false);
+  const rows = (costs.data ?? []).slice(0, expanded ? 10 : 4);
+  const hasMore = (costs.data?.length ?? 0) > 4;
   return (
     <section>
       <h2 className="text-heading mb-3">Usage</h2>
-      <div className="glass-card rounded-lg">
+      <div className="glass-card relative rounded-lg pb-1">
         <div className="flex items-center justify-between px-4 py-3">
           <span className="text-sm font-medium">Extraction spend</span>
           <Link
@@ -691,27 +693,82 @@ function UsageRail() {
             No extraction runs yet — spend appears once the pipeline processes documents.
           </p>
         ) : (
-          <ul>
-            {rows.map((r, i) => (
-              <li
-                key={r.dealId}
-                className={cn("flex items-center gap-2 px-4 py-2", i % 2 === 0 && "bg-accent/30")}
-              >
-                <span className="min-w-0 flex-1 truncate text-[13px]">{r.dealName}</span>
-                <span
+          <>
+            <ul>
+              {rows.map((r, i) => (
+                <li
+                  key={r.dealId}
                   className={cn(
-                    "shrink-0 text-[13px] font-medium tabular-nums",
-                    r.overEnvelope && "text-severity-warning",
+                    "flex items-center gap-2.5 rounded-md px-4 py-2",
+                    i % 2 === 0 && "bg-accent/30",
                   )}
                 >
-                  {formatMicroUsd(r.totalMicroUsd)}
-                </span>
-              </li>
-            ))}
-          </ul>
+                  <SpendRing spentMicro={r.totalMicroUsd} envelopeMicro={r.envelopeMicroUsd} />
+                  <span className="min-w-0 flex-1 truncate text-[13px]">{r.dealName}</span>
+                  <span
+                    className={cn(
+                      "shrink-0 text-[13px] font-medium tabular-nums",
+                      r.overEnvelope && "text-severity-warning",
+                    )}
+                  >
+                    {formatMicroUsd(r.totalMicroUsd)}
+                    <span className="text-muted-foreground font-normal">
+                      {" "}
+                      / {formatMicroUsd(r.envelopeMicroUsd)}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {hasMore ? (
+              <button
+                type="button"
+                aria-label={expanded ? "Show fewer deals" : "Show more deals"}
+                aria-expanded={expanded}
+                onClick={() => setExpanded((v) => !v)}
+                className="border-border bg-popover hover:bg-accent absolute -bottom-3.5 left-1/2 flex size-7 -translate-x-1/2 items-center justify-center rounded-full border transition-colors duration-150"
+              >
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn(
+                    "text-muted-foreground size-4 transition-transform duration-150",
+                    expanded && "rotate-180",
+                  )}
+                />
+              </button>
+            ) : null}
+          </>
         )}
       </div>
     </section>
+  );
+}
+
+/**
+ * Per-deal envelope ring — the reference's usage-meter ring. Both numbers
+ * come from the server; the arc is presentation geometry only.
+ */
+function SpendRing({ spentMicro, envelopeMicro }: { spentMicro: string; envelopeMicro: string }) {
+  const spent = Number(spentMicro);
+  const cap = Number(envelopeMicro);
+  const frac = cap > 0 ? Math.min(1, spent / cap) : 0;
+  const r = 6;
+  const c = 2 * Math.PI * r;
+  return (
+    <svg viewBox="0 0 16 16" className="size-4 shrink-0 -rotate-90" aria-hidden="true">
+      <circle cx="8" cy="8" r={r} fill="none" strokeWidth="2" className="stroke-border" />
+      <circle
+        cx="8"
+        cy="8"
+        r={r}
+        fill="none"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={c * (1 - frac)}
+        className={frac >= 1 ? "stroke-severity-warning" : "stroke-primary"}
+      />
+    </svg>
   );
 }
 

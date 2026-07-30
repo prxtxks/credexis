@@ -78,7 +78,9 @@ export function FindDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="top-[20%] translate-y-0 gap-0 overflow-hidden rounded-xl p-0 sm:max-w-lg"
+        // Anchored where the sidebar's Find sits — the panel expands in
+        // place over the rail (reference behavior), not center-screen.
+        className="top-3 left-3 max-w-[calc(100vw-1.5rem)] translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-xl p-0 data-[state=open]:slide-in-from-left-1 sm:max-w-md"
       >
         <DialogTitle className="sr-only">Find a page or deal</DialogTitle>
         <div className="flex items-center gap-2.5 border-b border-border px-4">
