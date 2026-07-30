@@ -31,3 +31,14 @@ export const credexisGridTheme = themeQuartz.withParams({
 /** V1 grid density (ProFormaGrid.tsx): 38px rows under a 42px header. */
 export const GRID_ROW_HEIGHT = 38;
 export const GRID_HEADER_HEIGHT = 42;
+
+/**
+ * Monetary column width from the longest rendered value in that column - a
+ * banker-grade spread never clips or ellipsizes currency (M13.2 finding:
+ * "$1,500,000,000." clipped at the column edge). Mono tabular glyphs at
+ * grid size are ~7.8px; the constant covers cell inset plus the
+ * confidence dot / ✓IRS suffix breathing room.
+ */
+export function moneyColumnWidth(maxChars: number): number {
+  return Math.max(130, Math.ceil(maxChars * 7.8) + 36);
+}

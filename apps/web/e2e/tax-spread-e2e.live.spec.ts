@@ -114,10 +114,11 @@ test.describe("M4.8 Tax Spread tab (live)", () => {
     await expect(page.getByRole("gridcell", { name: "$100,000.00" })).toBeVisible();
     await expect(page.getByRole("gridcell", { name: "$5,000.00" })).toBeVisible();
 
-    // The derived line (registry-only fact, null taxonomy) renders with its
-    // chip - this row simply did not exist before M4.8.
+    // The registry-only line (null taxonomy) renders with its "tax-only"
+    // chip (renamed from "derived" in M13.2 - these values are read off
+    // the page) - this row simply did not exist before M4.8.
     await expect(page.getByText("Adjusted gross income")).toBeVisible();
-    await expect(page.getByText("derived", { exact: true })).toBeVisible();
+    await expect(page.getByText("tax-only", { exact: true })).toBeVisible();
 
     // Transcript agreement badges the AGI cell.
     await expect(page.getByRole("gridcell", { name: "$95,000.00 ✓IRS" })).toBeVisible();
