@@ -518,19 +518,9 @@
   border-bottom: 1px solid oklch(1 0 0 / 10%);
 }
 
-/* Mobile bottom tab bar (ui-9): iOS-grade blur stack, top hairline only.
-   RETIRED by 02 §1.4 — dies with the shell PR (ui-17-shell); the class
-   stays only until app-shell.tsx stops rendering it. */
-.tab-bar {
-  background: oklch(0.985 0.001 166 / 92%);
-  backdrop-filter: blur(20px) saturate(160%);
-  border-top: 1px solid oklch(0 0 0 / 8%);
-}
-
-.dark .tab-bar {
-  background: oklch(0.09 0.004 166 / 92%);
-  border-top: 1px solid oklch(1 0 0 / 10%);
-}
+/* Mobile tab bar: RETIRED (ui-17, 02 §1.4) — replaced by the floating
+   Find/menu pill in components/mobile-nav.tsx. Class deleted the day its
+   consumer died (Iron Law #10). */
 
 /* Animated border gradient */
 .border-gradient {
