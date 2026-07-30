@@ -54,6 +54,7 @@ const OFFICIAL_FORMS: ReadonlyArray<{
   { base: "f1040sf", family: "1040_SCH_F", years: [2019, 2021, 2023] },
   { base: "f1040s1", family: "1040_SCH_1", years: [2019, 2021, 2023] },
   { base: "f4562", family: "4562", years: [2019, 2021, 2023] },
+  { base: "f4626", family: "4626", years: [2023] },
   { base: "f1125e", family: "1125E", years: [] },
   { base: "f8825", family: "8825", years: [] },
   { base: "fw2", family: "W2", years: [2019, 2021, 2023] },
@@ -61,7 +62,7 @@ const OFFICIAL_FORMS: ReadonlyArray<{
   { base: "f1065sk1", family: "K1_1065", years: [2019, 2021, 2023] },
 ];
 
-const CORP_1120: readonly FormFamily[] = ["1120", "1125E", "4562"];
+const CORP_1120: readonly FormFamily[] = ["1120", "1125E", "4562", "4626"];
 // "1120" is allowed in S-corp bundles: Schedule N is titled "(Form 1120)"
 // by the IRS itself and files with 1120-S returns (sweep finding).
 const CORP_1120S: readonly FormFamily[] = ["1120S", "K1_1120S", "1125E", "4562", "8825", "1120"];
