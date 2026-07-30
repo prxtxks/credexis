@@ -1,154 +1,135 @@
 "use client";
 
 /**
- * Support & feedback (ui-17-support, Pratik 2026-07-30: "i like the way
- * vercel does this. it opens an ai chat" + "feedback/report a bug").
- *
- * UI-first and honest: the chat surface is the map for the future support
- * agent. Until it is wired, the "agent" answers with the truth — a static
- * handoff to the support mailbox (decision D7: one mailbox, one sentence).
- * No fake typing, no invented answers.
+ * Support → Cases (ui-19, matched to the reference dashboard-Support view):
+ * search + status/severity filters + New Case, and the case list. Cases
+ * persist in THIS BROWSER (localStorage) until a case backend exists — the
+ * footer says so plainly. Creating a case happens on /support/new.
  */
 
-import { useState } from "react";
-import { ArrowUp, BookOpen, LifeBuoy, Mail } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { MessageCircle, Plus } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { FieldSelect } from "@/components/ui/field-select";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Pill } from "@/components/ui/pill";
+import { readCases, type SupportCase } from "@/lib/support-cases";
 
-const SUPPORT_EMAIL = "support@credexis.co";
+function relativeTime(iso: string): string {
+  const ms = Date.now() - Date.parse(iso);
+  const m = Math.floor(ms / 60_000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
 
-const TOPICS = [
-  { value: "question", label: "Question" },
-  { value: "bug", label: "Report a bug" },
-  { value: "feedback", label: "Feedback" },
-  { value: "billing", label: "Billing" },
-] as const;
+export default function SupportCasesPage() {
+  const [cases, setCases] = useState<SupportCase[]>([]);
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("all");
+  const [severity, setSeverity] = useState("all");
 
-const AGENT_REPLY =
-  "The support agent isn't connected yet — this chat is the surface it will " +
-  `live in. For now, email ${SUPPORT_EMAIL} with the details below and a ` +
-  "human reads every message.";
+  useEffect(() => {
+    setCases(readCases());
+  }, []);
 
-export default function SupportPage() {
-  const [topic, setTopic] = useState<string>("question");
-  const [draft, setDraft] = useState("");
-  const [thread, setThread] = useState<{ from: "you" | "agent"; text: string }[]>([]);
-
-  function send() {
-    const text = draft.trim();
-    if (text === "") return;
-    setThread((t) => [...t, { from: "you", text }, { from: "agent", text: AGENT_REPLY }]);
-    setDraft("");
-  }
-
-  const mailHref = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
-    `[${TOPICS.find((t) => t.value === topic)?.label ?? "Support"}] Credexis`,
-  )}&body=${encodeURIComponent(
-    thread
-      .filter((m) => m.from === "you")
-      .map((m) => m.text)
-      .join("\n\n"),
-  )}`;
+  const rows = useMemo(
+    () =>
+      cases.filter(
+        (c) =>
+          (q.trim() === "" || c.title.toLowerCase().includes(q.trim().toLowerCase())) &&
+          (status === "all" || c.status === status) &&
+          (severity === "all" || c.severity === severity),
+      ),
+    [cases, q, status, severity],
+  );
 
   return (
-    <AppShell breadcrumb="Support">
-      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-        <h1 className="text-display">Credexis Support</h1>
-        <p className="text-muted-foreground mt-1 text-lg">How can we help you today?</p>
-
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="glass-card cursor-not-allowed rounded-lg p-5 opacity-70">
-            <p className="flex items-center gap-2 text-[15px] font-semibold">
-              <BookOpen aria-hidden="true" className="text-muted-foreground size-4" />
-              Documentation
-            </p>
-            <p className="text-muted-foreground mt-1 text-[13px]">
-              Guides for underwriting, the borrower portal, and exports — being written alongside
-              the pilot.
-            </p>
-          </div>
-          <a
-            href={`mailto:${SUPPORT_EMAIL}`}
-            className="glass-card hover:border-primary/40 rounded-lg p-5 transition-colors duration-150"
-          >
-            <p className="flex items-center gap-2 text-[15px] font-semibold">
-              <Mail aria-hidden="true" className="text-muted-foreground size-4" />
-              Email us
-            </p>
-            <p className="text-muted-foreground mt-1 text-[13px]">
-              {SUPPORT_EMAIL} — a human reads every message during the pilot.
-            </p>
-          </a>
+    <AppShell breadcrumb="Support · Cases">
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-2">
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search cases…"
+            aria-label="Search cases"
+            className="h-9 flex-1"
+          />
+          <Button asChild variant="brand" className="h-9 shrink-0">
+            <Link href="/support/new">
+              <span className="flex items-center gap-1.5">
+                <Plus className="size-4" />
+                New Case
+              </span>
+            </Link>
+          </Button>
         </div>
 
-        <section className="mt-10">
-          <h2 className="text-heading flex items-center gap-2">
-            <LifeBuoy aria-hidden="true" className="text-primary size-4" />
-            Credexis Agent
-          </h2>
-          <p className="text-muted-foreground mt-2 text-sm">
-            Hello — this is where the support agent will live. Describe the problem; if it
-            can&apos;t solve it, it will help you open a case.
-          </p>
+        <div className="mt-3 flex gap-2">
+          <FieldSelect
+            ariaLabel="Filter by status"
+            value={status}
+            onChange={setStatus}
+            options={[
+              { value: "all", label: "All Statuses" },
+              { value: "open", label: "Open" },
+              { value: "closed", label: "Closed" },
+            ]}
+          />
+          <FieldSelect
+            ariaLabel="Filter by severity"
+            value={severity}
+            onChange={setSeverity}
+            options={[
+              { value: "all", label: "All Severities" },
+              { value: "low", label: "Low" },
+              { value: "normal", label: "Normal" },
+              { value: "high", label: "High" },
+            ]}
+          />
+        </div>
 
-          {thread.length > 0 ? (
-            <div className="mt-4 space-y-3">
-              {thread.map((m, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "max-w-[85%] rounded-lg px-3.5 py-2.5 text-sm",
-                    m.from === "you" ? "bg-primary/15 ml-auto" : "glass-card",
-                  )}
-                >
-                  {m.text}
-                </div>
-              ))}
-              <Button asChild size="sm" variant="outline">
-                <a href={mailHref}>Create support case by email</a>
+        <div className="glass-card mt-4 rounded-lg">
+          {rows.length === 0 ? (
+            <div className="flex flex-col items-center px-6 py-16 text-center">
+              <span className="border-border bg-popover flex size-10 items-center justify-center rounded-[10px] border">
+                <MessageCircle aria-hidden="true" className="text-muted-foreground size-4" />
+              </span>
+              <p className="mt-4 text-[15px] font-semibold">No Cases</p>
+              <p className="text-muted-foreground mt-1 text-[13px]">
+                Create a new case to get assistance.
+              </p>
+              <Button asChild size="sm" className="mt-4">
+                <Link href="/support/new">New Case</Link>
               </Button>
             </div>
-          ) : null}
-
-          <div className="glass-card mt-4 rounded-lg p-3">
-            <FieldSelect
-              ariaLabel="Problem area"
-              value={topic}
-              onChange={setTopic}
-              options={TOPICS.map((t) => ({ value: t.value, label: t.label }))}
-            />
-            <div className="mt-2 flex items-end gap-2">
-              <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    send();
-                  }
-                }}
-                placeholder="Send a message…"
-                aria-label="Message to support"
-                rows={2}
-                className="placeholder:text-muted-foreground min-h-16 w-full resize-none bg-transparent text-sm outline-none"
-              />
-              <button
-                type="button"
-                aria-label="Send message"
-                onClick={send}
-                disabled={draft.trim() === ""}
-                className="bg-primary flex size-8 shrink-0 items-center justify-center rounded-full text-white transition-opacity disabled:opacity-40"
-              >
-                <ArrowUp aria-hidden="true" className="size-4" />
-              </button>
-            </div>
-          </div>
-          <p className="text-muted-foreground mt-2 text-[11px]">
-            The agent is not wired up yet — messages stay on this page until you email them.
-          </p>
-        </section>
+          ) : (
+            <ul className="divide-border/70 divide-y">
+              {rows.map((c) => (
+                <li key={c.id} className="flex items-center gap-3 px-4 py-3.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{c.title}</p>
+                    <p className="text-muted-foreground mt-0.5 text-[13px]">
+                      {c.topic} · opened {relativeTime(c.createdAt)}
+                    </p>
+                  </div>
+                  {c.severity !== "normal" ? (
+                    <Pill tone={c.severity === "high" ? "warn" : "neutral"}>{c.severity}</Pill>
+                  ) : null}
+                  <Pill tone={c.status === "open" ? "accent" : "neutral"}>{c.status}</Pill>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <p className="text-muted-foreground mt-2 text-[11px]">
+          Cases are stored in this browser until the case backend lands — email support@credexis.co
+          for anything urgent.
+        </p>
       </main>
     </AppShell>
   );

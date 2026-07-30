@@ -164,7 +164,7 @@ export function AccountMenu({ variant = "avatar" }: { variant?: "avatar" | "row"
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild className="rounded-lg text-[13px]">
-            <Link href="/support?topic=bug">
+            <Link href="/support/new">
               <Bug />
               <span>Feedback / report a bug</span>
             </Link>

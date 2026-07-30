@@ -605,6 +605,12 @@
   border-radius: 4px;
 }
 
+/* Inside an open dialog the surface itself is the focus context — the
+   brand ring on the palette input read as a stray green box (Pratik). */
+[data-slot="dialog-content"] :where(input, [tabindex]):focus-visible {
+  outline: none;
+}
+
 /* ── Reduced motion (M11.1 UI standard): decorative animation yields to
    the OS preference; opacity transitions may remain, movement may not. ── */
 @media (prefers-reduced-motion: reduce) {

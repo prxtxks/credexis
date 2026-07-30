@@ -22,7 +22,7 @@ const KIND_DOT: Record<string, string> = {
   review_backlog: "bg-severity-warning",
 };
 
-export function NotificationsBell() {
+export function NotificationsBell({ side = "down" }: { side?: "up" | "down" } = {}) {
   const [open, setOpen] = useState(false);
   const utils = trpc.useUtils();
   const count = trpc.notifications.unreadCount.useQuery(undefined, {
@@ -67,7 +67,14 @@ export function NotificationsBell() {
               hairline + shadow — text never sits on transparency. Phones:
               fixed full-width sheet under the top bar (an absolute panel
               anchored to the bell overflows the viewport edge). */}
-          <div className="fixed inset-x-3 top-16 z-50 rounded-xl border border-border bg-popover p-2 shadow-xl md:absolute md:inset-x-auto md:top-auto md:right-0 md:mt-2 md:w-96">
+          <div
+            className={cn(
+              "border-border bg-popover fixed inset-x-3 top-16 z-50 rounded-xl border p-2 shadow-xl md:absolute md:inset-x-auto md:top-auto md:w-96",
+              // The bell lives in the sidebar FOOTER on desktop — the panel
+              // must open upward or it renders below the viewport (Pratik).
+              side === "up" ? "md:bottom-full md:left-0 md:mb-2" : "md:right-0 md:mt-2",
+            )}
+          >
             <div className="flex items-center justify-between px-2 py-1.5">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Notifications
