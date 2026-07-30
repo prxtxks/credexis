@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { createClient } from "@/lib/supabase/browser";
 import { AppShell } from "@/components/app-shell";
+import { ROLE_LABEL } from "@/components/account-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -70,7 +71,7 @@ export default function SettingsPage() {
               </CardTitle>
               <CardDescription>
                 {profile.data
-                  ? `${profile.data.email} · ${profile.data.role}${profile.data.orgName ? ` at ${profile.data.orgName}` : ""}`
+                  ? `${profile.data.email} · ${ROLE_LABEL[profile.data.role] ?? profile.data.role}${profile.data.orgName ? ` at ${profile.data.orgName}` : ""}`
                   : "…"}
               </CardDescription>
             </CardHeader>

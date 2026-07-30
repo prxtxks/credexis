@@ -43,6 +43,14 @@ const STATUS_CHIP: Record<string, string> = {
   failed: "bg-severity-critical",
 };
 
+/** deal_status enum → display string (never print the raw enum). */
+const STATUS_LABEL: Record<string, string> = {
+  intake: "Intake",
+  parsing: "Parsing",
+  review: "In review",
+  complete: "Complete",
+};
+
 function RailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mb-4">
@@ -124,12 +132,23 @@ function WorkspaceInner() {
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Deal status
           </p>
-          <p className="mt-1 text-lg font-bold">{deal.data?.status ?? "…"}</p>
+          {/* The DB enum is not a display string, and a loading query must
+              not read as a real zero — counts render only once both queries
+              have landed (a wrong number in an underwriting tool is a bug,
+              not a placeholder). */}
+          <p className="mt-1 text-lg font-bold">
+            {deal.data ? (STATUS_LABEL[deal.data.status] ?? deal.data.status) : "…"}
+          </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {(docs.data ?? []).length} {(docs.data ?? []).length === 1 ? "document" : "documents"} ·{" "}
-            {(docs.data ?? []).filter((d) => d.status === "processed").length} processed ·{" "}
-            {(issues.data ?? []).length} open{" "}
-            {(issues.data ?? []).length === 1 ? "issue" : "issues"}
+            {docs.data && issues.data ? (
+              <>
+                {docs.data.length} {docs.data.length === 1 ? "document" : "documents"} ·{" "}
+                {docs.data.filter((d) => d.status === "processed").length} processed ·{" "}
+                {issues.data.length} open {issues.data.length === 1 ? "issue" : "issues"}
+              </>
+            ) : (
+              "Loading…"
+            )}
           </p>
         </div>
         {progress.data ? (
@@ -344,7 +363,8 @@ function WorkspaceInner() {
               />
             ) : tab === "proforma" ? (
               <div className="glass-card flex h-full items-center justify-center rounded-xl text-sm text-muted-foreground">
-                Pro-forma — post-acquisition projection view (scenario-driven, M8.6+).
+                Pro-forma — the post-acquisition projection view. Pick a loan scenario to populate
+                it.
               </div>
             ) : (
               <div className="glass-card flex h-full items-center justify-center rounded-xl text-sm text-muted-foreground">
@@ -387,7 +407,7 @@ function WorkspaceInner() {
               />
             ) : (
               <div className="glass-card flex h-full items-center justify-center rounded-xl p-4 text-center text-sm text-muted-foreground">
-                Select a cell for its source · loan scenario inputs land in M8.6.
+                Select a cell to trace its source.
               </div>
             )}
           </aside>

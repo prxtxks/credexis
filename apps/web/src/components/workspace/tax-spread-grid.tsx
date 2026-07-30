@@ -168,6 +168,7 @@ export function TaxSpreadGrid({
         rowData={rowData}
         columnDefs={columnDefs}
         getRowId={(p) => p.data.key}
+        overlayNoRowsTemplate={`<span style="color: var(--muted-foreground); font-size: 13px;">No tax-form facts yet — upload a return and run the pipeline.</span>`}
         theme={credexisGridTheme}
         headerHeight={GRID_HEADER_HEIGHT}
         rowHeight={GRID_ROW_HEIGHT}

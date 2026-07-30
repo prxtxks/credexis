@@ -188,7 +188,7 @@ export default function ReviewPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <h2 className="text-lg font-semibold text-foreground">Queue clear 🎉</h2>
+          <h2 className="text-lg font-semibold text-foreground">Queue clear</h2>
           <p className="text-sm text-muted-foreground">
             No suggested facts await review for this deal.
           </p>
