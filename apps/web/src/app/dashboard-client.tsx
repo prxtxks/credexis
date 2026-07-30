@@ -853,7 +853,7 @@ function UsageRail() {
             href="/costs"
             className="text-muted-foreground hover:text-foreground text-[13px] transition-colors duration-150"
           >
-            All costs →
+            All usage →
           </Link>
         </div>
         {costs.isLoading ? (

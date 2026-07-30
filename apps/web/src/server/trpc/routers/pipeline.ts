@@ -73,6 +73,49 @@ export const pipelineRouter = router({
       }));
   }),
 
+  /**
+   * Org-wide run log (ui-18 /logs, 02-VERCEL-DERIVATION §4): newest-first
+   * extraction runs with optional stage/status filters. RLS scopes to the
+   * caller's tenant; read-only.
+   */
+  runs: protectedProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().int().min(1).max(200).default(100),
+          stage: z.string().trim().min(1).max(40).optional(),
+          status: z.enum(["running", "succeeded", "failed"]).optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      let query = ctx.supabase
+        .from("extraction_runs")
+        .select(
+          "id, deal_id, stage, status, extractor_name, model, page_count, cost_micro_usd, error, started_at, finished_at, deals(name)",
+        )
+        .order("started_at", { ascending: false })
+        .limit(input?.limit ?? 100);
+      if (input?.stage) query = query.eq("stage", input.stage);
+      if (input?.status) query = query.eq("status", input.status);
+      const { data, error } = await query;
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+      return (data ?? []).map((r) => ({
+        id: r.id as string,
+        dealId: r.deal_id as string,
+        dealName: (r.deals as unknown as { name: string } | null)?.name ?? "(deleted deal)",
+        stage: r.stage as string,
+        status: r.status as string,
+        extractor: (r.extractor_name as string | null) ?? null,
+        model: (r.model as string | null) ?? null,
+        pages: (r.page_count as number | null) ?? null,
+        costMicroUsd: String(r.cost_micro_usd ?? 0),
+        error: (r.error as string | null) ?? null,
+        startedAt: r.started_at as string,
+        finishedAt: (r.finished_at as string | null) ?? null,
+      }));
+    }),
+
   progress: protectedProcedure
     .input(z.object({ dealId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {

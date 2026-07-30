@@ -25,10 +25,10 @@ export default function CostsPage() {
   const costs = trpc.pipeline.costs.useQuery(undefined, { refetchInterval: 30_000 });
 
   return (
-    <AppShell breadcrumb="Extraction costs">
+    <AppShell breadcrumb="Usage">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-5">
-          <h1 className="text-xl font-bold tracking-tight">Extraction costs</h1>
+          <h1 className="text-xl font-bold tracking-tight">Usage</h1>
           <p className="text-sm text-muted-foreground">
             Per-deal spend across pipeline stages — envelope $10/deal.
           </p>
