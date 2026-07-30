@@ -35,6 +35,20 @@ export const NAV_SETTINGS: { href: string; label: string }[] = [
   { href: "/settings/plan", label: "Plan & Usage" },
 ];
 
+/**
+ * Deal sub-nav (ui-17-deal-scope): inside /deals/[id] the rail scopes to
+ * the deal, as the reference scopes to a project. Workspace keeps its own
+ * cockpit chrome; these are the page-style deal surfaces.
+ */
+export const NAV_DEAL: { segment: string; label: string }[] = [
+  { segment: "overview", label: "Overview" },
+  { segment: "workspace", label: "Workspace" },
+  { segment: "documents", label: "Documents" },
+  { segment: "review", label: "Review queue" },
+  { segment: "assignment", label: "Assignment" },
+  { segment: "borrower", label: "Borrower portal" },
+];
+
 export function isActive(item: NavItem, pathname: string): boolean {
   return item.exact ? pathname === item.href : pathname.startsWith(item.href);
 }
