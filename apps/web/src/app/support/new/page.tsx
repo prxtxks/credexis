@@ -1,11 +1,10 @@
 "use client";
 
 /**
- * Support → New case (ui-19): the reference's "How can we help you today?"
- * hero - both title lines at display size, second muted - cards, and the
- * agent conversation. Creating a case stores it in this browser
- * (localStorage) and returns to /support; the agent stays an honest stub
- * until it is wired.
+ * Support → New case (ui-19, reworded ui-21): two display-size hero lines
+ * (second in brand color), help cards, and the agent conversation.
+ * Creating a case stores it in this browser (localStorage) and returns to
+ * /support; the agent stays an honest stub until it is wired.
  */
 
 import { useState } from "react";
@@ -66,8 +65,8 @@ export default function SupportNewCasePage() {
   return (
     <AppShell breadcrumb="Support · New case">
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="text-display">Credexis Support</h1>
-        <p className="text-display text-muted-foreground">How can we help you today?</p>
+        <h1 className="text-display">Get help with Credexis</h1>
+        <p className="text-display text-primary">What can we sort out for you?</p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <div className="glass-card cursor-not-allowed rounded-lg p-5 opacity-70">
@@ -110,7 +109,7 @@ export default function SupportNewCasePage() {
                 <div
                   key={i}
                   className={cn(
-                    "max-w-[85%] rounded-lg px-3.5 py-2.5 text-sm",
+                    "w-fit max-w-[75%] rounded-lg px-3.5 py-2.5 text-sm",
                     m.from === "you" ? "bg-primary/15 ml-auto" : "glass-card",
                   )}
                 >
@@ -120,8 +119,8 @@ export default function SupportNewCasePage() {
             </div>
           ) : null}
 
-          <div className="glass-card mt-4 rounded-lg p-3">
-            <div className="flex flex-wrap gap-2">
+          <div className="glass-card mt-4 rounded-lg p-4">
+            <div className="flex flex-wrap gap-2 pt-0.5">
               <FieldSelect
                 ariaLabel="Problem area"
                 value={topic}
@@ -139,7 +138,7 @@ export default function SupportNewCasePage() {
                 ]}
               />
             </div>
-            <div className="mt-2 flex items-end gap-2">
+            <div className="mt-3 flex items-end gap-2">
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
