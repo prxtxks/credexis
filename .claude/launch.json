@@ -10,9 +10,8 @@
     {
       "name": "web-prod",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@credexis/web", "start"],
-      "port": 3000,
-      "autoPort": true
+      "runtimeArgs": ["--filter", "@credexis/web", "start", "--port", "3100"],
+      "port": 3100
     }
   ]
 }

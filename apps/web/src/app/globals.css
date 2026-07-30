@@ -335,6 +335,60 @@
   letter-spacing: 0.05em;
 }
 
+/* Grid loader — 9-dot sequential snake (restored ui-18: the brand moment
+   for the deal workspace; consumed by components/ui/grid-loader.tsx). */
+@keyframes grid-loader {
+  0%,
+  100% {
+    transform: scale(0.55);
+    opacity: 0.2;
+  }
+  40% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+}
+
+.grid-loader {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 42px;
+  height: 42px;
+}
+
+.grid-loader span {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--primary);
+  animation: grid-loader 1.6s ease-in-out infinite both;
+}
+
+.grid-loader span:nth-child(1) {
+  animation-delay: 0s;
+}
+.grid-loader span:nth-child(2),
+.grid-loader span:nth-child(4) {
+  animation-delay: 0.12s;
+}
+.grid-loader span:nth-child(3),
+.grid-loader span:nth-child(5),
+.grid-loader span:nth-child(7) {
+  animation-delay: 0.24s;
+}
+.grid-loader span:nth-child(6),
+.grid-loader span:nth-child(8) {
+  animation-delay: 0.36s;
+}
+.grid-loader span:nth-child(9) {
+  animation-delay: 0.48s;
+}
+
 /* ── Utility Classes ── */
 
 /* Glassmorphism card */

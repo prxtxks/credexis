@@ -12,7 +12,7 @@
 
 import { useMemo, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { GridLoader } from "@/components/ui/grid-loader";
 import {
   AllCommunityModule,
   ModuleRegistry,
@@ -243,18 +243,8 @@ export function SpreadGrid({
 
   if (spread.isLoading) {
     return (
-      <div
-        role="status"
-        aria-label="Loading spread"
-        data-slot="page-skeleton"
-        className="h-full space-y-2 p-4"
-      >
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-6 w-11/12" />
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-6 w-10/12" />
-        <Skeleton className="h-6 w-full" />
+      <div className="flex h-full items-center justify-center" data-slot="page-skeleton">
+        <GridLoader label="Loading spread…" />
       </div>
     );
   }
