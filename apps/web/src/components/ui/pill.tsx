@@ -19,15 +19,19 @@ export function Pill({
   className,
 }: {
   children: ReactNode;
-  /** `warn` is the only colour a pill may carry — see the design language. */
-  tone?: "neutral" | "warn";
+  /** `warn` = Vercel's "Needs Attention" orange; `accent` = their "Beta"
+   *  blue, in emerald (02-VERCEL-DERIVATION §2). Nothing else. */
+  tone?: "neutral" | "warn" | "accent";
   className?: string;
 }) {
   return (
     <span
       className={cn(
         "border-border/70 inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-4 font-medium",
-        tone === "warn" ? "text-severity-warning border-severity-warning/40" : "text-foreground/70",
+        tone === "warn" &&
+          "text-severity-warning border-severity-warning/40 bg-severity-warning/10",
+        tone === "accent" && "text-primary border-primary/40 bg-primary/10",
+        tone === "neutral" && "text-foreground/70",
         className,
       )}
     >

@@ -60,6 +60,10 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
+  /* Inverse button pair (02-VERCEL-DERIVATION §2 — flat primary buttons) */
+  --color-inverse: var(--inverse);
+  --color-inverse-foreground: var(--inverse-foreground);
+
   /* ── Credexis extras (same convention as the shadcn tokens) ── */
   --color-computed: var(--computed);
   --color-dscr-good: var(--dscr-good);
@@ -82,21 +86,27 @@
   --animate-border-spin: border-spin 4s linear infinite;
 }
 
-/* ── Light Theme (Emerald/Teal) ── */
+/* ── Light Theme (Emerald accent on neutral paper — 02-VERCEL-DERIVATION) ── */
 :root {
-  --radius: 0.625rem;
+  /* 8px control radius; rounded-xl resolves to 12 (cards), 2xl to 16 (modals),
+     3xl to 20 (sheets) — the measured Vercel ladder. */
+  --radius: 0.5rem;
   /* Core */
-  --background: oklch(0.985 0.002 166);
-  --foreground: oklch(0.17 0.02 166);
+  --background: oklch(0.985 0.001 166);
+  --foreground: oklch(0.17 0.01 166);
   /* Cards */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.17 0.02 166);
+  --card-foreground: oklch(0.17 0.01 166);
   /* Popovers */
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.17 0.02 166);
-  /* Primary — Emerald */
+  --popover-foreground: oklch(0.17 0.01 166);
+  /* Primary — Emerald (the ACCENT role: what blue is to Vercel). Buttons use
+     the inverse pair below, never this. */
   --primary: oklch(0.52 0.17 162);
   --primary-foreground: oklch(0.99 0 0);
+  /* Inverse — flat primary buttons (near-black on light, white on dark) */
+  --inverse: oklch(0.17 0.005 166);
+  --inverse-foreground: oklch(0.99 0 0);
   /* Secondary */
   --secondary: oklch(0.96 0.015 166);
   --secondary-foreground: oklch(0.25 0.04 166);
@@ -108,9 +118,9 @@
   --accent-foreground: oklch(0.25 0.04 166);
   /* Destructive */
   --destructive: oklch(0.577 0.245 27.325);
-  /* Borders & Inputs */
-  --border: oklch(0.93 0.005 166);
-  --input: oklch(0.91 0.01 166);
+  /* Borders & Inputs — hairlines, never solid greys (02 §2) */
+  --border: oklch(0 0 0 / 8%);
+  --input: oklch(0 0 0 / 10%);
   --ring: oklch(0.6 0.17 162);
   /* Chart palette */
   --chart-1: oklch(0.55 0.18 162);
@@ -118,14 +128,14 @@
   --chart-3: oklch(0.45 0.12 190);
   --chart-4: oklch(0.7 0.14 152);
   --chart-5: oklch(0.75 0.1 140);
-  /* Sidebar */
-  --sidebar: oklch(0.98 0.005 166);
-  --sidebar-foreground: oklch(0.17 0.02 166);
+  /* Sidebar — same canvas as the page, separated by hairline only (02 §3.1) */
+  --sidebar: oklch(0.985 0.001 166);
+  --sidebar-foreground: oklch(0.17 0.01 166);
   --sidebar-primary: oklch(0.52 0.17 162);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.95 0.03 166);
-  --sidebar-accent-foreground: oklch(0.25 0.04 166);
-  --sidebar-border: oklch(0.91 0.01 166);
+  --sidebar-accent: oklch(0 0 0 / 6%);
+  --sidebar-accent-foreground: oklch(0.17 0.01 166);
+  --sidebar-border: oklch(0 0 0 / 8%);
   --sidebar-ring: oklch(0.6 0.17 162);
   /* Credexis extras */
   --computed: #8b5cf6;
@@ -138,33 +148,36 @@
   --severity-info: oklch(0.55 0.05 240);
 }
 
-/* ── Dark Theme (Emerald/Teal) ── */
+/* ── Dark Theme (near-black canvas, hairline edges — 02-VERCEL-DERIVATION) ── */
 .dark {
-  --background: oklch(0.13 0.01 166);
-  --foreground: oklch(0.94 0.005 166);
-  /* Cards */
-  --card: oklch(0.17 0.012 166);
-  --card-foreground: oklch(0.94 0.005 166);
-  /* Popovers */
-  --popover: oklch(0.17 0.012 166);
-  --popover-foreground: oklch(0.94 0.005 166);
-  /* Primary — Bright Emerald */
+  --background: oklch(0.09 0.004 166);
+  --foreground: oklch(0.94 0.003 166);
+  /* Cards — surface-1: barely above canvas; the hairline does the work */
+  --card: oklch(0.145 0.006 166);
+  --card-foreground: oklch(0.94 0.003 166);
+  /* Popovers — surface-2 */
+  --popover: oklch(0.16 0.006 166);
+  --popover-foreground: oklch(0.94 0.003 166);
+  /* Primary — Bright Emerald (accent role only; buttons use inverse) */
   --primary: oklch(0.7 0.18 162);
   --primary-foreground: oklch(0.13 0.02 166);
+  /* Inverse — the flat white primary button */
+  --inverse: oklch(0.99 0 0);
+  --inverse-foreground: oklch(0.13 0.005 166);
   /* Secondary */
-  --secondary: oklch(0.22 0.02 166);
-  --secondary-foreground: oklch(0.9 0.01 166);
+  --secondary: oklch(0.18 0.008 166);
+  --secondary-foreground: oklch(0.9 0.005 166);
   /* Muted */
-  --muted: oklch(0.22 0.015 166);
-  --muted-foreground: oklch(0.6 0.02 166);
-  /* Accent */
-  --accent: oklch(0.22 0.02 166);
-  --accent-foreground: oklch(0.9 0.01 166);
+  --muted: oklch(0.18 0.008 166);
+  --muted-foreground: oklch(0.62 0.01 166);
+  /* Accent (hover fills) */
+  --accent: oklch(1 0 0 / 8%);
+  --accent-foreground: oklch(0.94 0.003 166);
   /* Destructive */
   --destructive: oklch(0.704 0.191 22.216);
-  /* Borders & Inputs */
-  --border: oklch(0.28 0.015 166);
-  --input: oklch(0.25 0.015 166);
+  /* Borders & Inputs — white hairlines at Vercel weights */
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.65 0.17 162);
   /* Chart palette */
   --chart-1: oklch(0.65 0.2 162);
@@ -172,14 +185,14 @@
   --chart-3: oklch(0.55 0.12 190);
   --chart-4: oklch(0.75 0.14 152);
   --chart-5: oklch(0.8 0.1 140);
-  /* Sidebar */
-  --sidebar: oklch(0.15 0.012 166);
-  --sidebar-foreground: oklch(0.94 0.005 166);
+  /* Sidebar — same canvas as the page, hairline-separated (02 §3.1) */
+  --sidebar: oklch(0.09 0.004 166);
+  --sidebar-foreground: oklch(0.94 0.003 166);
   --sidebar-primary: oklch(0.7 0.18 162);
   --sidebar-primary-foreground: oklch(0.13 0.02 166);
-  --sidebar-accent: oklch(0.22 0.02 166);
-  --sidebar-accent-foreground: oklch(0.9 0.01 166);
-  --sidebar-border: oklch(0.28 0.015 166);
+  --sidebar-accent: oklch(1 0 0 / 8%);
+  --sidebar-accent-foreground: oklch(0.94 0.003 166);
+  --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.65 0.17 162);
   /* Credexis extras (brighter for dark surfaces) */
   --severity-info: oklch(0.7 0.05 240);
@@ -348,6 +361,42 @@
   animation-delay: 0.48s;
 }
 
+/* ── Type scale (02-VERCEL-DERIVATION §2: 28/20/16/14/13/11) ──
+   Named steps so a size is a decision, not a guess. New off-scale
+   sizes are banned (plan 01 step 15 gate). */
+@utility text-display {
+  font-size: 1.75rem;
+  line-height: 2.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+@utility text-title {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+@utility text-heading {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+}
+@utility text-body {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+}
+@utility text-meta {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+@utility text-label {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 /* ── Utility Classes ── */
 
 /* Glassmorphism card */
@@ -356,12 +405,12 @@
    historical name so every existing page upgrades in place. */
 .glass-card {
   background: oklch(1 0 0);
-  border: 1px solid oklch(0.92 0.006 166);
+  border: 1px solid oklch(0 0 0 / 8%);
   box-shadow: 0 1px 2px oklch(0.2 0.02 166 / 5%);
 }
 
 .dark .glass-card {
-  background: oklch(0.19 0.012 166);
+  background: oklch(0.145 0.006 166);
   border: 1px solid oklch(1 0 0 / 8%);
   box-shadow: 0 1px 3px oklch(0 0 0 / 30%);
 }
@@ -459,26 +508,28 @@
 /* Chrome (top bar / tab bar) may blur — it floats over content — but at
    high opacity so text on it never fights the page underneath. */
 .frosted-toolbar {
-  background: oklch(1 0 0 / 88%);
+  background: oklch(0.985 0.001 166 / 88%);
   backdrop-filter: blur(16px) saturate(160%);
-  border-bottom: 1px solid oklch(0.92 0.006 166);
+  border-bottom: 1px solid oklch(0 0 0 / 8%);
 }
 
 .dark .frosted-toolbar {
-  background: oklch(0.15 0.01 166 / 88%);
-  border-bottom: 1px solid oklch(1 0 0 / 8%);
+  background: oklch(0.09 0.004 166 / 88%);
+  border-bottom: 1px solid oklch(1 0 0 / 10%);
 }
 
-/* Mobile bottom tab bar (ui-9): iOS-grade blur stack, top hairline only. */
+/* Mobile bottom tab bar (ui-9): iOS-grade blur stack, top hairline only.
+   RETIRED by 02 §1.4 — dies with the shell PR (ui-17-shell); the class
+   stays only until app-shell.tsx stops rendering it. */
 .tab-bar {
-  background: oklch(1 0 0 / 92%);
+  background: oklch(0.985 0.001 166 / 92%);
   backdrop-filter: blur(20px) saturate(160%);
-  border-top: 1px solid oklch(0.92 0.006 166);
+  border-top: 1px solid oklch(0 0 0 / 8%);
 }
 
 .dark .tab-bar {
-  background: oklch(0.15 0.01 166 / 92%);
-  border-top: 1px solid oklch(1 0 0 / 8%);
+  background: oklch(0.09 0.004 166 / 92%);
+  border-top: 1px solid oklch(1 0 0 / 10%);
 }
 
 /* Animated border gradient */

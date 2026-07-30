@@ -267,6 +267,9 @@ export function SpreadGrid({
         rowData={rowData}
         columnDefs={columnDefs}
         getRowId={(p) => p.data.key}
+        // AG Grid's stock "No Rows To Show" is the one string in the cockpit
+        // we don't own — replace it with product voice (ui-17).
+        overlayNoRowsTemplate={`<span style="color: var(--muted-foreground); font-size: 13px;">No accepted facts yet — rows appear as extraction lands and review accepts them.</span>`}
         theme={credexisGridTheme}
         headerHeight={GRID_HEADER_HEIGHT}
         rowHeight={GRID_ROW_HEIGHT}
