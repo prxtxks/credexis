@@ -257,7 +257,30 @@ export class AnthropicPageClassifier implements PageClassifier {
     });
   }
 
+  /**
+   * Image-bearing pages are batched (M13.6): a scanned bundle can be
+   * dozens of ~700KB PNGs, and one request carrying all of them exceeds
+   * the API's payload ceiling - the whole call fails and every page comes
+   * back unresolved. Text-only pages still go in one request, so native
+   * PDFs are unchanged.
+   */
+  private static readonly IMAGE_BATCH = 4;
+
   async classifyPages(pages: PageInput[]): Promise<PageClassification[]> {
+    const withImages = pages.filter((p) => p.imagePng);
+    if (withImages.length > AnthropicPageClassifier.IMAGE_BATCH) {
+      const out: PageClassification[] = [];
+      for (let i = 0; i < pages.length; i += AnthropicPageClassifier.IMAGE_BATCH) {
+        out.push(
+          ...(await this.classifyBatch(pages.slice(i, i + AnthropicPageClassifier.IMAGE_BATCH))),
+        );
+      }
+      return out;
+    }
+    return this.classifyBatch(pages);
+  }
+
+  private async classifyBatch(pages: PageInput[]): Promise<PageClassification[]> {
     const content: Anthropic.ContentBlockParam[] = [];
     for (const p of pages) {
       if (p.imagePng) {

@@ -18,7 +18,7 @@ import {
   type PageClassifier,
   type PageInput,
 } from "@credexis/extraction";
-import { extractPdfText, type PdfText } from "./pdf.js";
+import { extractPdfText, pagesNeedingRender, renderPageImages, type PdfText } from "./pdf.js";
 import { anthropicCostMicroUsd } from "./pricing.js";
 import type { DbPort, DocumentRow, StoragePort, VirusScanner, VirusScanStatus } from "./ports.js";
 
@@ -92,6 +92,8 @@ export interface IngestDeps {
   takeLlmUsage?: () => { model: string; inputTokens: number; outputTokens: number }[];
   /** Injectable for tests; defaults to unpdf. */
   extractPdf?: (bytes: Uint8Array) => Promise<PdfText>;
+  /** Seam for tests: render scanned pages to PNG (M13.6). */
+  renderPages?: (bytes: Uint8Array, pages: readonly number[]) => Promise<Map<number, Uint8Array>>;
   now?: () => number;
 }
 
@@ -176,7 +178,26 @@ export async function runIngest(deps: IngestDeps, payload: IngestPayload): Promi
 
     if (doc.mimeType === "application/pdf") {
       const { pageCount, pageTexts } = await (deps.extractPdf ?? extractPdfText)(bytes);
-      const pages: PageInput[] = pageTexts.map((text, i) => ({ page: i + 1, text }));
+
+      // SCANNED pages carry no text layer, so a text-only classifier is
+      // blind on them - the first real customer bundle was 19 image-only
+      // pages and produced one undifferentiated span (M13.6). Render just
+      // those pages and hand them to the vision classifier, which has
+      // always accepted `imagePng` and never received one in production.
+      // Text-bearing pages are never rendered, so native PDFs cost the
+      // same as before.
+      const needsRender = pagesNeedingRender(pageTexts);
+      const renderErrors: string[] = [];
+      const images =
+        needsRender.length > 0
+          ? await (deps.renderPages ?? renderPageImages)(bytes, needsRender, (page, message) =>
+              renderErrors.push(`p${page}: ${message}`),
+            )
+          : new Map<number, Uint8Array>();
+      const pages: PageInput[] = pageTexts.map((text, i) => {
+        const img = images.get(i + 1);
+        return img ? { page: i + 1, text, imagePng: img } : { page: i + 1, text };
+      });
       const classifications = await classifyBundle(pages, deps.classifier);
       const spans = inheritBundleYear(await groupIntoLogicalDocuments(pages, classifications));
 
@@ -228,6 +249,12 @@ export async function runIngest(deps: IngestDeps, payload: IngestPayload): Promi
           llmPages: byMethod.llm,
           unresolvedPages: byMethod.unresolved,
           duplicateSpans: spans.filter((s) => s.duplicateOf !== null).length,
+          // Scanned-page rendering (M13.6): visible in the run log, because
+          // a bundle whose pages all failed to render looks identical to a
+          // text-only bundle from the outside.
+          scannedPages: needsRender.length,
+          renderedPages: images.size,
+          ...(renderErrors.length > 0 ? { renderErrors: renderErrors.slice(0, 10) } : {}),
         },
         durationMs: now() - stageStartedAt,
       });
