@@ -50,6 +50,31 @@ function PdfViewport({
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const pan = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
 
+  // The page re-fits LIVE as the inspector is resized (ui-27: dragging the
+  // panel wider left the PDF at its old width until a zoom nudged it).
+  // Debounced so pdf.js re-renders once per gesture, not per frame.
+  const [fitWidth, setFitWidth] = useState(0);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    setFitWidth(el.clientWidth);
+    let t: ReturnType<typeof setTimeout> | null = null;
+    const ro = new ResizeObserver(() => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => setFitWidth(el.clientWidth), 120);
+    });
+    ro.observe(el);
+    return () => {
+      if (t) clearTimeout(t);
+      ro.disconnect();
+    };
+  }, []);
+
+  // One download per URL (ui-27): zoom and resize re-render from the
+  // cached document. Re-fetching on every zoom step both wasted bytes and
+  // broke after the signed URL expired mid-session (400 on zoom).
+  const docCache = useRef<{ url: string; promise: Promise<unknown> } | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -59,11 +84,16 @@ function PdfViewport({
           "pdfjs-dist/build/pdf.worker.min.mjs",
           import.meta.url,
         ).toString();
-        const doc = await pdfjs.getDocument({ url }).promise;
+        if (docCache.current?.url !== url) {
+          docCache.current = { url, promise: pdfjs.getDocument({ url }).promise };
+        }
+        const doc = (await docCache.current.promise) as Awaited<
+          ReturnType<typeof pdfjs.getDocument>["promise"]
+        >;
         const pdfPage = await doc.getPage(Math.min(page, doc.numPages));
         const base = pdfPage.getViewport({ scale: 1 });
-        const fitWidth = containerRef.current?.clientWidth ?? 320;
-        const cssScale = (fitWidth / base.width) * zoom;
+        const width = fitWidth || containerRef.current?.clientWidth || 320;
+        const cssScale = (width / base.width) * zoom;
         // Render at devicePixelRatio so zoomed text is crisp, not upscaled.
         const dpr = window.devicePixelRatio || 1;
         const rendered = pdfPage.getViewport({ scale: cssScale * dpr });
@@ -86,7 +116,7 @@ function PdfViewport({
     return () => {
       cancelled = true;
     };
-  }, [url, page, zoom]);
+  }, [url, page, zoom, fitWidth]);
 
   if (error) {
     return <p className="text-severity-critical text-xs">PDF render failed: {error}</p>;
@@ -117,14 +147,17 @@ function PdfViewport({
         <div className="relative inline-block">
           <canvas ref={canvasRef} />
           {bbox && size && (
+            /* Marker anatomy (ui-27): a rounded OUTLINE with a soft outer
+               halo and breathing room - the value stays fully readable,
+               where the old translucent fill painted over the digits. */
             <div
               aria-label="source bounding box"
-              className="border-primary bg-primary/15 pointer-events-none absolute border-2"
+              className="border-primary pointer-events-none absolute rounded-[4px] border-2 shadow-[0_0_0_4px_color-mix(in_oklch,var(--primary)_25%,transparent),0_0_18px_2px_color-mix(in_oklch,var(--primary)_35%,transparent)]"
               style={{
-                left: bbox.x * size.w,
-                top: bbox.y * size.h,
-                width: bbox.w * size.w,
-                height: bbox.h * size.h,
+                left: bbox.x * size.w - 3,
+                top: bbox.y * size.h - 3,
+                width: bbox.w * size.w + 6,
+                height: bbox.h * size.h + 6,
               }}
             />
           )}
@@ -217,7 +250,6 @@ export function SourceViewer({
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           <Pill tone={d.status === "suggested" ? "warn" : "neutral"}>{d.status}</Pill>
           <Pill>{d.method}</Pill>
-          {d.confidence !== null ? <Pill>conf {d.confidence}</Pill> : null}
         </div>
         {d.method === "override" && d.originalValueCents !== null && (
           <div className="text-muted-foreground mt-1.5 text-xs">
@@ -249,23 +281,34 @@ export function SourceViewer({
           {d.document?.formFamily ?? "-"} {d.document?.taxYear ?? ""}
         </MetaRow>
         <MetaRow label="Page">{d.document?.pdfPage ?? "-"}</MetaRow>
+        <MetaRow label="Confidence">
+          {d.confidence !== null ? `${Math.round(d.confidence * 100)}%` : "-"}
+        </MetaRow>
       </dl>
 
-      {/* ── Actions ── */}
+      {/* ── Actions ── two identical rows: flexible control, fixed 88px
+          button, everything h-8 on the same baseline (ui-27: the input,
+          select, and buttons were four different widths). */}
       <div className="glass-card rounded-lg p-3.5">
         <label htmlFor="override" className="text-[12px] font-semibold">
           Override value
         </label>
-        <div className="mt-1.5 flex gap-2">
+        <div className="mt-1.5 flex items-center gap-2">
           <Input
             id="override"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="36,500.00"
-            className="h-8"
+            className="h-8 min-w-0 flex-1"
             onKeyDown={(e) => e.key === "Enter" && submitOverride()}
           />
-          <Button size="sm" variant="brand" onClick={submitOverride} disabled={override.isPending}>
+          <Button
+            size="sm"
+            variant="brand"
+            className="h-8 w-[88px] shrink-0"
+            onClick={submitOverride}
+            disabled={override.isPending}
+          >
             Save
           </Button>
         </div>
@@ -276,7 +319,7 @@ export function SourceViewer({
         <label htmlFor="addback-category" className="mt-4 block text-[12px] font-semibold">
           Add back this line
         </label>
-        <div className="mt-1.5 flex gap-2">
+        <div className="mt-1.5 flex items-center gap-2">
           <FieldSelect
             ariaLabel="Add-back category"
             value={addbackCategory}
@@ -285,11 +328,12 @@ export function SourceViewer({
               value: c,
               label: c.replaceAll("_", " "),
             }))}
-            className="w-full"
+            className="h-8 min-w-0 flex-1"
           />
           <Button
             size="sm"
             variant="outline"
+            className="h-8 w-[88px] shrink-0"
             onClick={() =>
               createAddback.mutate({
                 dealId,

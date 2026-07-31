@@ -477,13 +477,17 @@ function WorkspaceInner() {
 
         {/* Right - inspector (ui-26: resizable; the PDF earns the width) */}
         {panelOpen && (
+          /* A generous 10px hitbox around a hairline grip - the 4px first
+             cut was a pixel-hunt to grab (ui-27). */
           <div
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize inspector"
             onPointerDown={onResizeStart}
-            className="hover:bg-primary/50 relative z-10 -mr-1 w-1 shrink-0 cursor-col-resize rounded-full transition-colors max-lg:hidden"
-          />
+            className="group relative z-10 -mx-[5px] flex w-2.5 shrink-0 cursor-col-resize items-stretch justify-center max-lg:hidden"
+          >
+            <div className="group-hover:bg-primary/60 w-[3px] rounded-full bg-transparent transition-colors" />
+          </div>
         )}
         {panelOpen && (
           <aside
