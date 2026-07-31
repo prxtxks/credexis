@@ -164,6 +164,27 @@ secret and the deal identifiers it is currently and deliberately denied.
   `node packages/eval/dist/signal-sweep/cli.js run --dir <corpus>`; it exits
   non-zero on hard failures.
 
+## Resolution updates
+
+**P2-1 resolved (M13.4, 2026-07-31):** the business-return registries map
+Schedule L to `bs.*` taxonomy nodes for 1120, 1120-S, and 1065 -
+END-OF-YEAR column only (column d; the beginning column is the prior
+period, whose honest source is a prior-year upload). Line numbering
+verified against the official 2023 printed PDFs; the 1065's divergent
+numbering (assets end at L14, partners' capital at L21) is respected.
+Each form carries a registry relation asserting total assets = total
+liabilities & equity. The Balance Sheet tab populates from the next
+extraction of a return with a filled Schedule L.
+
+**P2-2 resolved (2026-07-31):** the parsing→review advance was correct in
+code all along - the DEPLOYED worker was stale. Verified live after the
+worker redeploy: a fresh upload advanced its deal to Review
+automatically.
+
+**P2-3 resolved (M13.3, #181):** the staff-side sweeper
+(`sweep-orphan-documents`, cron \*/10) enqueues ingest for documents with
+no run - it rescued its first real document in production the same day.
+
 ## Resolution (M13.1, same day)
 
 P0 shipped: 4626 and NON_FORM exist as honesty labels; 4626 has a

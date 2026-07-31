@@ -2,17 +2,50 @@
  * Business return registries: 1120-S, 1120, 1065 (tax years 2023–2025).
  *
  * ⚠️ 1120-S line numbering verified against real filed 2023/2024 returns
- * (see the §179D insertion below). 1120 and 1065 still carry unverified
- * numbering — [PRATIK]/M4.1 must check them against printed forms before
- * extraction trusts their line numbers.
+ * (see the §179D insertion below). 1120 and 1065 page-1 numbering still
+ * carries the [PRATIK]/M4.1 caveat; the SCHEDULE L numbering for all
+ * three forms was verified against the official 2023 printed PDFs
+ * (corpus-1, 2026-07-31).
  * Line numbers verified against the 2023 printed forms; 2024/2025 carried
  * the same numbering (empty overrides — the mechanism is there for when
  * the IRS renumbers). ⚠️ [PRATIK] reviews field lists against real
  * underwriting needs (task M4.1).
  */
 
-import type { FormDefinition } from "../types.js";
+import type { FormDefinition, RegistryField } from "../types.js";
 import { identityText, money } from "./helpers.js";
+
+/**
+ * Schedule L line, END-OF-YEAR column only (M13.4, walkthrough P2-1).
+ * The schedule prints four columns; these fields read column (d) - the
+ * balance sheet as of the return's fiscal year end, the same period the
+ * rest of the return binds to. Column (b) is the PRIOR year's closing
+ * balance sheet: a different period, deliberately not extracted - a
+ * prior-year upload is the honest source for it. Line numbering verified
+ * against the official 2023 printed forms (corpus-1 PDFs, 2026-07-31):
+ * 1120 p6, 1120-S p4, 1065 Schedule L page; the three forms number their
+ * liability/equity sections differently.
+ */
+const SCH_L_HINT =
+  "Schedule L prints four columns: (a)/(b) beginning of tax year, (c)/(d) end of tax year. " +
+  "Read ONLY column (d), end of tax year - never columns (a) through (c).";
+
+function schL(
+  fieldId: string,
+  lineNumber: string,
+  label: string,
+  taxonomyNodeKey: string | null,
+  pageHint: number,
+  opts: Partial<Omit<RegistryField, "fieldId" | "lineNumber" | "label" | "dtype">> = {},
+): RegistryField {
+  return money(fieldId, lineNumber, `Schedule L: ${label} (end of year)`, {
+    pageHint,
+    hasCentsBox: false,
+    hint: SCH_L_HINT,
+    taxonomyNodeKey,
+    ...opts,
+  });
+}
 
 export const F1120S: FormDefinition = {
   formFamily: "1120S",
@@ -85,8 +118,136 @@ export const F1120S: FormDefinition = {
       money("f1120s.line21", "22", "Ordinary business income (loss)", {
         taxonomyNodeKey: "is.net_income",
       }),
+      // ── Schedule L (printed page 4) - see SCH_L_HINT ──
+      schL("f1120s.schl_line1", "L1", "Cash", "bs.assets.current.cash", 4),
+      schL(
+        "f1120s.schl_line2b",
+        "L2b",
+        "Trade notes and accounts receivable, net of allowance",
+        "bs.assets.current.accounts_receivable",
+        4,
+      ),
+      schL("f1120s.schl_line3", "L3", "Inventories", "bs.assets.current.inventory", 4),
+      schL(
+        "f1120s.schl_line4",
+        "L4",
+        "U.S. government obligations",
+        "bs.assets.other.investments",
+        4,
+      ),
+      schL("f1120s.schl_line5", "L5", "Tax-exempt securities", "bs.assets.other.investments", 4),
+      schL("f1120s.schl_line6", "L6", "Other current assets", "bs.assets.current.other", 4),
+      schL(
+        "f1120s.schl_line7",
+        "L7",
+        "Loans to shareholders",
+        "bs.assets.other.due_from_shareholders",
+        4,
+      ),
+      schL(
+        "f1120s.schl_line8",
+        "L8",
+        "Mortgage and real estate loans",
+        "bs.assets.other.notes_receivable_lt",
+        4,
+      ),
+      schL("f1120s.schl_line9", "L9", "Other investments", "bs.assets.other.investments", 4),
+      schL(
+        "f1120s.schl_line10b",
+        "L10b",
+        "Buildings and other depreciable assets, net of accumulated depreciation",
+        "bs.assets.fixed.total",
+        4,
+      ),
+      schL("f1120s.schl_line12", "L12", "Land", "bs.assets.fixed.land", 4),
+      schL(
+        "f1120s.schl_line13b",
+        "L13b",
+        "Intangible assets, net of accumulated amortization",
+        "bs.assets.other.intangibles",
+        4,
+      ),
+      schL("f1120s.schl_line14", "L14", "Other assets", "bs.assets.other.other", 4),
+      schL("f1120s.schl_line15", "L15", "Total assets", "bs.assets.total", 4),
+      schL(
+        "f1120s.schl_line16",
+        "L16",
+        "Accounts payable",
+        "bs.liabilities.current.accounts_payable",
+        4,
+      ),
+      schL(
+        "f1120s.schl_line17",
+        "L17",
+        "Mortgages, notes, bonds payable in less than 1 year",
+        "bs.liabilities.current.current_portion_ltd",
+        4,
+      ),
+      schL(
+        "f1120s.schl_line18",
+        "L18",
+        "Other current liabilities",
+        "bs.liabilities.current.other",
+        4,
+      ),
+      schL(
+        "f1120s.schl_line19",
+        "L19",
+        "Loans from shareholders",
+        "bs.liabilities.longterm.stockholder_loans",
+        4,
+      ),
+      schL(
+        "f1120s.schl_line20",
+        "L20",
+        "Mortgages, notes, bonds payable in 1 year or more",
+        "bs.liabilities.longterm.notes_payable",
+        4,
+      ),
+      schL("f1120s.schl_line21", "L21", "Other liabilities", "bs.liabilities.longterm.other", 4),
+      schL("f1120s.schl_line22", "L22", "Capital stock", "bs.equity.common_stock", 4),
+      schL(
+        "f1120s.schl_line23",
+        "L23",
+        "Additional paid-in capital",
+        "bs.equity.paid_in_capital",
+        4,
+      ),
+      schL("f1120s.schl_line24", "L24", "Retained earnings", "bs.equity.retained_earnings", 4),
+      schL(
+        "f1120s.schl_line25",
+        "L25",
+        "Adjustments to shareholders' equity",
+        "bs.equity.other",
+        4,
+      ),
+      schL(
+        "f1120s.schl_line26",
+        "L26",
+        "Less cost of treasury stock",
+        "bs.equity.treasury_stock",
+        4,
+        {
+          sign: -1,
+        },
+      ),
+      schL(
+        "f1120s.schl_line27",
+        "L27",
+        "Total liabilities and shareholders' equity",
+        "bs.total_liabilities_equity",
+        4,
+      ),
     ],
     relations: [
+      {
+        id: "1120s.schl_balances",
+        type: "sum",
+        result: "f1120s.schl_line27",
+        operands: ["f1120s.schl_line15"],
+        toleranceCents: 100n,
+        description: "Schedule L balances: total liabilities & equity (L27) = total assets (L15)",
+      },
       {
         id: "1120s.balance",
         type: "difference",
@@ -218,8 +379,156 @@ export const F1120: FormDefinition = {
       }),
       money("f1120.line30", "30", "Taxable income", { taxonomyNodeKey: "is.pretax_income" }),
       money("f1120.line31", "31", "Total tax", { taxonomyNodeKey: "is.income_tax" }),
+      // ── Schedule L (printed page 6) - see SCH_L_HINT ──
+      schL("f1120.schl_line1", "L1", "Cash", "bs.assets.current.cash", 6),
+      schL(
+        "f1120.schl_line2b",
+        "L2b",
+        "Trade notes and accounts receivable, net of allowance",
+        "bs.assets.current.accounts_receivable",
+        6,
+      ),
+      schL("f1120.schl_line3", "L3", "Inventories", "bs.assets.current.inventory", 6),
+      schL(
+        "f1120.schl_line4",
+        "L4",
+        "U.S. government obligations",
+        "bs.assets.other.investments",
+        6,
+      ),
+      schL("f1120.schl_line5", "L5", "Tax-exempt securities", "bs.assets.other.investments", 6),
+      schL("f1120.schl_line6", "L6", "Other current assets", "bs.assets.current.other", 6),
+      schL(
+        "f1120.schl_line7",
+        "L7",
+        "Loans to shareholders",
+        "bs.assets.other.due_from_shareholders",
+        6,
+      ),
+      schL(
+        "f1120.schl_line8",
+        "L8",
+        "Mortgage and real estate loans",
+        "bs.assets.other.notes_receivable_lt",
+        6,
+      ),
+      schL("f1120.schl_line9", "L9", "Other investments", "bs.assets.other.investments", 6),
+      schL(
+        "f1120.schl_line10b",
+        "L10b",
+        "Buildings and other depreciable assets, net of accumulated depreciation",
+        "bs.assets.fixed.total",
+        6,
+      ),
+      schL("f1120.schl_line12", "L12", "Land", "bs.assets.fixed.land", 6),
+      schL(
+        "f1120.schl_line13b",
+        "L13b",
+        "Intangible assets, net of accumulated amortization",
+        "bs.assets.other.intangibles",
+        6,
+      ),
+      schL("f1120.schl_line14", "L14", "Other assets", "bs.assets.other.other", 6),
+      schL("f1120.schl_line15", "L15", "Total assets", "bs.assets.total", 6),
+      schL(
+        "f1120.schl_line16",
+        "L16",
+        "Accounts payable",
+        "bs.liabilities.current.accounts_payable",
+        6,
+      ),
+      schL(
+        "f1120.schl_line17",
+        "L17",
+        "Mortgages, notes, bonds payable in less than 1 year",
+        "bs.liabilities.current.current_portion_ltd",
+        6,
+      ),
+      schL(
+        "f1120.schl_line18",
+        "L18",
+        "Other current liabilities",
+        "bs.liabilities.current.other",
+        6,
+      ),
+      schL(
+        "f1120.schl_line19",
+        "L19",
+        "Loans from shareholders",
+        "bs.liabilities.longterm.stockholder_loans",
+        6,
+      ),
+      schL(
+        "f1120.schl_line20",
+        "L20",
+        "Mortgages, notes, bonds payable in 1 year or more",
+        "bs.liabilities.longterm.notes_payable",
+        6,
+      ),
+      schL("f1120.schl_line21", "L21", "Other liabilities", "bs.liabilities.longterm.other", 6),
+      schL(
+        "f1120.schl_line22a",
+        "L22a",
+        "Capital stock: preferred stock",
+        "bs.equity.preferred_stock",
+        6,
+      ),
+      schL(
+        "f1120.schl_line22b",
+        "L22b",
+        "Capital stock: common stock",
+        "bs.equity.common_stock",
+        6,
+      ),
+      schL(
+        "f1120.schl_line23",
+        "L23",
+        "Additional paid-in capital",
+        "bs.equity.paid_in_capital",
+        6,
+      ),
+      schL(
+        "f1120.schl_line24",
+        "L24",
+        "Retained earnings, appropriated",
+        "bs.equity.retained_earnings",
+        6,
+      ),
+      schL(
+        "f1120.schl_line25",
+        "L25",
+        "Retained earnings, unappropriated",
+        "bs.equity.retained_earnings",
+        6,
+      ),
+      schL("f1120.schl_line26", "L26", "Adjustments to shareholders' equity", "bs.equity.other", 6),
+      schL(
+        "f1120.schl_line27",
+        "L27",
+        "Less cost of treasury stock",
+        "bs.equity.treasury_stock",
+        6,
+        {
+          sign: -1,
+        },
+      ),
+      schL(
+        "f1120.schl_line28",
+        "L28",
+        "Total liabilities and shareholders' equity",
+        "bs.total_liabilities_equity",
+        6,
+      ),
     ],
     relations: [
+      {
+        id: "1120.schl_balances",
+        type: "sum",
+        result: "f1120.schl_line28",
+        operands: ["f1120.schl_line15"],
+        toleranceCents: 100n,
+        description: "Schedule L balances: total liabilities & equity (L28) = total assets (L15)",
+      },
       {
         id: "1120.total_income",
         type: "sum",
@@ -313,8 +622,115 @@ export const F1065: FormDefinition = {
       money("f1065.line22", "22", "Ordinary business income (loss)", {
         taxonomyNodeKey: "is.net_income",
       }),
+      // ── Schedule L - see SCH_L_HINT. The 1065 numbers its schedule
+      //    differently from the 1120 family (assets end at 14, partners'
+      //    capital replaces the equity block) - verified against the
+      //    official 2023 form. ──
+      schL("f1065.schl_line1", "L1", "Cash", "bs.assets.current.cash", 6),
+      schL(
+        "f1065.schl_line2b",
+        "L2b",
+        "Trade notes and accounts receivable, net of allowance",
+        "bs.assets.current.accounts_receivable",
+        6,
+      ),
+      schL("f1065.schl_line3", "L3", "Inventories", "bs.assets.current.inventory", 6),
+      schL(
+        "f1065.schl_line4",
+        "L4",
+        "U.S. government obligations",
+        "bs.assets.other.investments",
+        6,
+      ),
+      schL("f1065.schl_line5", "L5", "Tax-exempt securities", "bs.assets.other.investments", 6),
+      schL("f1065.schl_line6", "L6", "Other current assets", "bs.assets.current.other", 6),
+      schL("f1065.schl_line7a", "L7a", "Loans to partners", "bs.assets.other.due_from_related", 6),
+      schL(
+        "f1065.schl_line7b",
+        "L7b",
+        "Mortgage and real estate loans",
+        "bs.assets.other.notes_receivable_lt",
+        6,
+      ),
+      schL("f1065.schl_line8", "L8", "Other investments", "bs.assets.other.investments", 6),
+      schL(
+        "f1065.schl_line9b",
+        "L9b",
+        "Buildings and other depreciable assets, net of accumulated depreciation",
+        "bs.assets.fixed.total",
+        6,
+      ),
+      schL("f1065.schl_line11", "L11", "Land", "bs.assets.fixed.land", 6),
+      schL(
+        "f1065.schl_line12b",
+        "L12b",
+        "Intangible assets, net of accumulated amortization",
+        "bs.assets.other.intangibles",
+        6,
+      ),
+      schL("f1065.schl_line13", "L13", "Other assets", "bs.assets.other.other", 6),
+      schL("f1065.schl_line14", "L14", "Total assets", "bs.assets.total", 6),
+      schL(
+        "f1065.schl_line15",
+        "L15",
+        "Accounts payable",
+        "bs.liabilities.current.accounts_payable",
+        6,
+      ),
+      schL(
+        "f1065.schl_line16",
+        "L16",
+        "Mortgages, notes, bonds payable in less than 1 year",
+        "bs.liabilities.current.current_portion_ltd",
+        6,
+      ),
+      schL(
+        "f1065.schl_line17",
+        "L17",
+        "Other current liabilities",
+        "bs.liabilities.current.other",
+        6,
+      ),
+      schL("f1065.schl_line18", "L18", "All nonrecourse loans", "bs.liabilities.longterm.other", 6),
+      schL(
+        "f1065.schl_line19a",
+        "L19a",
+        "Loans from partners",
+        "bs.liabilities.longterm.due_to_related",
+        6,
+      ),
+      schL(
+        "f1065.schl_line19b",
+        "L19b",
+        "Mortgages, notes, bonds payable in 1 year or more",
+        "bs.liabilities.longterm.notes_payable",
+        6,
+      ),
+      schL("f1065.schl_line20", "L20", "Other liabilities", "bs.liabilities.longterm.other", 6),
+      schL(
+        "f1065.schl_line21",
+        "L21",
+        "Partners' capital accounts",
+        "bs.equity.partner_capital",
+        6,
+      ),
+      schL(
+        "f1065.schl_line22",
+        "L22",
+        "Total liabilities and capital",
+        "bs.total_liabilities_equity",
+        6,
+      ),
     ],
     relations: [
+      {
+        id: "1065.schl_balances",
+        type: "sum",
+        result: "f1065.schl_line22",
+        operands: ["f1065.schl_line14"],
+        toleranceCents: 100n,
+        description: "Schedule L balances: total liabilities & capital (L22) = total assets (L14)",
+      },
       {
         id: "1065.gross_profit",
         type: "difference",
