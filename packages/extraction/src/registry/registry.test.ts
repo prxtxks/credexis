@@ -192,3 +192,60 @@ describe("K-1 box-17 disambiguation (real-corpus finding, 2026-07-20)", () => {
     expect(req?.hint).toMatch(/box 17/i); // warns about the adjacent AC amount
   });
 });
+
+describe("Schedule L (M13.4) - the Balance Sheet finally spreads from business returns", () => {
+  it("all three business returns map Schedule L to bs.* nodes", () => {
+    for (const family of ["1120", "1120S", "1065"] as const) {
+      const entry = getRegistryEntry(family, 2023);
+      const schL = entry!.fields.filter((f) => f.fieldId.includes(".schl_"));
+      expect(schL.length, family).toBeGreaterThanOrEqual(20);
+      // Every Schedule L field is either bs.*-mapped or deliberately null.
+      for (const f of schL) {
+        if (f.taxonomyNodeKey !== null) {
+          expect(f.taxonomyNodeKey.startsWith("bs."), f.fieldId).toBe(true);
+        }
+        // Column discipline is in the schema the readers consume.
+        expect(f.hint, f.fieldId).toContain("column (d)");
+        expect(f.label, f.fieldId).toContain("end of year");
+      }
+      // The anchors every balance sheet needs.
+      const keys = new Set(schL.map((f) => f.taxonomyNodeKey));
+      expect(keys.has("bs.assets.total"), family).toBe(true);
+      expect(keys.has("bs.total_liabilities_equity"), family).toBe(true);
+      expect(keys.has("bs.assets.current.cash"), family).toBe(true);
+      expect(keys.has("bs.liabilities.current.accounts_payable"), family).toBe(true);
+    }
+  });
+
+  it("the balance relation asserts assets = liabilities + equity per form", () => {
+    const cases = [
+      ["1120", "1120.schl_balances"],
+      ["1120S", "1120s.schl_balances"],
+      ["1065", "1065.schl_balances"],
+    ] as const;
+    for (const [family, relId] of cases) {
+      const entry = getRegistryEntry(family, 2023);
+      const rel = entry!.relations.find((r) => r.id === relId);
+      expect(rel, family).toBeDefined();
+      expect(rel!.operands).toHaveLength(1); // equality expressed as a one-operand sum
+    }
+  });
+
+  it("treasury stock carries the negative sign the printed parentheses imply", () => {
+    for (const [family, fieldId] of [
+      ["1120", "f1120.schl_line27"],
+      ["1120S", "f1120s.schl_line26"],
+    ] as const) {
+      const f = getRegistryEntry(family, 2023)!.fields.find((x) => x.fieldId === fieldId);
+      expect(f?.sign, fieldId).toBe(-1);
+    }
+  });
+
+  it("the 1065's divergent numbering is respected (assets end at L14, capital at L21)", () => {
+    const entry = getRegistryEntry("1065", 2023)!;
+    const byId = new Map(entry.fields.map((f) => [f.fieldId, f]));
+    expect(byId.get("f1065.schl_line14")?.taxonomyNodeKey).toBe("bs.assets.total");
+    expect(byId.get("f1065.schl_line21")?.taxonomyNodeKey).toBe("bs.equity.partner_capital");
+    expect(byId.get("f1065.schl_line22")?.taxonomyNodeKey).toBe("bs.total_liabilities_equity");
+  });
+});
