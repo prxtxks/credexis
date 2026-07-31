@@ -139,22 +139,39 @@ export async function runExtractStage(
   const entities = await deps.db.getDealEntities(input.dealId);
   const soleEntity = entities.length === 1 ? entities[0]!.id : null;
 
-  // Interleaved schedules fragment one form into several spans; adapters
-  // read the WHOLE file anyway, so extract once per (family, year) via the
-  // primary (earliest) span - 4 fragments must not mean 4 vendor bills.
-  const primaryByKey = new Map<string, string>();
-  for (const ld of input.logicalDocuments) {
-    if (
-      STATEMENT_FAMILIES.has(ld.formFamily) ||
-      UNSUPPORTED_FAMILIES.has(ld.formFamily) ||
-      ld.formFamily === "UNKNOWN"
-    )
-      continue;
-    const key = `${ld.formFamily}|${ld.taxYear}`;
-    const current = primaryByKey.get(key);
-    const currentStart =
-      input.logicalDocuments.find((x) => x.id === current)?.pageStart ?? Infinity;
-    if (!current || ld.pageStart < currentStart) primaryByKey.set(key, ld.id);
+  // Skip only spans that are genuinely REDUNDANT - contained inside
+  // another span of the same (family, year) that will itself be
+  // extracted. Never skip a merely same-keyed span.
+  //
+  // This used to collapse every same-key span onto the earliest one, on
+  // the premise that "adapters read the WHOLE file anyway". That premise
+  // expired the next day when extraction started slicing to each span's
+  // own pages (the `slicePdfPages` call below), and the comment was never
+  // updated. The result was silent data loss: an 1120-S with interleaved
+  // K-1s produces two 1120-S spans, only the first was ever sent to a
+  // vendor, and the second was recorded as "extracted via its primary
+  // span" - a coverage claim for pages nothing ever read. Containment
+  // keeps the original intent (a duplicate span must not be billed
+  // twice) without dropping disjoint fragments.
+  const redundant = new Set<string>();
+  const extractable = input.logicalDocuments.filter(
+    (ld) =>
+      !STATEMENT_FAMILIES.has(ld.formFamily) &&
+      !UNSUPPORTED_FAMILIES.has(ld.formFamily) &&
+      ld.formFamily !== "UNKNOWN",
+  );
+  for (const ld of extractable) {
+    for (const other of extractable) {
+      if (other.id === ld.id) continue;
+      if (other.formFamily !== ld.formFamily || other.taxYear !== ld.taxYear) continue;
+      const contains = other.pageStart <= ld.pageStart && other.pageEnd >= ld.pageEnd;
+      const identical = other.pageStart === ld.pageStart && other.pageEnd === ld.pageEnd;
+      // Identical ranges: keep exactly one (lowest id wins the tie).
+      if (contains && (!identical || other.id < ld.id) && !redundant.has(other.id)) {
+        redundant.add(ld.id);
+        break;
+      }
+    }
   }
 
   for (const ld of input.logicalDocuments) {
@@ -182,11 +199,11 @@ export async function runExtractStage(
         result.factsInserted += n;
         result.perDocument.push({ logicalDocumentId: ld.id, facts: n });
       } else if (ld.formFamily !== "UNKNOWN") {
-        if (primaryByKey.get(`${ld.formFamily}|${ld.taxYear}`) !== ld.id) {
+        if (redundant.has(ld.id)) {
           result.perDocument.push({
             logicalDocumentId: ld.id,
             facts: 0,
-            skipped: "fragment of a form extracted via its primary span",
+            skipped: "duplicate span - its pages are covered by a wider span of the same form",
           });
           continue;
         }

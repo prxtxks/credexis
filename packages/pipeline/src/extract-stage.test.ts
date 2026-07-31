@@ -412,3 +412,61 @@ describe("statement extraction resilience (bake-off finding, 2026-07-20)", () =>
     expect(db.facts.some((f) => f.taxonomy_node_key === "is.opex.rent")).toBe(true);
   });
 });
+
+describe("runExtractStage - span coverage (M13.5 regression)", () => {
+  /**
+   * Disjoint spans of the SAME form and year must each be extracted.
+   * They used to collapse onto the earliest span on the premise that
+   * "adapters read the whole file anyway" - which stopped being true when
+   * extraction started slicing to each span's own pages. An 1120-S with
+   * interleaved K-1s silently lost every page after the first fragment,
+   * while the run log claimed the fragment was covered.
+   */
+  it("interleaved fragments of one form are BOTH extracted, not collapsed", async () => {
+    const db = new FakeDb();
+    const deps = baseDeps({
+      db,
+      path1ForFamily: () => adapterReturning([cand("f1120s.line1c", "121125")]),
+      path2: adapterReturning([cand("f1120s.line1c", "121125")]),
+    });
+    const front = { ...LD_1120S, id: "ld-front", pageStart: 1, pageEnd: 3 };
+    const back = { ...LD_1120S, id: "ld-back", pageStart: 6, pageEnd: 9 };
+
+    const result = await runExtractStage(deps, {
+      ...INPUT,
+      logicalDocuments: [front, back],
+    });
+
+    const skipped = result.perDocument.filter((p) => p.skipped !== undefined);
+    expect(skipped, JSON.stringify(result.perDocument)).toHaveLength(0);
+    expect(result.perDocument.map((p) => p.logicalDocumentId).sort()).toEqual([
+      "ld-back",
+      "ld-front",
+    ]);
+    // Both spans produced their own lineage.
+    expect(new Set(db.facts.map((f) => f.source_logical_document_id))).toEqual(
+      new Set(["ld-front", "ld-back"]),
+    );
+  });
+
+  it("a span contained inside a wider span of the same form is still skipped once", async () => {
+    const db = new FakeDb();
+    const deps = baseDeps({
+      db,
+      path1ForFamily: () => adapterReturning([cand("f1120s.line1c", "121125")]),
+      path2: adapterReturning([cand("f1120s.line1c", "121125")]),
+    });
+    const wide = { ...LD_1120S, id: "ld-wide", pageStart: 1, pageEnd: 9 };
+    const inner = { ...LD_1120S, id: "ld-inner", pageStart: 3, pageEnd: 5 };
+
+    const result = await runExtractStage(deps, {
+      ...INPUT,
+      logicalDocuments: [wide, inner],
+    });
+
+    const skipped = result.perDocument.filter((p) => p.skipped !== undefined);
+    expect(skipped).toHaveLength(1);
+    expect(skipped[0]!.logicalDocumentId).toBe("ld-inner");
+    expect(skipped[0]!.skipped).toContain("duplicate span");
+  });
+});

@@ -14,7 +14,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertCircle, Check, FileText, Loader2 } from "lucide-react";
+import { AlertCircle, Check, FileText, Loader2, Merge, Scissors, X } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { ASSIGNABLE_FAMILIES } from "@/lib/form-families";
@@ -49,6 +49,77 @@ export default function AssignmentPage() {
     onSuccess: () => void utils.assignment.list.invalidate({ dealId }),
     onError: (err) => toast.error(err.message),
   });
+  // M13.5: reviewers own the page ranges too - edit and split, audited.
+  const setPages = trpc.assignment.setPages.useMutation({
+    onSuccess: () => {
+      void utils.assignment.list.invalidate({ dealId });
+      toast.success("Page range updated");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const split = trpc.assignment.split.useMutation({
+    onSuccess: () => {
+      void utils.assignment.list.invalidate({ dealId });
+      toast.success("Span split - relabel the new half");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const merge = trpc.assignment.merge.useMutation({
+    onSuccess: () => {
+      void utils.assignment.list.invalidate({ dealId });
+      toast.success("Spans joined");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const [pageDrafts, setPageDrafts] = useState<Record<string, { start: string; end: string }>>({});
+  const [splitDrafts, setSplitDrafts] = useState<Record<string, string>>({});
+
+  type Row = NonNullable<typeof list.data>[number];
+  const pagesDirty = (row: Row) => {
+    const d = pageDrafts[row.id];
+    return d !== undefined && (d.start !== String(row.pageStart) || d.end !== String(row.pageEnd));
+  };
+  const pagesValid = (row: Row) => {
+    const d = pageDrafts[row.id];
+    if (!d) return false;
+    const s = Number(d.start);
+    const e = Number(d.end);
+    return d.start !== "" && d.end !== "" && s >= 1 && e >= s;
+  };
+  const splitValid = (row: Row) => {
+    const v = splitDrafts[row.id];
+    if (v === undefined || v === "") return false;
+    const n = Number(v);
+    return n > row.pageStart && n <= row.pageEnd;
+  };
+  const cancelSplit = (row: Row) =>
+    setSplitDrafts((d) => {
+      const next = { ...d };
+      delete next[row.id];
+      return next;
+    });
+  function submitSplit(row: Row) {
+    if (!splitValid(row)) return;
+    split.mutate(
+      { logicalDocumentId: row.id, atPage: Number(splitDrafts[row.id]) },
+      { onSuccess: () => cancelSplit(row) },
+    );
+  }
+  function submitPages(row: Row) {
+    if (!pagesDirty(row) || !pagesValid(row)) return;
+    const d = pageDrafts[row.id]!;
+    setPages.mutate(
+      { logicalDocumentId: row.id, pageStart: Number(d.start), pageEnd: Number(d.end) },
+      {
+        onSuccess: () =>
+          setPageDrafts((x) => {
+            const next = { ...x };
+            delete next[row.id];
+            return next;
+          }),
+      },
+    );
+  }
 
   // Draft edits keyed by logical document id; unsaved fields only.
   const [drafts, setDrafts] = useState<
@@ -141,7 +212,14 @@ export default function AssignmentPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((row) => {
+                {rows.map((row, i) => {
+                  // The row above, when it is the immediately preceding
+                  // span of the SAME file - the only legal merge partner.
+                  const prev = rows[i - 1];
+                  const mergeable =
+                    prev && prev.documentId === row.documentId && prev.pageEnd + 1 === row.pageStart
+                      ? prev
+                      : null;
                   const draft = drafts[row.id] ?? {};
                   const family = draft.formFamily ?? row.formFamily;
                   const year = draft.taxYear ?? String(row.taxYear ?? "");
@@ -186,8 +264,126 @@ export default function AssignmentPage() {
                             </span>
                           ))}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
-                        {row.pageStart}-{row.pageEnd}
+                      <TableCell className="whitespace-nowrap">
+                        {/* Editable range + split (M13.5): if the splitter
+                            drew a boundary wrong, the reviewer fixes it
+                            here - every change audited like the labels. */}
+                        <div className="flex items-center gap-1">
+                          <Input
+                            aria-label={`First page of the ${row.pageStart}-${row.pageEnd} span in ${row.fileName}`}
+                            value={pageDrafts[row.id]?.start ?? String(row.pageStart)}
+                            onChange={(e) =>
+                              setPageDrafts((d) => ({
+                                ...d,
+                                [row.id]: {
+                                  start: e.target.value.replace(/\D/g, ""),
+                                  end: d[row.id]?.end ?? String(row.pageEnd),
+                                },
+                              }))
+                            }
+                            onKeyDown={(e) => e.key === "Enter" && submitPages(row)}
+                            inputMode="numeric"
+                            className="h-8 w-12 text-center tabular-nums"
+                          />
+                          <span className="text-muted-foreground">-</span>
+                          <Input
+                            aria-label={`Last page of the ${row.pageStart}-${row.pageEnd} span in ${row.fileName}`}
+                            value={pageDrafts[row.id]?.end ?? String(row.pageEnd)}
+                            onChange={(e) =>
+                              setPageDrafts((d) => ({
+                                ...d,
+                                [row.id]: {
+                                  start: d[row.id]?.start ?? String(row.pageStart),
+                                  end: e.target.value.replace(/\D/g, ""),
+                                },
+                              }))
+                            }
+                            onKeyDown={(e) => e.key === "Enter" && submitPages(row)}
+                            inputMode="numeric"
+                            className="h-8 w-12 text-center tabular-nums"
+                          />
+                          {pagesDirty(row) ? (
+                            <Button
+                              size="xs"
+                              variant="brand"
+                              // Guard the empty/partial draft here: the server
+                              // would answer a raw Zod blob, which is not a
+                              // sentence an underwriter can act on.
+                              disabled={setPages.isPending || !pagesValid(row)}
+                              onClick={() => submitPages(row)}
+                            >
+                              Set
+                            </Button>
+                          ) : row.pageEnd > row.pageStart ? (
+                            splitDrafts[row.id] !== undefined ? (
+                              <span className="flex items-center gap-1">
+                                <Input
+                                  autoFocus
+                                  aria-label={`Split the ${row.pageStart}-${row.pageEnd} span of ${row.fileName} at page`}
+                                  value={splitDrafts[row.id]}
+                                  onChange={(e) =>
+                                    setSplitDrafts((d) => ({
+                                      ...d,
+                                      [row.id]: e.target.value.replace(/\D/g, ""),
+                                    }))
+                                  }
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") submitSplit(row);
+                                    if (e.key === "Escape") cancelSplit(row);
+                                  }}
+                                  placeholder={`${row.pageStart + 1}`}
+                                  inputMode="numeric"
+                                  className="h-8 w-12 text-center tabular-nums"
+                                />
+                                <Button
+                                  size="xs"
+                                  variant="brand"
+                                  disabled={split.isPending || !splitValid(row)}
+                                  onClick={() => submitSplit(row)}
+                                >
+                                  Split
+                                </Button>
+                                {/* An accidental scissors click must be
+                                    escapable - Esc or this button. */}
+                                <button
+                                  type="button"
+                                  aria-label={`Cancel splitting the ${row.pageStart}-${row.pageEnd} span`}
+                                  onClick={() => cancelSplit(row)}
+                                  className="hover:bg-accent text-muted-foreground rounded-md p-1 transition-colors"
+                                >
+                                  <X className="size-3.5" />
+                                </button>
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                aria-label={`Split span ${row.pageStart}-${row.pageEnd} of ${row.fileName}`}
+                                title="Split this span at a page"
+                                onClick={() => setSplitDrafts((d) => ({ ...d, [row.id]: "" }))}
+                                className="hover:bg-accent text-muted-foreground rounded-md p-1.5 transition-colors"
+                              >
+                                <Scissors className="size-3.5" />
+                              </button>
+                            )
+                          ) : null}
+                          {mergeable && splitDrafts[row.id] === undefined ? (
+                            <button
+                              type="button"
+                              aria-label={`Join pages ${row.pageStart}-${row.pageEnd} into the ${mergeable.pageStart}-${mergeable.pageEnd} span`}
+                              title={`Join with the span above (${mergeable.pageStart}-${mergeable.pageEnd})`}
+                              disabled={merge.isPending}
+                              onClick={() =>
+                                merge.mutate({
+                                  logicalDocumentId: row.id,
+                                  intoLogicalDocumentId: mergeable.id,
+                                })
+                              }
+                              className="hover:bg-accent text-muted-foreground rounded-md p-1.5 transition-colors"
+                            >
+                              <Merge className="size-3.5" />
+                            </button>
+                          ) : null}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <FieldSelect
