@@ -9,13 +9,16 @@
  * panels over the gradient mesh.
  */
 
-import { Suspense, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, FileStack, ListChecks, UserRound } from "lucide-react";
+import { ChevronLeft, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
+import { NAV_DEAL } from "@/components/nav-config";
+import { Button } from "@/components/ui/button";
 import { FieldSelect } from "@/components/ui/field-select";
+import { Switch } from "@/components/ui/switch";
 
 type DealStatus = "intake" | "parsing" | "review" | "complete";
 import { MetricsStrip } from "@/components/workspace/metrics-strip";
@@ -51,16 +54,24 @@ const STATUS_LABEL: Record<string, string> = {
   complete: "Complete",
 };
 
+/** Section shell matching the app sidebar's vocabulary (ui-26: the
+ *  workspace rail read as a different product from the rest of the app). */
 function RailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="mb-4">
-      <h2 className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <section className="mb-5">
+      <h2 className="px-2.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
         {title}
       </h2>
-      <div className="mt-1">{children}</div>
+      <div className="mt-1.5 space-y-0.5">{children}</div>
     </section>
   );
 }
+
+/** Inspector width + grid zoom are per-browser layout preferences. */
+const INSPECTOR_WIDTH_KEY = "credexis-inspector-width";
+const GRID_ZOOM_KEY = "credexis-grid-zoom";
+const INSPECTOR_MIN = 320;
+const INSPECTOR_MAX = 720;
 
 function WorkspaceInner() {
   const params = useParams<{ dealId: string }>();
@@ -76,6 +87,47 @@ function WorkspaceInner() {
   const [selection, setSelection] = useState<CellSelection | null>(null);
   const [inspectorTab, setInspectorTab] = useState<InspectorTab>("source");
   const scenarioId = search.get("scenario");
+
+  // ui-26: draggable inspector width + center-grid zoom, both persisted.
+  const [inspectorWidth, setInspectorWidth] = useState(360);
+  const [gridZoom, setGridZoom] = useState(1);
+  useEffect(() => {
+    const w = Number(localStorage.getItem(INSPECTOR_WIDTH_KEY));
+    if (w >= INSPECTOR_MIN && w <= INSPECTOR_MAX) setInspectorWidth(w);
+    const z = Number(localStorage.getItem(GRID_ZOOM_KEY));
+    if (z >= 0.7 && z <= 1.4) setGridZoom(z);
+  }, []);
+  const dragState = useRef<{ startX: number; startWidth: number } | null>(null);
+  function onResizeStart(e: React.PointerEvent) {
+    dragState.current = { startX: e.clientX, startWidth: inspectorWidth };
+    const onMove = (ev: PointerEvent) => {
+      const s = dragState.current;
+      if (!s) return;
+      const w = Math.min(
+        INSPECTOR_MAX,
+        Math.max(INSPECTOR_MIN, s.startWidth + (s.startX - ev.clientX)),
+      );
+      setInspectorWidth(w);
+    };
+    const onUp = () => {
+      dragState.current = null;
+      setInspectorWidth((w) => {
+        localStorage.setItem(INSPECTOR_WIDTH_KEY, String(w));
+        return w;
+      });
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+  function bumpZoom(delta: number) {
+    setGridZoom((z) => {
+      const next = Math.min(1.4, Math.max(0.7, Math.round((z + delta) * 10) / 10));
+      localStorage.setItem(GRID_ZOOM_KEY, String(next));
+      return next;
+    });
+  }
 
   const utils = trpc.useUtils();
   const deal = trpc.deals.get.useQuery({ dealId });
@@ -187,14 +239,56 @@ function WorkspaceInner() {
         {railOpen && (
           <nav
             aria-label="deal navigation"
-            className="scroll-pane w-[280px] shrink-0 border-r border-border bg-card/40 py-3 backdrop-blur-sm max-md:hidden"
+            className="scroll-pane border-sidebar-border bg-sidebar w-60 shrink-0 border-r px-3 py-3 max-md:hidden"
           >
+            {/* Same anatomy as the app sidebar's deal takeover (ui-26). */}
+            <Link
+              href="/"
+              title="All deals"
+              className="text-foreground hover:bg-sidebar-accent/60 mb-2 flex h-9 items-center gap-1 rounded-lg px-1.5 text-sm font-semibold transition-colors duration-150"
+            >
+              <ChevronLeft aria-hidden="true" className="size-4 shrink-0" />
+              <span className="min-w-0 flex-1 truncate text-center">{deal.data?.name ?? "…"}</span>
+              <span aria-hidden="true" className="size-4" />
+            </Link>
+            <div className="mb-4 space-y-0.5">
+              {NAV_DEAL.map((item) => {
+                const href = `/deals/${dealId}/${item.segment}`;
+                const active = item.segment === "workspace";
+                const suffix =
+                  item.segment === "review" && progress.data
+                    ? progress.data.total - progress.data.done
+                    : null;
+                return (
+                  <Link
+                    key={item.segment}
+                    href={href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "flex h-9 items-center rounded-lg px-2.5 text-sm font-medium transition-colors duration-150",
+                      active
+                        ? "bg-sidebar-accent text-foreground"
+                        : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+                    )}
+                  >
+                    <span className="flex-1">{item.label}</span>
+                    {suffix !== null && suffix > 0 ? (
+                      <span className="text-muted-foreground text-[12px] tabular-nums">
+                        {suffix}
+                      </span>
+                    ) : null}
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="border-sidebar-border mb-4 border-t" />
+
             <RailSection title="Deal status">
               {/* The ONLY place a human can move a deal forward. Without it
                   a deal reaches Review and sticks there permanently: the
                   pipeline advances intake→parsing→review, but review→complete
                   is a judgement nobody but an underwriter can make. */}
-              <div className="px-3 py-1">
+              <div className="px-0.5 py-1">
                 <FieldSelect
                   ariaLabel="Deal status"
                   value={deal.data?.status ?? "intake"}
@@ -217,104 +311,80 @@ function WorkspaceInner() {
                   key={e.id}
                   onClick={() => setParam("entity", e.id === entities.data?.[0]?.id ? null : e.id)}
                   className={cn(
-                    "block w-full px-3 py-1.5 text-left text-sm transition-colors hover:bg-accent/50",
-                    e.id === entityId && "bg-accent font-semibold",
+                    "flex h-9 w-full items-center gap-2 rounded-lg px-2.5 text-left text-sm font-medium transition-colors duration-150",
+                    e.id === entityId
+                      ? "bg-sidebar-accent text-foreground"
+                      : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
                   )}
                 >
-                  {e.name}
-                  <span className="ml-2 text-xs text-muted-foreground">{e.kind}</span>
+                  <span className="min-w-0 flex-1 truncate">{e.name}</span>
+                  <span className="text-muted-foreground text-[11px]">{e.kind}</span>
                 </button>
               ))}
               {(entities.data ?? []).length === 0 && (
-                <p className="px-3 text-xs text-muted-foreground">No entities yet.</p>
+                <p className="text-muted-foreground px-2.5 text-xs">No entities yet.</p>
               )}
             </RailSection>
 
             <RailSection title="Documents">
               {(docs.data ?? []).slice(0, 8).map((d) => (
-                <div key={d.id} className="flex items-center gap-2 px-3 py-1 text-sm">
+                <div
+                  key={d.id}
+                  className="text-muted-foreground flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-[13px]"
+                >
                   <span
-                    className={`h-2 w-2 shrink-0 rounded-full ${STATUS_CHIP[d.status] ?? "bg-muted-foreground"}`}
+                    className={`size-1.5 shrink-0 rounded-full ${STATUS_CHIP[d.status] ?? "bg-muted-foreground"}`}
                     title={d.status}
                   />
                   <span className="truncate">{d.fileName}</span>
                 </div>
               ))}
-              <Link
-                href={`/deals/${dealId}/documents`}
-                className="flex items-center gap-1 px-3 py-1 text-xs text-primary hover:underline"
-              >
-                <FileStack className="h-3 w-3" />
-                All documents
-                <ArrowRight className="h-3 w-3" />
-              </Link>
             </RailSection>
 
-            <RailSection title="IRS transcripts">
+            <RailSection title="IRS verification">
+              <div className="flex h-9 items-center gap-2 rounded-lg px-2.5">
+                <span className="text-muted-foreground flex-1 text-[13px] font-medium">
+                  Transcript check
+                </span>
+                <Switch
+                  aria-label="IRS transcript verification"
+                  checked={transcripts.data?.enabled ?? false}
+                  disabled={!transcripts.data || setTranscripts.isPending}
+                  onCheckedChange={(on) => setTranscripts.mutate({ dealId, enabled: on })}
+                />
+              </div>
               {transcripts.data?.enabled ? (
                 <>
                   {(entities.data ?? []).map((e) => {
                     const consent = transcripts.data?.consents.find((c) => c.entityId === e.id);
                     return (
-                      <div key={e.id} className="flex items-center gap-2 px-3 py-1 text-xs">
-                        <span className="truncate">{e.name}</span>
+                      <div
+                        key={e.id}
+                        className="text-muted-foreground flex h-8 items-center gap-2 px-2.5 text-xs"
+                      >
+                        <span className="min-w-0 flex-1 truncate">{e.name}</span>
                         {consent ? (
-                          <span className="ml-auto text-muted-foreground">{consent.status}</span>
+                          <span>{consent.status}</span>
                         ) : (
-                          <button
-                            className="ml-auto text-primary underline underline-offset-2"
+                          <Button
+                            size="xs"
+                            variant="outline"
                             onClick={() => requestConsent.mutate({ dealId, entityId: e.id })}
+                            disabled={requestConsent.isPending}
                           >
-                            request 8821
-                          </button>
+                            Request 8821
+                          </Button>
                         )}
                       </div>
                     );
                   })}
                   {requestConsent.data && !requestConsent.data.requested && (
-                    <p className="px-3 py-1 text-[11px] text-severity-warning">
+                    <p className="text-severity-warning px-2.5 py-1 text-[11px]">
                       {requestConsent.data.reason}
                     </p>
                   )}
-                  <button
-                    className="px-3 py-1 text-[11px] text-muted-foreground underline underline-offset-2"
-                    onClick={() => setTranscripts.mutate({ dealId, enabled: false })}
-                  >
-                    disable for this deal
-                  </button>
                 </>
-              ) : (
-                <button
-                  className="px-3 py-1 text-xs text-primary underline underline-offset-2"
-                  onClick={() => setTranscripts.mutate({ dealId, enabled: true })}
-                >
-                  Enable IRS transcript verification
-                </button>
-              )}
-            </RailSection>
-
-            <RailSection title="Review">
-              <Link
-                href={`/deals/${dealId}/review`}
-                className="flex items-center gap-1.5 px-3 py-1 text-sm text-primary hover:underline"
-              >
-                <ListChecks className="h-3.5 w-3.5" />
-                Review queue{progress.data ? ` (${progress.data.total - progress.data.done})` : ""}
-              </Link>
-              <Link
-                href={`/deals/${dealId}/assignment`}
-                className="flex items-center gap-1.5 px-3 py-1 text-sm text-primary hover:underline"
-              >
-                <FileStack className="h-3.5 w-3.5" />
-                Document assignment
-              </Link>
-              <Link
-                href={`/deals/${dealId}/borrower`}
-                className="flex items-center gap-1.5 px-3 py-1 text-sm text-primary hover:underline"
-              >
-                <UserRound className="h-3.5 w-3.5" />
-                Borrower portal
-              </Link>
+              ) : null}
             </RailSection>
           </nav>
         )}
@@ -340,8 +410,39 @@ function WorkspaceInner() {
                 </button>
               ))}
             </div>
+            {/* Grid zoom (ui-26): CSS zoom reflows the grid, so hit-testing
+                and column widths stay correct at every step. */}
+            <div className="ml-auto flex items-center gap-0.5 rounded-full bg-muted/60 p-0.5">
+              <button
+                type="button"
+                aria-label="Zoom grid out"
+                onClick={() => bumpZoom(-0.1)}
+                className="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-full transition-colors"
+              >
+                <Minus className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Reset grid zoom"
+                onClick={() => {
+                  setGridZoom(1);
+                  localStorage.setItem(GRID_ZOOM_KEY, "1");
+                }}
+                className="text-muted-foreground hover:text-foreground w-11 text-center text-[11px] font-medium tabular-nums transition-colors"
+              >
+                {Math.round(gridZoom * 100)}%
+              </button>
+              <button
+                type="button"
+                aria-label="Zoom grid in"
+                onClick={() => bumpZoom(0.1)}
+                className="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-full transition-colors"
+              >
+                <Plus className="size-3.5" />
+              </button>
+            </div>
           </div>
-          <div className="scroll-pane flex-1 px-3 pb-3">
+          <div className="scroll-pane flex-1 px-3 pb-3" style={{ zoom: gridZoom }}>
             {(tab === "is" || tab === "bs" || tab === "gcf") && entityId ? (
               <SpreadGrid
                 dealId={dealId}
@@ -374,11 +475,21 @@ function WorkspaceInner() {
           </div>
         </main>
 
-        {/* Right - inspector */}
+        {/* Right - inspector (ui-26: resizable; the PDF earns the width) */}
+        {panelOpen && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize inspector"
+            onPointerDown={onResizeStart}
+            className="hover:bg-primary/50 relative z-10 -mr-1 w-1 shrink-0 cursor-col-resize rounded-full transition-colors max-lg:hidden"
+          />
+        )}
         {panelOpen && (
           <aside
             aria-label="inspector"
-            className="side-panel-enter scroll-pane w-[360px] shrink-0 border-l border-border bg-card/40 p-4 backdrop-blur-sm max-lg:hidden"
+            style={{ width: inspectorWidth }}
+            className="side-panel-enter scroll-pane shrink-0 border-l border-border bg-card/40 p-4 backdrop-blur-sm max-lg:hidden"
           >
             {inspectorTab === "scenario" ? (
               <ScenarioInspector

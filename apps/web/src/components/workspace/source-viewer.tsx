@@ -4,14 +4,25 @@
  * Source viewer (M8.4 - the hero feature, Blueprint §8.2): the selected
  * cell's PDF page rendered with its bounding box highlighted, full lineage,
  * override + revert, and the explicit addback action with a category
- * picker (V1 hardcoded "other" - fixed). Rendering is pdf.js on a canvas;
- * the bbox overlay is a positioned div over normalized 0..1 coordinates.
+ * picker. Rendering is pdf.js on a canvas; the bbox overlay is a
+ * positioned div over normalized 0..1 coordinates.
+ *
+ * ui-26 (Pratik's workspace queue): the panel is a designed surface now -
+ * value hero, sectioned cards, pill metadata - and the PDF is a real
+ * viewport: zoom in/out/reset, drag to pan, re-rendered at each zoom step
+ * (and at devicePixelRatio) so text stays crisp instead of scaling up a
+ * 320px bitmap.
  */
 
 import { useEffect, useRef, useState } from "react";
+import { Minus, Plus, RotateCcw } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { formatCents, parseDollarsInput } from "@/lib/money-display";
+import { Button } from "@/components/ui/button";
 import { FieldSelect } from "@/components/ui/field-select";
+import { Input } from "@/components/ui/input";
+import { Pill } from "@/components/ui/pill";
+import { cn } from "@/lib/utils";
 import type { CellSelection } from "./spread-grid";
 
 const ADDBACK_CATEGORIES = [
@@ -23,7 +34,7 @@ const ADDBACK_CATEGORIES = [
   "discretionary",
 ] as const;
 
-function PdfPage({
+function PdfViewport({
   url,
   page,
   bbox,
@@ -32,9 +43,12 @@ function PdfPage({
   page: number;
   bbox: { x: number; y: number; w: number; h: number } | null;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  const pan = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,18 +61,23 @@ function PdfPage({
         ).toString();
         const doc = await pdfjs.getDocument({ url }).promise;
         const pdfPage = await doc.getPage(Math.min(page, doc.numPages));
-        const viewport = pdfPage.getViewport({ scale: 1 });
-        const scale = 320 / viewport.width; // panel width
-        const scaled = pdfPage.getViewport({ scale });
+        const base = pdfPage.getViewport({ scale: 1 });
+        const fitWidth = containerRef.current?.clientWidth ?? 320;
+        const cssScale = (fitWidth / base.width) * zoom;
+        // Render at devicePixelRatio so zoomed text is crisp, not upscaled.
+        const dpr = window.devicePixelRatio || 1;
+        const rendered = pdfPage.getViewport({ scale: cssScale * dpr });
         const canvas = canvasRef.current;
         if (!canvas || cancelled) return;
-        canvas.width = scaled.width;
-        canvas.height = scaled.height;
-        setSize({ w: scaled.width, h: scaled.height });
+        canvas.width = rendered.width;
+        canvas.height = rendered.height;
+        canvas.style.width = `${rendered.width / dpr}px`;
+        canvas.style.height = `${rendered.height / dpr}px`;
+        setSize({ w: rendered.width / dpr, h: rendered.height / dpr });
         await pdfPage.render({
           canvas,
           canvasContext: canvas.getContext("2d")!,
-          viewport: scaled,
+          viewport: rendered,
         }).promise;
       } catch (e) {
         if (!cancelled) setError((e as Error).message);
@@ -67,26 +86,90 @@ function PdfPage({
     return () => {
       cancelled = true;
     };
-  }, [url, page]);
+  }, [url, page, zoom]);
 
   if (error) {
-    return <p className="text-xs text-severity-critical">PDF render failed: {error}</p>;
+    return <p className="text-severity-critical text-xs">PDF render failed: {error}</p>;
   }
   return (
-    <div className="relative inline-block">
-      <canvas ref={canvasRef} className="rounded border border-border" />
-      {bbox && size && (
-        <div
-          aria-label="source bounding box"
-          className="pointer-events-none absolute border-2 border-primary bg-primary/15"
-          style={{
-            left: bbox.x * size.w,
-            top: bbox.y * size.h,
-            width: bbox.w * size.w,
-            height: bbox.h * size.h,
-          }}
-        />
-      )}
+    <div className="relative">
+      <div
+        ref={containerRef}
+        onPointerDown={(e) => {
+          const el = containerRef.current;
+          if (!el) return;
+          pan.current = { x: e.clientX, y: e.clientY, left: el.scrollLeft, top: el.scrollTop };
+          el.setPointerCapture(e.pointerId);
+        }}
+        onPointerMove={(e) => {
+          const el = containerRef.current;
+          const s = pan.current;
+          if (!el || !s) return;
+          el.scrollLeft = s.left - (e.clientX - s.x);
+          el.scrollTop = s.top - (e.clientY - s.y);
+        }}
+        onPointerUp={() => (pan.current = null)}
+        className={cn(
+          "border-border bg-popover/40 max-h-[46vh] overflow-auto rounded-lg border select-none",
+          zoom > 1 ? "cursor-grab active:cursor-grabbing" : "cursor-default",
+        )}
+      >
+        <div className="relative inline-block">
+          <canvas ref={canvasRef} />
+          {bbox && size && (
+            <div
+              aria-label="source bounding box"
+              className="border-primary bg-primary/15 pointer-events-none absolute border-2"
+              style={{
+                left: bbox.x * size.w,
+                top: bbox.y * size.h,
+                width: bbox.w * size.w,
+                height: bbox.h * size.h,
+              }}
+            />
+          )}
+        </div>
+      </div>
+      {/* Zoom cluster floats over the viewport corner. */}
+      <div className="border-border bg-popover/90 absolute right-2 bottom-2 flex items-center gap-0.5 rounded-full border p-0.5 shadow-sm backdrop-blur">
+        <button
+          type="button"
+          aria-label="Zoom out"
+          onClick={() => setZoom((z) => Math.max(1, Math.round((z - 0.5) * 2) / 2))}
+          className="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-full transition-colors"
+        >
+          <Minus className="size-3.5" />
+        </button>
+        <span className="text-muted-foreground w-9 text-center text-[11px] font-medium tabular-nums">
+          {Math.round(zoom * 100)}%
+        </span>
+        <button
+          type="button"
+          aria-label="Zoom in"
+          onClick={() => setZoom((z) => Math.min(4, Math.round((z + 0.5) * 2) / 2))}
+          className="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-full transition-colors"
+        >
+          <Plus className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          aria-label="Fit page"
+          onClick={() => setZoom(1)}
+          className="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-full transition-colors"
+        >
+          <RotateCcw className="size-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Definition row inside the lineage card. */
+function MetaRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 py-1">
+      <dt className="text-muted-foreground text-[12px]">{label}</dt>
+      <dd className="min-w-0 truncate text-right text-[13px] font-medium">{children}</dd>
     </div>
   );
 }
@@ -110,7 +193,7 @@ export function SourceViewer({
 
   if (detail.isLoading) return <p className="text-sm">Loading source…</p>;
   if (detail.error || !detail.data) {
-    return <p className="text-sm text-severity-critical">{detail.error?.message}</p>;
+    return <p className="text-severity-critical text-sm">{detail.error?.message}</p>;
   }
   const d = detail.data;
 
@@ -122,15 +205,25 @@ export function SourceViewer({
   }
 
   return (
-    <div className="space-y-3 text-sm">
+    <div className="space-y-4 text-sm">
+      {/* ── Value hero ── */}
       <header>
-        <code className="text-xs">{d.registryFieldId ?? d.taxonomyNodeKey}</code>
-        <div className="mt-1 text-2xl font-semibold tabular-nums">{formatCents(d.valueCents)}</div>
+        <code className="border-border bg-popover text-muted-foreground inline-block rounded-md border px-1.5 py-0.5 text-[11px]">
+          {d.registryFieldId ?? d.taxonomyNodeKey}
+        </code>
+        <div className="mt-2 text-[26px] leading-8 font-semibold tabular-nums">
+          {formatCents(d.valueCents)}
+        </div>
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <Pill tone={d.status === "suggested" ? "warn" : "neutral"}>{d.status}</Pill>
+          <Pill>{d.method}</Pill>
+          {d.confidence !== null ? <Pill>conf {d.confidence}</Pill> : null}
+        </div>
         {d.method === "override" && d.originalValueCents !== null && (
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-1.5 text-xs">
             was {formatCents(d.originalValueCents)}{" "}
             <button
-              className="text-primary underline"
+              className="text-primary underline underline-offset-2"
               onClick={() => revert.mutate({ overrideFactId: d.factId })}
               disabled={revert.isPending}
             >
@@ -140,62 +233,50 @@ export function SourceViewer({
         )}
       </header>
 
+      {/* ── Source render ── */}
       {d.document?.signedUrl ? (
-        <PdfPage url={d.document.signedUrl} page={d.document.pdfPage} bbox={d.bbox} />
+        <PdfViewport url={d.document.signedUrl} page={d.document.pdfPage} bbox={d.bbox} />
       ) : (
-        <div className="rounded border border-dashed border-border p-4 text-xs text-muted-foreground">
+        <div className="border-border text-muted-foreground rounded-lg border border-dashed p-4 text-xs">
           No source render - {d.method === "human" ? "human-entered value" : "no PDF lineage"}.
         </div>
       )}
 
-      <dl className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-        <dt className="font-semibold">Document</dt>
-        <dd className="truncate">{d.document?.fileName ?? "-"}</dd>
-        <dt className="font-semibold">Form</dt>
-        <dd>
+      {/* ── Lineage ── */}
+      <dl className="glass-card divide-border/60 divide-y rounded-lg px-3.5 py-1.5">
+        <MetaRow label="Document">{d.document?.fileName ?? "-"}</MetaRow>
+        <MetaRow label="Form">
           {d.document?.formFamily ?? "-"} {d.document?.taxYear ?? ""}
-        </dd>
-        <dt className="font-semibold">Page</dt>
-        <dd>{d.document?.pdfPage ?? "-"}</dd>
-        <dt className="font-semibold">Method</dt>
-        <dd>{d.method}</dd>
-        <dt className="font-semibold">Confidence</dt>
-        <dd>{d.confidence ?? "-"}</dd>
-        <dt className="font-semibold">Status</dt>
-        <dd>{d.status}</dd>
+        </MetaRow>
+        <MetaRow label="Page">{d.document?.pdfPage ?? "-"}</MetaRow>
       </dl>
 
-      <div className="border-t border-border pt-2">
-        <label htmlFor="override" className="text-xs font-semibold">
+      {/* ── Actions ── */}
+      <div className="glass-card rounded-lg p-3.5">
+        <label htmlFor="override" className="text-[12px] font-semibold">
           Override value
         </label>
-        <div className="mt-1 flex gap-2">
-          <input
+        <div className="mt-1.5 flex gap-2">
+          <Input
             id="override"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="36,500.00"
-            className="w-full rounded border border-border px-2 py-1"
+            className="h-8"
             onKeyDown={(e) => e.key === "Enter" && submitOverride()}
           />
-          <button
-            onClick={submitOverride}
-            disabled={override.isPending}
-            className="rounded bg-primary px-3 py-1 text-primary-foreground"
-          >
+          <Button size="sm" variant="brand" onClick={submitOverride} disabled={override.isPending}>
             Save
-          </button>
+          </Button>
         </div>
         {override.error && (
-          <p className="mt-1 text-xs text-severity-critical">{override.error.message}</p>
+          <p className="text-severity-critical mt-1.5 text-xs">{override.error.message}</p>
         )}
-      </div>
 
-      <div className="border-t border-border pt-2">
-        <label htmlFor="addback-category" className="text-xs font-semibold">
+        <label htmlFor="addback-category" className="mt-4 block text-[12px] font-semibold">
           Add back this line
         </label>
-        <div className="mt-1 flex gap-2">
+        <div className="mt-1.5 flex gap-2">
           <FieldSelect
             ariaLabel="Add-back category"
             value={addbackCategory}
@@ -206,7 +287,9 @@ export function SourceViewer({
             }))}
             className="w-full"
           />
-          <button
+          <Button
+            size="sm"
+            variant="outline"
             onClick={() =>
               createAddback.mutate({
                 dealId,
@@ -216,13 +299,12 @@ export function SourceViewer({
               })
             }
             disabled={createAddback.isPending}
-            className="rounded border border-border px-3 py-1"
           >
             Add back
-          </button>
+          </Button>
         </div>
         {createAddback.error && (
-          <p className="mt-1 text-xs text-severity-critical">{createAddback.error.message}</p>
+          <p className="text-severity-critical mt-1.5 text-xs">{createAddback.error.message}</p>
         )}
       </div>
     </div>
