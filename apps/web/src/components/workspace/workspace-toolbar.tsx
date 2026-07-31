@@ -7,10 +7,8 @@
  * mutually-exclusive panel was a postmortem finding).
  */
 
-import Link from "next/link";
 import {
   AlertTriangle,
-  ArrowLeft,
   Download,
   FileSearch,
   PanelLeft,
@@ -20,6 +18,7 @@ import {
   Sigma,
   SlidersHorizontal,
 } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
@@ -61,11 +60,7 @@ export function WorkspaceToolbar({
 }) {
   return (
     <header className="frosted-toolbar z-30 flex h-14 shrink-0 items-center gap-2 px-3">
-      <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-full shrink-0">
-        <Link href="/" aria-label="Back to deals">
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-      </Button>
+      <BackButton />
       {/* Phones: the deal name IS the title - wordmark and the rail/panel
           toggles (which control desktop-only zones) get out of the way. */}
       <span className="max-md:hidden">
@@ -74,7 +69,8 @@ export function WorkspaceToolbar({
       <div className="mx-1 h-6 w-px bg-border max-md:hidden" />
       <h1 className="truncate text-sm font-semibold max-md:text-[15px]">{dealName}</h1>
       <Badge variant="secondary" className="rounded-full font-normal shrink-0">
-        {dealType.replaceAll("_", " ")}
+        {/* Title case - "business acquisition" read unfinished (ui-26). */}
+        {dealType.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
       </Badge>
 
       <div className="ml-auto flex items-center gap-2">
