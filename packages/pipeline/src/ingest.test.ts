@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { sha256Hex } from "@credexis/shared";
-import type { PageClassification, PageInput } from "@credexis/extraction";
+import type { PageClassification, PageClassifier, PageInput } from "@credexis/extraction";
 import {
   assertStoragePathPinned,
   runIngest,
@@ -323,5 +323,67 @@ describe("assertStoragePathPinned", () => {
     expect(() =>
       assertStoragePathPinned(row({ storagePath: "ten-1/deals/deal-1/uploads/x.pdf" })),
     ).toThrow(/outside the borrower-uploads prefix/);
+  });
+});
+
+describe("scanned bundles reach the vision classifier (M13.6)", () => {
+  /**
+   * The first real customer document was 19 image-only pages. The
+   * classifier accepted `imagePng` and was tested with it, but ingest
+   * never rendered one, so the vision path was dead in production and the
+   * whole bundle collapsed into a single undifferentiated span.
+   */
+  it("renders text-less pages and hands the images to the classifier", async () => {
+    const seen: PageInput[] = [];
+    const classifier: PageClassifier = {
+      async classifyPages(pages) {
+        seen.push(...pages);
+        return pages.map((p) => ({
+          page: p.page,
+          formFamily: "1120" as const,
+          taxYear: 2023,
+          isDocumentStart: p.page === 1,
+          confidence: 0.8,
+          method: "llm" as const,
+          matched: ["llm"],
+        }));
+      },
+    };
+    const { deps, payload } = await setup({ pageTexts: ["", ""], classifier });
+    const rendered: number[] = [];
+    const withRender = {
+      ...deps,
+      renderPages: async (_b: Uint8Array, pages: readonly number[]) => {
+        rendered.push(...pages);
+        return new Map(pages.map((p) => [p, new Uint8Array([0x89, 0x50, 0x4e, 0x47])]));
+      },
+    };
+
+    await runIngest(withRender, payload);
+
+    expect(rendered).toEqual([1, 2]); // both blank pages rendered
+    expect(seen).toHaveLength(2);
+    for (const p of seen) expect(p.imagePng, `page ${p.page}`).toBeDefined();
+  });
+
+  it("never renders a page that already has text - native PDFs cost the same", async () => {
+    const classifier: PageClassifier = {
+      async classifyPages(pages) {
+        return pages.map((p) => ({
+          page: p.page,
+          formFamily: null,
+          taxYear: null,
+          isDocumentStart: false,
+          confidence: 0,
+          method: "llm" as const,
+          matched: [],
+        }));
+      },
+    };
+    const realPage = "Form 1120 U.S. Corporation Income Tax Return OMB No. 1545-0123 2023";
+    const { deps, payload } = await setup({ pageTexts: [realPage, realPage], classifier });
+    let called = false;
+    await runIngest({ ...deps, renderPages: async () => ((called = true), new Map()) }, payload);
+    expect(called).toBe(false);
   });
 });

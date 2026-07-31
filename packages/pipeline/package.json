@@ -29,6 +29,7 @@
     "@credexis/extraction": "workspace:*",
     "@credexis/schema": "workspace:*",
     "@credexis/shared": "workspace:*",
+    "@napi-rs/canvas": "^1.0.3",
     "@sentry/node": "^10.66.0",
     "@supabase/supabase-js": "2.55.0",
     "@trigger.dev/sdk": "4.5.4",
