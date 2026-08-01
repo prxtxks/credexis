@@ -204,3 +204,70 @@ describe("AnthropicPageClassifier applies the guards to model output", () => {
     expect(r?.matched).toContain("llm-vetoed:1125E");
   });
 });
+
+describe("scanned bundles: page binding and batching (M13.6)", () => {
+  const png = new Uint8Array([137, 80, 78, 71]);
+
+  it("names the page BEFORE its image, never relying on block order (Iron Law #4)", async () => {
+    const capture: { body?: unknown } = {};
+    const classifier = new AnthropicPageClassifier({
+      apiKey: "test",
+      fetch: recordedFetch(capture),
+    });
+    await classifier.classifyPages([
+      { page: 7, text: "", imagePng: png },
+      { page: 8, text: "", imagePng: png },
+    ]);
+    const content = (capture.body as { messages: { content: { type: string; text?: string }[] }[] })
+      .messages[0]!.content;
+    const imageAt = content.findIndex((b) => b.type === "image");
+    // The block immediately before the first image must identify its page,
+    // and the block after must reassert it. Without this an all-scan bundle
+    // binds images to pages purely by position.
+    expect(content[imageAt - 1]?.text).toContain("PAGE 7");
+    expect(content[imageAt + 1]?.text).toContain("page 7");
+  });
+
+  it("batches by IMAGE count so text-only pages ride along free", async () => {
+    let requests = 0;
+    const classifier = new AnthropicPageClassifier({
+      apiKey: "test",
+      fetch: async (_u, init) => {
+        requests += 1;
+        return recordedFetch()(_u, init);
+      },
+    });
+    // 30 text pages + 5 scans. Counting PAGES would fire 9 requests; counting
+    // images fires 2.
+    const pages = [
+      ...Array.from({ length: 30 }, (_, i) => ({ page: i + 1, text: "Form 1120 text" })),
+      ...Array.from({ length: 5 }, (_, i) => ({ page: 31 + i, text: "", imagePng: png })),
+    ];
+    await classifier.classifyPages(pages);
+    expect(requests).toBeLessThanOrEqual(2);
+  });
+
+  it("a failed batch degrades to unresolved instead of losing the bundle", async () => {
+    // Fail every attempt for the batch containing page 1 (the SDK retries,
+    // so a single throw would just be retried into success). Later batches
+    // succeed - the point is that they still run and still return.
+    const classifier = new AnthropicPageClassifier({
+      apiKey: "test",
+      fetch: async (_u, init) => {
+        const body = String(init?.body ?? "");
+        if (body.includes("PAGE 1 ---")) throw new Error("529 overloaded");
+        return recordedFetch()(_u, init);
+      },
+    });
+    const pages = Array.from({ length: 10 }, (_, i) => ({
+      page: i + 1,
+      text: "",
+      imagePng: png,
+    }));
+    const out = await classifier.classifyPages(pages);
+    expect(out).toHaveLength(10);
+    const failed = out.filter((c) => c.matched.some((m) => m.startsWith("llm-error")));
+    expect(failed.length).toBeGreaterThan(0);
+    expect(failed.every((c) => c.formFamily === null && c.confidence === 0)).toBe(true);
+  });
+});
