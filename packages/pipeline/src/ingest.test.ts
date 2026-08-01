@@ -387,3 +387,42 @@ describe("scanned bundles reach the vision classifier (M13.6)", () => {
     expect(called).toBe(false);
   });
 });
+
+describe("unreadable documents are recorded as failures (M13.6)", () => {
+  it("a scan whose pages neither carry text nor render is status=failed", async () => {
+    const { db, deps, payload } = await setup({ pageTexts: ["", "", ""] });
+    // Rendering fails for every page - the real case when the container
+    // cannot load the canvas binary. The pipeline then saw NOTHING.
+    await runIngest({ ...deps, renderPages: async () => new Map() }, payload);
+    const split = db.runs.find((r) => r.stage === "split_classify")!;
+    expect(split.status, "an unreadable document must not record success").toBe("failed");
+    expect(split.error).toMatch(/no readable content/i);
+    expect((split.metadata as Record<string, unknown>)["blindPages"]).toBe(3);
+  });
+
+  it("a scan that DOES render is not marked failed", async () => {
+    const { db, deps, payload } = await setup({ pageTexts: ["", "", ""] });
+    const png = new Uint8Array([137, 80, 78, 71]);
+    await runIngest(
+      {
+        ...deps,
+        renderPages: async () =>
+          new Map([
+            [1, png],
+            [2, png],
+            [3, png],
+          ]),
+      },
+      payload,
+    );
+    const split = db.runs.find((r) => r.stage === "split_classify")!;
+    expect(split.status).toBe("succeeded");
+    expect((split.metadata as Record<string, unknown>)["blindPages"]).toBe(0);
+  });
+
+  it("a normal text bundle still records success", async () => {
+    const { db, deps, payload } = await setup();
+    await runIngest(deps, payload);
+    expect(db.runs.find((r) => r.stage === "split_classify")!.status).toBe("succeeded");
+  });
+});

@@ -198,6 +198,10 @@ export async function runIngest(deps: IngestDeps, payload: IngestPayload): Promi
         const img = images.get(i + 1);
         return img ? { page: i + 1, text, imagePng: img } : { page: i + 1, text };
       });
+      // Pages with neither a text layer nor a usable render: the pipeline is
+      // blind to these. All of them blind = the document was unreadable.
+      const blindPages = needsRender.length - images.size;
+      const unreadable = pageCount > 0 && blindPages === pageCount;
       const classifications = await classifyBundle(pages, deps.classifier);
       const spans = inheritBundleYear(await groupIntoLogicalDocuments(pages, classifications));
 
@@ -241,13 +245,22 @@ export async function runIngest(deps: IngestDeps, payload: IngestPayload): Promi
         model: usage[0]?.model ?? null,
         pageCount,
         costMicroUsd: cost,
-        status: "succeeded",
-        error: null,
+        // A bundle nobody could read must never look like a clean one. If
+        // every page lacked a text layer AND none of them rendered, the
+        // pipeline saw literally nothing - recording "succeeded" here is
+        // what made an unreadable upload indistinguishable from a good one
+        // from outside (the user-reported "it did nothing" symptom).
+        status: unreadable ? "failed" : "succeeded",
+        error: unreadable
+          ? `no readable content: ${needsRender.length}/${pageCount} pages have no text layer and ${blindPages} could not be rendered for the vision reader`
+          : null,
         metadata: {
           spans: spans.length,
           deterministicPages: byMethod.deterministic,
           llmPages: byMethod.llm,
           unresolvedPages: byMethod.unresolved,
+          // Pages the pipeline was blind to: no text layer AND no render.
+          blindPages,
           duplicateSpans: spans.filter((s) => s.duplicateOf !== null).length,
           // Scanned-page rendering (M13.6): visible in the run log, because
           // a bundle whose pages all failed to render looks identical to a

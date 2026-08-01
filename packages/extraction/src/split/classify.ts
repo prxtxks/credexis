@@ -267,22 +267,71 @@ export class AnthropicPageClassifier implements PageClassifier {
   private static readonly IMAGE_BATCH = 4;
 
   async classifyPages(pages: PageInput[]): Promise<PageClassification[]> {
-    const withImages = pages.filter((p) => p.imagePng);
-    if (withImages.length > AnthropicPageClassifier.IMAGE_BATCH) {
-      const out: PageClassification[] = [];
-      for (let i = 0; i < pages.length; i += AnthropicPageClassifier.IMAGE_BATCH) {
-        out.push(
-          ...(await this.classifyBatch(pages.slice(i, i + AnthropicPageClassifier.IMAGE_BATCH))),
-        );
+    const batches = AnthropicPageClassifier.batch(pages);
+    if (batches.length === 1) return this.classifyBatch(pages);
+    const out: PageClassification[] = [];
+    for (const b of batches) out.push(...(await this.classifyBatchSafely(b)));
+    return out;
+  }
+
+  /**
+   * Close a batch on IMAGE count, not page count: text-only pages cost
+   * almost nothing and ride along free. Counting pages instead split a
+   * 60-page bundle holding 5 scans into 15 requests - 15x the overhead and
+   * 15x the exposure to a transient vendor error, on exactly the bundles
+   * that are already the slowest.
+   */
+  private static batch(pages: PageInput[]): PageInput[][] {
+    const batches: PageInput[][] = [];
+    let current: PageInput[] = [];
+    let images = 0;
+    for (const p of pages) {
+      if (images === AnthropicPageClassifier.IMAGE_BATCH && current.length > 0) {
+        batches.push(current);
+        current = [];
+        images = 0;
       }
-      return out;
+      current.push(p);
+      if (p.imagePng) images += 1;
     }
-    return this.classifyBatch(pages);
+    if (current.length > 0) batches.push(current);
+    return batches;
+  }
+
+  /**
+   * One failed batch must not discard the whole bundle. Rejecting here
+   * would reject classifyBundle, fail the document, and throw away every
+   * page the DETERMINISTIC layer already resolved correctly. Unresolved
+   * pages go to review, which is the honest outcome (Iron Law #6) - and
+   * the marker keeps the failure countable rather than silent.
+   */
+  private async classifyBatchSafely(batch: PageInput[]): Promise<PageClassification[]> {
+    try {
+      return await this.classifyBatch(batch);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      return batch.map((p) => ({
+        page: p.page,
+        formFamily: null,
+        taxYear: null,
+        isDocumentStart: false,
+        confidence: 0,
+        method: "unresolved",
+        matched: [`llm-error:${message.slice(0, 80)}`],
+      }));
+    }
   }
 
   private async classifyBatch(pages: PageInput[]): Promise<PageClassification[]> {
     const content: Anthropic.ContentBlockParam[] = [];
     for (const p of pages) {
+      // The page number is announced BEFORE the image (Iron Law #4). With
+      // the image first, the only thing tying it to a page was its position
+      // relative to the next text block - and on an all-scan bundle every
+      // text block is an empty "--- PAGE n ---" marker, so one off-by-one
+      // silently relabels an entire return at full confidence. Naming the
+      // page first makes the binding explicit rather than ordinal.
+      content.push({ type: "text", text: `--- PAGE ${p.page} ---` });
       if (p.imagePng) {
         content.push({
           type: "image",
@@ -292,10 +341,11 @@ export class AnthropicPageClassifier implements PageClassifier {
             data: Buffer.from(p.imagePng).toString("base64"),
           },
         });
+        content.push({ type: "text", text: `(image above IS page ${p.page})` });
       }
       content.push({
         type: "text",
-        text: `--- PAGE ${p.page} ---\n${p.text.slice(0, 4000)}`,
+        text: p.text.trim() === "" ? "(no text layer)" : p.text.slice(0, 4000),
       });
     }
     content.push({

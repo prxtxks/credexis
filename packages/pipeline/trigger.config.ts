@@ -8,6 +8,12 @@ export default defineConfig({
   dirs: ["./src/trigger"],
   maxDuration: 600,
   build: {
+    // @napi-rs/canvas ships a NATIVE binary per platform (M13.6 page
+    // rendering). Bundling resolves the builder's own platform package -
+    // deploying from a Mac put `@napi-rs/canvas-darwin-arm64` in the Linux
+    // image and the build died on "Unsupported platform". Marking the
+    // parent external makes the container install its OWN binary.
+    external: ["@napi-rs/canvas"],
     extensions: [
       // Deploy-time env sync: the worker needs Supabase (service role —
       // legal here, worker-side only, Iron Law #7) and the classifier key.
