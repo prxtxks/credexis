@@ -18,7 +18,13 @@ import {
   type PageClassifier,
   type PageInput,
 } from "@credexis/extraction";
-import { extractPdfText, pagesNeedingRender, renderPageImages, type PdfText } from "./pdf.js";
+import {
+  extractPdfText,
+  isGarbledTextLayer,
+  pagesNeedingRender,
+  renderPageImages,
+  type PdfText,
+} from "./pdf.js";
 import { anthropicCostMicroUsd } from "./pricing.js";
 import type { DbPort, DocumentRow, StoragePort, VirusScanner, VirusScanStatus } from "./ports.js";
 
@@ -194,8 +200,12 @@ export async function runIngest(deps: IngestDeps, payload: IngestPayload): Promi
               renderErrors.push(`p${page}: ${message}`),
             )
           : new Map<number, Uint8Array>();
-      const pages: PageInput[] = pageTexts.map((text, i) => {
+      const pages: PageInput[] = pageTexts.map((rawText, i) => {
         const img = images.get(i + 1);
+        // Garbled text layers (broken ToUnicode maps) are noise, not
+        // evidence - blank them so the classifier reads the page image
+        // (or honestly abstains), never control-character soup.
+        const text = isGarbledTextLayer(rawText) ? "" : rawText;
         return img ? { page: i + 1, text, imagePng: img } : { page: i + 1, text };
       });
       // Pages with neither a text layer nor a usable render: the pipeline is
