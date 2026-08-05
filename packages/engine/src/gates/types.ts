@@ -55,6 +55,13 @@ export interface RegistryRelationSpec {
   operands: string[];
   toleranceCents: bigint;
   description: string;
+  /** Tax years whose printed form carries exactly this arithmetic (M14.4:
+   *  the §179D renumbering made one id sum DIFFERENT operand sets pre/post
+   *  2023). Absent = applies to any year. The gate loop matches this
+   *  against the period's FY label; skip-on-missing-operand alone is NOT
+   *  safe, because a pre-2023 subset relation evaluates - wrongly - on a
+   *  2023 return that claims the extra line. */
+  taxYears?: number[];
 }
 
 /** Cross-form flow (4562 line 22 → parent depreciation line, K-1 ↔ parent). */
@@ -64,6 +71,8 @@ export interface RegistryFlowSpec {
   toField: string;
   toleranceCents: bigint;
   description: string;
+  /** Same year-scoping as RegistryRelationSpec. */
+  taxYears?: number[];
 }
 
 export interface GateConfig {

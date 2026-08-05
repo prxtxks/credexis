@@ -208,8 +208,16 @@ export function runG4(facts: GateFact[], cfg: GateConfig): GateIssue[] {
     const [entityId, periodLabel] = key.split("|") as [string, string];
     const fields = bestByRegistryField(group);
     const first = (id: string): GateFact | undefined => fields.get(id);
+    // Year-scoped specs (M14.4): tax-form periods are labelled FY<year> by
+    // the extract stage; a spec listing taxYears applies only to those
+    // years. Unlabelled periods and unscoped specs keep today's behavior.
+    const fy = /^FY(\d{4})$/.exec(periodLabel)?.[1];
+    const periodYear = fy === undefined ? null : Number(fy);
+    const inScope = (years?: number[]): boolean =>
+      years === undefined || periodYear === null || years.includes(periodYear);
 
     for (const rel of cfg.registryRelations) {
+      if (!inScope(rel.taxYears)) continue;
       const result = first(rel.result);
       if (!result) continue;
       const operands = rel.operands.map(first).filter((f): f is GateFact => f !== undefined);
@@ -238,6 +246,7 @@ export function runG4(facts: GateFact[], cfg: GateConfig): GateIssue[] {
     }
 
     for (const flow of cfg.registryFlows) {
+      if (!inScope(flow.taxYears)) continue;
       const from = first(flow.fromField);
       const to = first(flow.toField);
       if (!from || !to) continue;
