@@ -73,10 +73,37 @@ const RENDER_SCALE = 1.5;
 /** Never ship a page image larger than the API will take comfortably. */
 const MAX_IMAGE_BYTES = 4_000_000;
 
+/**
+ * A text layer can exist and still be unreadable: PDFs printed through
+ * broken font subsetting (no ToUnicode map - QuickBooks exports are the
+ * classic case) extract as control characters and wrong code points while
+ * the page RENDERS perfectly. Golden Deal 1's 2024 balance sheet was
+ * exactly this. Treat such text like no text: the page goes to vision.
+ * Detector: real extracted text is virtually free of C0 control chars
+ * (beyond tab/newline), private-use glyphs, and U+FFFD replacements.
+ */
+const GARBLED_MAX_RATIO = 0.05;
+export function isGarbledTextLayer(text: string): boolean {
+  const t = text.trim();
+  if (t.length === 0) return false; // empty is the length check's job
+  let bad = 0;
+  for (const ch of t) {
+    const c = ch.codePointAt(0) ?? 0;
+    if (
+      (c < 32 && c !== 9 && c !== 10 && c !== 13) ||
+      (c >= 0xe000 && c <= 0xf8ff) ||
+      c === 0xfffd
+    ) {
+      bad++;
+    }
+  }
+  return bad / t.length > GARBLED_MAX_RATIO;
+}
+
 export function pagesNeedingRender(pageTexts: readonly string[]): number[] {
   return pageTexts
-    .map((t, i) => ({ page: i + 1, len: t.trim().length }))
-    .filter((p) => p.len < MIN_TEXT_CHARS)
+    .map((t, i) => ({ page: i + 1, t: t.trim() }))
+    .filter((p) => p.t.length < MIN_TEXT_CHARS || isGarbledTextLayer(p.t))
     .map((p) => p.page);
 }
 

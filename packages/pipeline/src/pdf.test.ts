@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { PDFDocument } from "pdf-lib";
-import { extractPdfText, MIN_TEXT_CHARS, pagesNeedingRender, slicePdfPages } from "./pdf.js";
+import {
+  extractPdfText,
+  isGarbledTextLayer,
+  MIN_TEXT_CHARS,
+  pagesNeedingRender,
+  slicePdfPages,
+} from "./pdf.js";
 
 async function fivePager(): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
@@ -57,6 +63,26 @@ describe("pagesNeedingRender (M13.6 - scanned pages reach the vision reader)", (
   it("renders nothing for a fully native bundle", () => {
     const page = "x".repeat(MIN_TEXT_CHARS);
     expect(pagesNeedingRender([page, page])).toEqual([]);
+  });
+
+  // Golden Deal 1 (2026-08-04): a QuickBooks-printed balance sheet whose
+  // font subsetting has no ToUnicode map - plenty of "text", all of it
+  // control characters and wrong code points, while the page renders
+  // perfectly. Such a page must go to vision, not to a text classifier.
+  it("a garbled ToUnicode text layer routes to vision", () => {
+    const garbled =
+      "\u0013*(\u0001 \u0007\u0003\u0001\b \u0010 \u0014! \u0012966*28\u0001\u001077*87 \u0012-*(/.2,\u0005 &:.2,7".repeat(
+        4,
+      );
+    const native = "Total Current Assets 1,204,563.00 as of December 31, 2024 - Prayosha";
+    expect(isGarbledTextLayer(garbled)).toBe(true);
+    expect(isGarbledTextLayer(native)).toBe(false);
+    expect(pagesNeedingRender([garbled, native])).toEqual([1]);
+  });
+
+  it("ordinary punctuation-heavy text is not flagged as garbled", () => {
+    const dense = "Line 7(a): $1,234.56 - see Sch. L, col. (d); 100% owner!\n".repeat(5);
+    expect(isGarbledTextLayer(dense)).toBe(false);
   });
 });
 
