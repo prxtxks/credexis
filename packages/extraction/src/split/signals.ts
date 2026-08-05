@@ -149,9 +149,13 @@ const OMB_CORROBORATING: Readonly<Record<string, readonly FormFamily[]>> = {
 
 /** Statement keywords — consulted ONLY when no IRS signal fired. */
 const STATEMENT_PATTERNS: ReadonlyArray<[RegExp, FormFamily, string]> = [
+  // DEBT_SCHEDULE first (Golden Deal 1, 2026-08-04): the standard bank
+  // debt-schedule template says "should match the current balance sheet",
+  // so the generic "balance sheet" keyword must not get first claim. A
+  // balance sheet never says "debt schedule"; the reverse is routine.
+  [/debt schedule|schedule of (?:liabilities|debts|loans)/i, "DEBT_SCHEDULE", "debt-keyword"],
   [/profit\s*(?:and|&)\s*loss|income statement|statement of operations/i, "PNL", "pnl-keyword"],
   [/balance sheet/i, "BALANCE_SHEET", "bs-keyword"],
-  [/debt schedule|schedule of (?:liabilities|debts|loans)/i, "DEBT_SCHEDULE", "debt-keyword"],
 ];
 
 /** A page that bears IRS print markers is an IRS form page. If the form

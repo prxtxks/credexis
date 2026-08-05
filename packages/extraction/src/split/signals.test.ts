@@ -42,6 +42,20 @@ describe("deterministic page signals (M3.5)", () => {
     expect(detectPageSignals("Business Debt Schedule").formFamily).toBe("DEBT_SCHEDULE");
   });
 
+  // Golden Deal 1 regression (2026-08-04): the standard bank debt-schedule
+  // template instructs "Current balance should match the current balance
+  // sheet" - the page IS a debt schedule that merely REFERENCES the balance
+  // sheet. Most-specific-first: "debt schedule" outranks "balance sheet".
+  it("a debt schedule referencing the balance sheet is still a debt schedule", () => {
+    const s = detectPageSignals(
+      "BUSINESS DEBT SCHEDULE Please include the following information on all " +
+        "installment debts, notes, contracts and mortgages. Current balance should " +
+        "match the current balance sheet. Include any capital leases shown on the " +
+        "balance sheet.",
+    );
+    expect(s.formFamily).toBe("DEBT_SCHEDULE");
+  });
+
   it("W-2 classifies from its unique OMB number alone", () => {
     const s = detectPageSignals("22222  a Employee's SSN  OMB No. 1545-0008");
     expect(s.formFamily).toBe("W2");
