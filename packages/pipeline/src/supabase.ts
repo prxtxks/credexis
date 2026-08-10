@@ -191,6 +191,19 @@ export function supabaseExtractDb(client: SupabaseClient): ExtractDbPort {
   };
 }
 
+/** Best mapping among candidates for one label: a human mapping always
+ *  beats an LLM one, then the most-used wins. Exported for tests - this
+ *  ranking is what keeps duplicated rows (migration 0035's subject) from
+ *  failing reads. */
+export function pickBestMapping(rows: readonly LearnedMapping[]): LearnedMapping | null {
+  if (rows.length === 0) return null;
+  const sorted = [...rows].sort(
+    (a, b) =>
+      Number(b.source === "human") - Number(a.source === "human") || b.usageCount - a.usageCount,
+  );
+  return sorted[0] ?? null;
+}
+
 /** learned_mappings-backed store for the taxonomy mapper (M5.4). */
 export function supabaseMappingsStore(client: SupabaseClient): LearnedMappingsStore {
   const toMapping = (r: Record<string, unknown>): LearnedMapping => ({
@@ -204,9 +217,14 @@ export function supabaseMappingsStore(client: SupabaseClient): LearnedMappingsSt
     async findExact(tenantId, labelNorm) {
       let q = client.from("learned_mappings").select("*").eq("label_norm", labelNorm);
       q = tenantId === null ? q.is("tenant_id", null) : q.eq("tenant_id", tenantId);
-      const { data, error } = await q.maybeSingle();
+      // Tolerant of duplicates by construction: `.maybeSingle()` THROWS on
+      // >1 row, and NULL-tenant rows historically duplicated (Postgres
+      // UNIQUE treats NULLs as distinct - migration 0035). One duplicated
+      // label must degrade to "best mapping wins", never fail the whole
+      // statement extraction.
+      const { data, error } = await q.limit(20);
       if (error) throw new Error(`learned_mappings select: ${error.message}`);
-      return data ? toMapping(data) : null;
+      return pickBestMapping((data ?? []).map(toMapping));
     },
     async listAll(tenantId) {
       let q = client.from("learned_mappings").select("*").limit(5000);
