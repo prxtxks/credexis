@@ -11,14 +11,21 @@ import {
 import { registryEntrySchema } from "./types.js";
 
 describe("Form Registry v1 (M4.1) — structural invariants", () => {
-  it("covers all 13 MVP form families × tax years 2023–2025", () => {
+  it("covers all 13 MVP form families × 2023-2025, business returns back to 2020", () => {
     expect(REGISTRY_DEFINITIONS).toHaveLength(13);
     for (const def of REGISTRY_DEFINITIONS) {
       for (const year of REGISTRY_TAX_YEARS) {
         expect(getRegistryEntry(def.formFamily, year), `${def.formFamily}:${year}`).not.toBeNull();
       }
     }
-    expect(listRegistryEntries()).toHaveLength(13 * 3);
+    // M14.4: real deals carry returns back to 2020 - the business families
+    // add three back-years each (Golden Deal 1: 2020-2022 filings).
+    for (const family of ["1120S", "1120", "1065"] as const) {
+      for (const year of [2020, 2021, 2022]) {
+        expect(getRegistryEntry(family, year), `${family}:${year}`).not.toBeNull();
+      }
+    }
+    expect(listRegistryEntries()).toHaveLength(13 * 3 + 9);
   });
 
   it("every entry passes zod validation (ids unique, relations resolve)", () => {
@@ -102,61 +109,39 @@ describe("toFieldRequests bridge (registry → ExtractorAdapter)", () => {
 });
 
 describe("registryGateSpecs (gate wiring: M6.1 G4 ← M4.1 data)", () => {
-  /** bigint-safe canonical serialization for content comparison. */
-  const canon = (v: unknown) =>
-    JSON.stringify(v, (_k, val: unknown) => (typeof val === "bigint" ? `${val}n` : val));
-
-  it("returns each relation and flow exactly once (id-deduped across years)", () => {
+  it("dedups by content and annotates each variant with its tax years", () => {
     const { relations, flows } = registryGateSpecs();
-    expect(new Set(relations.map((r) => r.id)).size).toBe(relations.length);
-    expect(new Set(flows.map((f) => f.id)).size).toBe(flows.length);
-    // The flagship examples survive the dedup.
+    // The flagship examples survive.
     expect(relations.some((r) => r.id === "1040.agi")).toBe(true);
     expect(flows.some((f) => f.id === "4562.to_1120s")).toBe(true);
-  });
-
-  it("no relation/flow id carries divergent content across tax years (dedup precondition)", () => {
-    // first-wins dedup is only sound while every year agrees. A year
-    // override that rewrites a relation must fail HERE, not silently apply
-    // one year's arithmetic to another year's facts.
-    const seen = new Map<string, string>();
-    for (const entry of listRegistryEntries()) {
-      for (const spec of [...entry.relations, ...entry.flows]) {
-        const body = canon(spec);
-        const prior = seen.get(spec.id);
-        if (prior !== undefined) {
-          expect(body, `divergent content for ${spec.id}`).toBe(prior);
-        }
-        seen.set(spec.id, body);
-      }
+    // Every spec carries at least one year.
+    for (const s of [...relations, ...flows]) {
+      expect(s.taxYears.length, s.id).toBeGreaterThan(0);
     }
   });
-});
 
-describe("year-override mechanism (IRS renumbering absorber)", () => {
-  it("a year override replaces a field by id without touching the rest", async () => {
-    // Synthetic definition — proves the mechanism the data files will use
-    // the day the IRS renumbers something.
-    const { registryEntrySchema: _s, ...types } = await import("./types.js");
-    void types;
-    const { money } = await import("./data/helpers.js");
-    const base = {
-      fields: [money("t.line1", "1", "Alpha"), money("t.line2", "2", "Beta")],
-      relations: [],
-      flows: [],
-    };
-    const def = {
-      formFamily: "W2" as const,
-      baseYear: 2023,
-      base,
-      overrides: { 2024: { fields: [money("t.line2", "2a", "Beta (renumbered)")] } },
-    };
-    // Use the same expansion path via a fresh loader-shaped closure:
-    const byId = new Map(base.fields.map((f) => [f.fieldId, f]));
-    for (const f of def.overrides[2024].fields) byId.set(f.fieldId, f);
-    const merged = [...byId.values()];
-    expect(merged.find((f) => f.fieldId === "t.line2")?.lineNumber).toBe("2a");
-    expect(merged.find((f) => f.fieldId === "t.line1")?.lineNumber).toBe("1");
+  it("an id with divergent content across years yields disjoint year-scoped variants", () => {
+    // The §179D renumbering (M14.4): total-deductions sums DIFFERENT
+    // operand sets pre/post 2023. Both variants must exist, each scoped to
+    // exactly its years - the engine picks by the period's FY label, and
+    // the year sets must never overlap (overlap = two arithmetics claiming
+    // the same period).
+    const { relations } = registryGateSpecs();
+    const variants = relations.filter((r) => r.id === "1120s.total_deductions");
+    expect(variants).toHaveLength(2);
+    const pre = variants.find((v) => !v.operands.includes("f1120s.line19_energy"))!;
+    const post = variants.find((v) => v.operands.includes("f1120s.line19_energy"))!;
+    expect(pre.taxYears).toEqual([2020, 2021, 2022]);
+    expect(post.taxYears).toEqual([2023, 2024, 2025]);
+    // Disjointness holds for EVERY multi-variant id.
+    const byId = new Map<string, number[][]>();
+    for (const r of relations) {
+      byId.set(r.id, [...(byId.get(r.id) ?? []), r.taxYears]);
+    }
+    for (const [id, sets] of byId) {
+      const all = sets.flat();
+      expect(new Set(all).size, `overlapping year scopes for ${id}`).toBe(all.length);
+    }
   });
 });
 
@@ -247,5 +232,81 @@ describe("Schedule L (M13.4) - the Balance Sheet finally spreads from business r
     expect(byId.get("f1065.schl_line14")?.taxonomyNodeKey).toBe("bs.assets.total");
     expect(byId.get("f1065.schl_line21")?.taxonomyNodeKey).toBe("bs.equity.partner_capital");
     expect(byId.get("f1065.schl_line22")?.taxonomyNodeKey).toBe("bs.total_liabilities_equity");
+  });
+});
+
+describe("back-years 2020-2022 (M14.4, Golden Deal 1: real returns predate 2023)", () => {
+  // Verified against the printed forms in corpus/signal-sweep: the 2023
+  // revisions inserted the §179D energy deduction (1120-S line 19, 1065
+  // line 20) and shifted everything below by one. 2019/2021 revisions
+  // (serving TY 2020-2022) share ONE stable pre-§179D numbering.
+  it("1065 2022 resolves with pre-§179D numbering", () => {
+    const e = getRegistryEntry("1065", 2022);
+    expect(e).not.toBeNull();
+    const by = new Map(e!.fields.map((f) => [f.fieldId, f.lineNumber]));
+    expect(by.get("f1065.line20")).toBe("20"); // Other deductions
+    expect(by.get("f1065.line21")).toBe("21"); // Total deductions
+    expect(by.get("f1065.line22")).toBe("22"); // Ordinary business income
+    expect(by.has("f1065.line20_energy")).toBe(false);
+  });
+
+  it("1065 2023 carries the printed 2023 numbering (base was wrong)", () => {
+    const e = getRegistryEntry("1065", 2023)!;
+    const by = new Map(e.fields.map((f) => [f.fieldId, f.lineNumber]));
+    expect(by.get("f1065.line20_energy")).toBe("20"); // §179D
+    expect(by.get("f1065.line20")).toBe("21");
+    expect(by.get("f1065.line21")).toBe("22");
+    expect(by.get("f1065.line22")).toBe("23");
+  });
+
+  it("1065 total-deductions relation includes §179D for 2023, not for 2022", () => {
+    const rel23 = getRegistryEntry("1065", 2023)!.relations.find(
+      (r) => r.id === "1065.total_deductions",
+    )!;
+    expect(rel23.operands).toContain("f1065.line20_energy");
+    const rel22 = getRegistryEntry("1065", 2022)!.relations.find(
+      (r) => r.id === "1065.total_deductions",
+    )!;
+    expect(rel22.operands).not.toContain("f1065.line20_energy");
+  });
+
+  it("1120-S 2021 resolves with pre-§179D numbering", () => {
+    const e = getRegistryEntry("1120S", 2021);
+    expect(e).not.toBeNull();
+    const by = new Map(e!.fields.map((f) => [f.fieldId, f.lineNumber]));
+    expect(by.get("f1120s.line19")).toBe("19"); // Other deductions
+    expect(by.get("f1120s.line20")).toBe("20"); // Total deductions
+    expect(by.get("f1120s.line21")).toBe("21"); // Ordinary business income
+    expect(by.has("f1120s.line19_energy")).toBe(false);
+  });
+
+  it("1120-S total-deductions relation includes §179D only from 2023", () => {
+    const rel23 = getRegistryEntry("1120S", 2023)!.relations.find(
+      (r) => r.id === "1120s.total_deductions",
+    )!;
+    expect(rel23.operands).toContain("f1120s.line19_energy");
+    const rel21 = getRegistryEntry("1120S", 2021)!.relations.find(
+      (r) => r.id === "1120s.total_deductions",
+    )!;
+    expect(rel21.operands).not.toContain("f1120s.line19_energy");
+  });
+
+  it("1120 2020-2022 resolve unchanged (numbering verified stable)", () => {
+    for (const year of [2020, 2021, 2022]) {
+      const e = getRegistryEntry("1120", year);
+      expect(e, `1120 ${year}`).not.toBeNull();
+      const by = new Map(e!.fields.map((f) => [f.fieldId, f.lineNumber]));
+      expect(by.get("f1120.line30")).toBe("30"); // Taxable income
+    }
+  });
+
+  it("Schedule L is identical across all supported years (printed forms stable)", () => {
+    for (const family of ["1120S", "1065"] as const) {
+      const now = getRegistryEntry(family, 2023)!.fields.filter((f) => f.fieldId.includes("schl"));
+      const then_ = getRegistryEntry(family, 2021)!.fields.filter((f) =>
+        f.fieldId.includes("schl"),
+      );
+      expect(then_).toEqual(now);
+    }
   });
 });

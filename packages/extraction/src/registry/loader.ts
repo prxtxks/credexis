@@ -40,18 +40,16 @@ export const REGISTRY_TAX_YEARS = [2023, 2024, 2025] as const;
 
 function expand(def: FormDefinition, taxYear: number): RegistryEntry {
   const override = def.overrides?.[taxYear];
-  // Fields replace by fieldId; relations/flows replace wholesale if given.
-  let fields = def.base.fields;
-  if (override?.fields) {
-    const byId = new Map(fields.map((f) => [f.fieldId, f]));
-    for (const f of override.fields) byId.set(f.fieldId, f);
-    fields = [...byId.values()];
-  }
+  // Fields, relations, and flows all replace WHOLESALE when given: an
+  // override year states its complete truth. (Merge-by-fieldId was the
+  // original semantics, but it cannot express a REMOVED line - the §179D
+  // field does not exist on pre-2023 forms, M14.4 - and a half-merged
+  // year is harder to audit than a full list.)
   return registryEntrySchema.parse({
     formFamily: def.formFamily,
     taxYear,
     revision: 1,
-    fields,
+    fields: override?.fields ?? def.base.fields,
     relations: override?.relations ?? def.base.relations,
     flows: override?.flows ?? def.base.flows,
   });
@@ -80,20 +78,43 @@ export function listRegistryEntries(): RegistryEntry[] {
   return [...registry().values()];
 }
 
+/** A gate spec annotated with the tax years whose registry carries exactly
+ *  this content. `taxYears` is derived, never authored - drift-proof. */
+export type YearScopedRelation = InFormRelation & { taxYears: number[] };
+export type YearScopedFlow = CrossFormFlow & { taxYears: number[] };
+
 /**
  * Gate wiring (M6.1 G4 ← M4.1 data): every registry relation and cross-form
- * flow as one flat, id-deduped list — the data shape the engine's GateConfig
- * consumes. Ids repeat across tax years (2023–2025 share definitions);
- * first-wins is safe ONLY while no year override rewrites a relation — the
- * registry test pins that invariant, so a divergent override fails CI and
- * forces period-aware gate config instead of silently mixing years.
+ * flow, deduped by CONTENT and annotated with the tax years that carry that
+ * content. The 2023 §179D renumbering (M14.4) made the same relation id
+ * legitimately divergent across years - "total deductions" sums different
+ * operand sets pre/post 2023 - so first-id-wins became unsound: the engine
+ * skips a relation when any operand fact is missing, and a pre-2023 subset
+ * relation would false-positive on a 2023 return that claims §179D. The
+ * gate loop filters by the period's fiscal year instead (periods are
+ * labelled FY<year> by the extract stage).
  */
-export function registryGateSpecs(): { relations: InFormRelation[]; flows: CrossFormFlow[] } {
-  const relations = new Map<string, InFormRelation>();
-  const flows = new Map<string, CrossFormFlow>();
+export function registryGateSpecs(): { relations: YearScopedRelation[]; flows: YearScopedFlow[] } {
+  const relations = new Map<string, YearScopedRelation>();
+  const flows = new Map<string, YearScopedFlow>();
+  const keyOf = (spec: object) =>
+    JSON.stringify(spec, (_k, v: unknown) => (typeof v === "bigint" ? v.toString() : v));
   for (const entry of listRegistryEntries()) {
-    for (const rel of entry.relations) if (!relations.has(rel.id)) relations.set(rel.id, rel);
-    for (const flow of entry.flows) if (!flows.has(flow.id)) flows.set(flow.id, flow);
+    for (const rel of entry.relations) {
+      const key = keyOf(rel);
+      const existing = relations.get(key);
+      if (existing) existing.taxYears.push(entry.taxYear);
+      else relations.set(key, { ...rel, taxYears: [entry.taxYear] });
+    }
+    for (const flow of entry.flows) {
+      const key = keyOf(flow);
+      const existing = flows.get(key);
+      if (existing) existing.taxYears.push(entry.taxYear);
+      else flows.set(key, { ...flow, taxYears: [entry.taxYear] });
+    }
+  }
+  for (const spec of [...relations.values(), ...flows.values()]) {
+    spec.taxYears = [...new Set(spec.taxYears)].sort((a, b) => a - b);
   }
   return { relations: [...relations.values()], flows: [...flows.values()] };
 }

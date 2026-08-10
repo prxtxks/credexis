@@ -393,3 +393,84 @@ describe("runGates — aggregation + blocking semantics (Iron Law #6)", () => {
     expect(issues).toHaveLength(0);
   });
 });
+
+describe("G4 year-scoped specs (M14.4 - §179D renumbering)", () => {
+  // The production scenario: total-deductions sums DIFFERENT operand sets
+  // pre/post 2023. Skip-on-missing alone is unsound - a pre-2023 subset
+  // relation has all its operands present on a 2023 return that claims
+  // §179D, and would flag the CORRECT printed total as an error.
+  const cfg = config({
+    registryRelations: [
+      {
+        id: "1120s.total_deductions",
+        type: "sum",
+        result: "f1120s.line20",
+        operands: ["f1120s.line7", "f1120s.line19"],
+        toleranceCents: 100n,
+        description: "pre-2023: 20 = 7 + 19",
+        taxYears: [2020, 2021, 2022],
+      },
+      {
+        id: "1120s.total_deductions",
+        type: "sum",
+        result: "f1120s.line20",
+        operands: ["f1120s.line7", "f1120s.line19_energy", "f1120s.line19"],
+        toleranceCents: 100n,
+        description: "2023+: 21 = 7 + 19 + 20",
+        taxYears: [2023, 2024, 2025],
+      },
+    ],
+    registryFlows: [],
+  });
+
+  it("a 2023 return with §179D passes its own spec and is NOT judged by the pre-2023 subset", () => {
+    const facts = [
+      fact({ registryFieldId: "f1120s.line7", valueCents: 100_000_00n, periodLabel: "FY2023" }),
+      fact({
+        registryFieldId: "f1120s.line19_energy",
+        valueCents: 5_000_00n,
+        periodLabel: "FY2023",
+      }),
+      fact({ registryFieldId: "f1120s.line19", valueCents: 20_000_00n, periodLabel: "FY2023" }),
+      // Printed total includes the energy deduction - correct per the form.
+      fact({ registryFieldId: "f1120s.line20", valueCents: 125_000_00n, periodLabel: "FY2023" }),
+    ];
+    expect(runG4(facts, cfg)).toHaveLength(0);
+  });
+
+  it("a 2021 return is judged by the pre-2023 spec only", () => {
+    const ok = [
+      fact({ registryFieldId: "f1120s.line7", valueCents: 100_000_00n, periodLabel: "FY2021" }),
+      fact({ registryFieldId: "f1120s.line19", valueCents: 20_000_00n, periodLabel: "FY2021" }),
+      fact({ registryFieldId: "f1120s.line20", valueCents: 120_000_00n, periodLabel: "FY2021" }),
+    ];
+    expect(runG4(ok, cfg)).toHaveLength(0);
+    const bad = [
+      fact({ registryFieldId: "f1120s.line7", valueCents: 100_000_00n, periodLabel: "FY2021" }),
+      fact({ registryFieldId: "f1120s.line19", valueCents: 20_000_00n, periodLabel: "FY2021" }),
+      fact({ registryFieldId: "f1120s.line20", valueCents: 999_000_00n, periodLabel: "FY2021" }),
+    ];
+    expect(runG4(bad, cfg)).toHaveLength(1);
+  });
+
+  it("an unscoped spec still applies to every period (back-compat)", () => {
+    const anyYear = config({
+      registryRelations: [
+        {
+          id: "x.sum",
+          type: "sum",
+          result: "f.total",
+          operands: ["f.a"],
+          toleranceCents: 0n,
+          description: "total = a",
+        },
+      ],
+      registryFlows: [],
+    });
+    const bad = [
+      fact({ registryFieldId: "f.a", valueCents: 1_00n, periodLabel: "FY2020" }),
+      fact({ registryFieldId: "f.total", valueCents: 2_00n, periodLabel: "FY2020" }),
+    ];
+    expect(runG4(bad, anyYear)).toHaveLength(1);
+  });
+});
