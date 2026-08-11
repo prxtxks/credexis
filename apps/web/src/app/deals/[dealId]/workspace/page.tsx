@@ -21,6 +21,7 @@ import { FieldSelect } from "@/components/ui/field-select";
 import { Switch } from "@/components/ui/switch";
 
 type DealStatus = "intake" | "parsing" | "review" | "complete";
+import { ProformaPanel } from "@/components/workspace/proforma-panel";
 import { MetricsStrip } from "@/components/workspace/metrics-strip";
 import { SpreadGrid, type CellSelection } from "@/components/workspace/spread-grid";
 import { TaxSpreadGrid } from "@/components/workspace/tax-spread-grid";
@@ -463,10 +464,7 @@ function WorkspaceInner() {
                 }}
               />
             ) : tab === "proforma" ? (
-              <div className="glass-card flex h-full items-center justify-center rounded-xl text-sm text-muted-foreground">
-                Pro-forma - the post-acquisition projection view. Pick a loan scenario to populate
-                it.
-              </div>
+              <ProformaPanel dealId={dealId} scenarioId={scenarioId} />
             ) : (
               <div className="glass-card flex h-full items-center justify-center rounded-xl text-sm text-muted-foreground">
                 Add an entity to this deal to open its spread.
