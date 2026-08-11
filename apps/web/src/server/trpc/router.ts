@@ -8,6 +8,7 @@ import { issuesRouter } from "./routers/issues";
 import { metricsRouter } from "./routers/metrics";
 import { pipelineRouter } from "./routers/pipeline";
 import { policyRouter } from "./routers/policy";
+import { proformaRouter } from "./routers/proforma";
 import { reviewRouter } from "./routers/review";
 import { sourceRouter } from "./routers/source";
 import { spreadRouter } from "./routers/spread";
@@ -61,6 +62,7 @@ export const appRouter = router({
 
   /** Policy compliance (M8.6): the deal's pinned pack vs engine output. */
   policy: policyRouter,
+  proforma: proformaRouter,
 
   /** Pipeline progress (M8.8): stage timeline per document. */
   pipeline: pipelineRouter,
