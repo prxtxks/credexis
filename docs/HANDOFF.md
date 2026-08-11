@@ -1,113 +1,90 @@
-# Handoff - state of play, 2026-07-30 (post feedback pass 4)
+# Handoff - state of play, 2026-08-11 (post M15 pro-forma)
 
-Written so a fresh session (or a fresh person) can pick up without reading a
-day of chat. Keep it short and current; delete anything that stops being true.
+Written so a fresh session (or a fresh person) can pick up without reading
+weeks of chat. Keep it short and current; delete anything that stops being
+true.
 
 ## Where the product actually is
 
-The Vercel-derived redesign SHIPPED and has absorbed four rounds of Pratik's
-feedback: PRs #151-#156, #158-#170, #172-#174 are on main (#171 was replaced
-by #173 after the stacked-base auto-close trap), every one CI-green
-(5 required checks; the "Vercel" check is a deploy status, not required -
-it rate-limits on Hobby at ~10 deploys/day). The binding design spec is
-`docs/design/ui-overhaul/02-VERCEL-DERIVATION.md`; Pratik's directive was
-"match 100%, just our colors" measured from 35 captures (gitignored in
-`docs/Vercel-ui/`, reference only).
+Documents in → pro-forma out WORKS END TO END on a real deal. Golden Deal 1
+(Travelodge Merrill acquisition - target + 2 guarantors + 3 operating
+companies, 29 documents, ~480 pages) ran through the deployed pipeline:
+1,025 facts across 6 entities, deal auto-advanced to Review, and the
+Pro-Forma tab projects three years off the accepted base with debt service
+amortized from a real SBA scenario (DSCR rendered per year). The pro-forma
+engine's acceptance test reproduces the deal's REAL banker workbook
+(JadeRock) to the cent.
 
-What exists now, all production-verified: token system (near-black canvas,
-hairlines, flat inverse primaries, emerald-as-accent, brand-teal CTAs);
-sidebar shell with Find palette (F), contextual takeovers, identity footer;
-deals home with grid/list toggle, filter/sort menu, usage + activity rail,
-pin/unpin (localStorage), per-card menus (delete staged); the New-deal flow
-is an IN-PAGE three-step wizard (board animates out, steps slide with
-Next/Back, review before create) - the dialog is gone; Deal Overview page;
-settings section (General, Notifications matrix, Security); top-level
-Members, Audit log, Usage (charts + plan), Logs, Support (cases list +
-"Get help with Credexis" agent-chat stub, honest handoff to
-support@credexis.co); /notifications with real archive, max-w-5xl, and
-illustrated empty states.
+Shipped milestones on top of the Vercel-derived UI (#151-#176):
 
-## Standing copy rule
+- M13: classifier structural guards (citations never identities; unknown
+  forms → null; NON_FORM/4626 families); scanned PDFs render to images for
+  the vision classifier (#186/#187 - identity-bound, batch-isolated,
+  unreadable = failed, never silent).
+- M14: golden-deal fixes - debt schedules outrank referenced balance
+  sheets (#188), garbled ToUnicode text routes to vision (#189), duplicate
+  learned mappings can't fail statements (#191 + migration 0035), business
+  returns extract back to TY2020 with year-scoped G4 gate specs (#192 -
+  the 1065's 2023 numbering was wrong in base data and is now verified
+  against printed forms).
+- M14.5: extraction FOLLOWS entity assignment (#194 carried it; #193
+  auto-closed empty) - the extract-document task, per-span, idempotent.
+  Before this, multi-entity deals could never extract.
+- M15: pro-forma engine (#195, fixes #196) - pure projection module in
+  packages/engine/src/proforma (%-of-revenue / fixed / excluded
+  treatments, linear annualization, compounding growth, amortized debt
+  service, DSCR); proforma tRPC router computes on read from ACCEPTED
+  target-entity facts; assumptions persist in proforma_assumptions
+  (migration 0036, RLS + audit, applied to prod); workspace Pro-Forma tab.
 
-NO EM DASHES anywhere in product copy - plain hyphens (Pratik, twice).
-#170 swept every U+2014/U+2013 out of apps/web, apps/portal,
-packages/pipeline, and the e2e specs. Do not reintroduce them.
+## Deploy state
 
-## THE lesson of 2026-07-30 - do not relearn it
+Trigger worker: local-build recipe from packages/pipeline -
+`DOCKER_CONFIG=/tmp/docker-config-clean npx trigger.dev@4.5.4 deploy
+--local-build` (Docker Desktop must run; @napi-rs/canvas is build.external
+so the Linux container installs its own binary). 5 tasks. Deploys only
+work from Pratik's Mac - move to CI eventually.
 
-**Never add a route-segment `loading.tsx` in this app.** Any such Suspense
-boundary above the client pages wedges react-query/uSES updates under
-Next 15.5 production streaming: hooks stay `isLoading` forever while the
-network returns 200s and React stays interactive. Fixed in #162 by deleting
-every route boundary; loading states live INSIDE pages (Skeleton components;
-the nine-dot `GridLoader` is the brand moment for the workspace spread grids
-only). `prod-smoke`'s `expectNoStuckFallback` guards BOTH vocabularies
-(`[data-slot=page-skeleton]` and `.grid-loader`).
+## Traps that cost time (all still true)
 
-Other traps that cost time, still true:
-
-- Verify on ONE clean tab against `web-prod` (pinned to port **3100**).
-  Before any rebuild: stop the server AND `lsof -ti :3100 | xargs kill` -
-  zombie next-servers survive preview_stop and serve a corrupted .next
-  (all-routes 500). Never rebuild while a server runs.
-- A Bash `cd` persists for later calls - git pathspecs are cwd-relative;
-  Pratik's private `docs/instructions/` PDFs got committed twice that way
-  (both scrubbed; verify with `git cat-file -e HEAD:<path>`).
-- Merging a stacked PR's base branch auto-closes the child PR and a closed
-  PR cannot be retargeted or reopened once its base ref is deleted. Order:
-  merge parent WITHOUT deleting its branch, retarget the child to main,
-  THEN delete the branch. (#157→#158 and #171→#173 both paid this tax.)
-- `gh pr checks --watch --fail-fast` trips on the non-required Vercel check;
-  gate merges on `mergeStateStatus` ∈ {CLEAN, UNSTABLE} instead.
-- The M10.3 mutation-tier test requires every new mutation to be
-  underwriter+ or an explicit self-scoped exception WITH rationale.
-
-## Portal reachability - VERIFIED
-
-The web app reads `apps/web/.env.local` (NOT the repo-root `.env.local`);
-`NEXT_PUBLIC_PORTAL_URL=https://credexis-portal.vercel.app` lives there now,
-and Pratik set it in Vercel (web + portal projects) and Trigger. Local
-verification: an invite minted on the borrower page produces
-`https://credexis-portal.vercel.app/claim?token=...` and the live portal
-serves the claim flow (token moves off the URL via 307). Production note:
-Vercel env changes only take effect on the NEXT deploy of credexis-web -
-if invite links on production still show localhost, redeploy.
+- NEVER a route-segment loading.tsx (react-query wedges under Next 15.5
+  streaming). Loading lives in-page.
+- Rebuild ritual: stop server AND `lsof -ti :3100 | xargs kill`, then
+  rm -rf apps/web/.next, then build. Never build while a server runs.
+- Stacked-PR order: merge parent WITHOUT deleting its branch, retarget
+  child, THEN delete. And never cut a new branch while sitting on an
+  un-merged feature branch - #194's squash silently carried #193's work
+  (fine, but the history reads wrong).
+- gh merge gating: mergeStateStatus ∈ {CLEAN, UNSTABLE}; the Vercel check
+  is non-required and rate-limits on Hobby.
+- pnpm audit runs in Quality gates on every PR - new upstream highs fail
+  unrelated PRs; clear via root pnpm.overrides (pattern in #190/#194).
+- supabase-js RETURNS errors; `.maybeSingle()` throws on >1 row; Postgres
+  UNIQUE treats NULLs as distinct (migration 0035's lesson).
+- The assignment UI stages DRAFTS - the row's Save button commits. An
+  automated sweep (or a hurried human) that only picks from the dropdown
+  commits NOTHING. Bulk-assign UX improvement is queued.
+- NO EM DASHES in product copy - plain hyphens (standing rule).
 
 ## What is NOT done (in order)
 
-1. **Interaction audit** (Pratik's item c): finish the 375→1440 sweep
-   (remaining: review, assignment, borrower, workspace pages) and click
-   every control - no dead ends.
-2. **Pratik's end-to-end deal run** - blocked on his Anthropic API top-up
-   (extraction fails on credits, see memory).
-3. **Staged UI awaiting backends** (all labeled "Soon"/disabled - Pratik
-   orders them explicitly): delete deal, bulk member actions, org-settings
-   writes, notification matrix writes, TOTP, retention, Logs live-tail,
-   support agent wiring + case backend (cases are localStorage today),
-   "New integration".
-4. Known debt: `deals.board` unpaginated (fine at pilot scale); middleware's
-   signed-in `/login` redirect drops `?next=` (memory:
-   middleware-login-next-param); CI minutes burn fast at this PR cadence.
+1. **Excel export matching the bank's template** (Pratik's next directive)
+   - exceljs exists in the stack; the JadeRock workbook is the reference.
+2. Golden-corpus labeling of Golden Deal 1 → a QUOTABLE accuracy number
+   (Iron Law #9: public/synthetic docs never count).
+3. Bulk assignment UX (Save-all / commit-on-select with undo).
+4. Staged "Soon" backends (delete deal, TOTP, retention, live-tail, support
+   backend, integrations) - Pratik orders explicitly.
+5. Known debt: deals.board unpaginated; middleware /login drops ?next=;
+   1040 line coverage is thinner than business returns; K-1 extraction is
+   minimal (2-15 facts/doc); statement facts are always suggested (by
+   design until mapping review UX exists).
 
-## Signal-sweep corpus (corpus-1, 2026-07-30)
+## Live data notes
 
-The deterministic split signals are adversarially tested against 69 public
-IRS documents / 1153 pages: every prior-year revision of each supported
-form plus the IRS's MeF ATS FILLED test scenarios (realistic complete
-returns, zero PII). `pnpm --filter @credexis/eval signals download` fetches
-them (gitignored, re-downloadable); `... signals run` sweeps and exits 1 on
-any confident wrong-family hit. The sweep found and fixed four bug classes
-(citation tokens, "(Form 1040 or 1040-SR)" titles, the 1120-F/1040-NR
-suffix boundary, the current W-2's changed OMB number) - all locked as unit
-regressions in signals.test.ts. Current state: 0 wrong, 0 suspect.
-Public docs are NEVER counted in accuracy claims (Iron Law #9) - the
-golden corpus of real labeled bundles remains the accuracy measure.
-
-## Scratch data
-
-Tenant "Meridian Bank SBA" / ui-audit@credexis.test (deterministic c0ffee
-IDs) exists in the LIVE db for UI verification - now includes a
-"Wizard Smoke Test" deal and a Ravi Shah borrower invite from verification.
-Cleanup: `node seed-ui-audit.mjs --clean` (script in the session scratchpad;
-recreate from the live-e2e helpers if lost). Delete before real-customer
-data lands.
+Tenant "Meridian Bank SBA" / ui-audit@credexis.test holds the REAL Golden
+Deal 1 documents (uploaded 2026-08-11, deal 76cbe240-…) plus older scratch
+deals. This is real client PII from a partner bank's closed deal - do not
+share screenshots outside the team, and delete the tenant before any
+external demo env ships. The staged upload set (renamed, collision-free)
+lives at ~/Downloads/golden-deal/demo-upload for re-runs.
