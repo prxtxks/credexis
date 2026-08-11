@@ -140,7 +140,14 @@ function WorkspaceInner() {
     onError: (e) => toast.error(e.message),
   });
   const entities = trpc.assignment.entities.useQuery({ dealId });
-  const entityId = entityParam ?? entities.data?.[0]?.id ?? null;
+  // Default to the TARGET entity (same rule as the pro-forma router):
+  // alphabetical-first opened a 6-entity deal on a guarantor's LLC and its
+  // single 2022 return, which read as "the spread lost two years".
+  const defaultEntity =
+    entities.data?.find((e) => e.kind === "target") ??
+    entities.data?.find((e) => e.kind === "applicant") ??
+    entities.data?.[0];
+  const entityId = entityParam ?? defaultEntity?.id ?? null;
   const docs = trpc.documents.list.useQuery({ dealId });
   const progress = trpc.review.progress.useQuery({ dealId });
   const issues = trpc.issues.forDeal.useQuery({ dealId });
