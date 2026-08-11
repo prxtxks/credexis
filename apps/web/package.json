@@ -31,7 +31,7 @@
     "geist": "^1.5.1",
     "lucide-react": "^0.563.0",
     "next": "15.5.21",
-    "pdfjs-dist": "^6.1.200",
+    "pdfjs-dist": "^6.2.108",
     "postcss": "^8.5.19",
     "radix-ui": "^1.4.3",
     "react": "19.1.0",
