@@ -133,6 +133,10 @@ export const proformaRouter = router({
     const EXPENSE_PREFIXES = ["is.opex.", "is.other."];
     const lines = [...period.keys()]
       .filter((k) => EXPENSE_PREFIXES.some((p) => k.startsWith(p)))
+      // Subtotal nodes (is.opex.total, …) are AGGREGATES of their sibling
+      // lines - projecting them alongside the components double-counts
+      // opex and understates NOI. The projection owns its own totals.
+      .filter((k) => !k.endsWith(".total"))
       .sort()
       .map((key) => {
         const treatment =
@@ -158,7 +162,7 @@ export const proformaRouter = router({
     let loanScenarioName: string | null = null;
     if (input.scenarioId) {
       const { data: srow, error: sErr } = await ctx.supabase
-        .from("scenarios")
+        .from("loan_scenarios")
         .select("id, name, amount_cents, rate_spec, term_months, structure")
         .eq("id", input.scenarioId)
         .eq("deal_id", input.dealId)
