@@ -31,7 +31,30 @@ export interface ExportSpreadRow {
   cells: Record<string, { kind: "cents" | "ratio"; value: string }>;
 }
 
+/** The projected pro-forma (M16) - strings of integer cents, already
+ *  computed by the ONE engine path; the sheet renders and cross-checks. */
+export interface ExportProforma {
+  entityName: string;
+  basePeriodLabel: string;
+  monthsCovered: number;
+  loanScenarioName: string | null;
+  growthBpsByYear: number[];
+  replacementSalaryCents: string;
+  treatments: Record<string, string>;
+  baseAnnualized: { revenueCents: string; lines: { label: string; amountCents: string }[] };
+  years: {
+    label: string;
+    revenueCents: string;
+    lines: { label: string; amountCents: string }[];
+    operatingExpensesCents: string;
+    noiCents: string;
+    cfadsCents: string;
+    debtServiceCents: string;
+  }[];
+}
+
 export interface ExportData {
+  proforma?: ExportProforma;
   dealName: string;
   entityName: string;
   engineVersion: string;
@@ -139,6 +162,13 @@ export function buildWorkbook(data: ExportData): Workbook {
 
   // ── Pro-Forma ────────────────────────────────────────────────────────
   const proforma = workbook.addWorksheet("Pro-Forma");
+  if (data.proforma) {
+    writeProformaForecast(proforma, data.proforma);
+    const assumptions = workbook.addWorksheet("Assumptions");
+    writeAssumptions(assumptions, data);
+    writeProformaAssumptions(assumptions, data.proforma);
+    return workbook;
+  }
   proforma.getColumn(1).width = 34;
   proforma.getColumn(2).width = 18;
   proforma.addRow(["Metric", "Value"]);
@@ -175,19 +205,128 @@ export function buildWorkbook(data: ExportData): Workbook {
 
   // ── Assumptions ──────────────────────────────────────────────────────
   const assumptions = workbook.addWorksheet("Assumptions");
-  assumptions.getColumn(1).width = 30;
-  assumptions.getColumn(2).width = 52;
-  assumptions.addRow(["Field", "Value"]);
-  styleHeader(assumptions, 1);
-  assumptions.addRow(["Deal", data.dealName]);
-  assumptions.addRow(["Entity", data.entityName]);
-  assumptions.addRow(["Engine version", data.engineVersion]);
-  assumptions.addRow(["Policy pack", data.policyPackVersion]);
-  assumptions.addRow(["Generated", data.generatedAt]);
-  assumptions.addRow([
+  writeAssumptions(assumptions, data);
+
+  return workbook;
+}
+
+function writeAssumptions(sheet: Worksheet, data: ExportData): void {
+  sheet.getColumn(1).width = 30;
+  sheet.getColumn(2).width = 52;
+  sheet.addRow(["Field", "Value"]);
+  styleHeader(sheet, 1);
+  sheet.addRow(["Deal", data.dealName]);
+  sheet.addRow(["Entity", data.entityName]);
+  sheet.addRow(["Engine version", data.engineVersion]);
+  sheet.addRow(["Policy pack", data.policyPackVersion]);
+  sheet.addRow(["Generated", data.generatedAt]);
+  sheet.addRow([
     "Note",
     "Authoritative values are integer cents inside Credexis; Excel numbers are display copies.",
   ]);
+}
 
-  return workbook;
+/**
+ * The bank template's forecast anatomy (M16, modeled on the Golden Deal's
+ * real workbook): line rows against paired amount + %-of-revenue columns,
+ * one pair per year. The % cells and the DSCR row are LIVE formulas
+ * referencing the money cells, so a banker can audit the arithmetic in
+ * Excel itself - baked percentages are exactly what they distrust.
+ */
+function writeProformaForecast(sheet: Worksheet, pf: ExportProforma): void {
+  const yearCount = pf.years.length;
+  sheet.getColumn(1).width = 32;
+  for (let i = 0; i < yearCount + 1; i++) {
+    sheet.getColumn(2 + i * 2).width = 16;
+    sheet.getColumn(3 + i * 2).width = 9;
+  }
+  const title = sheet.addRow([`Pro-Forma Forecast - ${pf.entityName}`]);
+  title.font = { bold: true, size: 13 };
+
+  const header = ["Line", `${pf.basePeriodLabel} (annualized)`, "%"];
+  for (const y of pf.years) header.push(y.label, "%");
+  sheet.addRow(header);
+  styleHeader(sheet, 2);
+
+  // Column letter for pair i (0 = base, 1.. = years): B, D, F, H…
+  const colFor = (pair: number): string => String.fromCharCode(66 + pair * 2);
+
+  const REVENUE_ROW = 3;
+  const revenueRow = sheet.addRow(["Revenue"]);
+  revenueRow.font = { bold: true };
+  const setMoney = (row: typeof revenueRow, pair: number, cents: string): void => {
+    const cell = row.getCell(2 + pair * 2);
+    cell.value = centsToExcelNumber(cents);
+    cell.numFmt = MONEY_FMT;
+  };
+  setMoney(revenueRow, 0, pf.baseAnnualized.revenueCents);
+  pf.years.forEach((y, i) => setMoney(revenueRow, i + 1, y.revenueCents));
+
+  // Line rows: Year-1's line list is the projection's vocabulary; the base
+  // column shows the annualized historical amount for the same label.
+  const baseByLabel = new Map(pf.baseAnnualized.lines.map((l) => [l.label, l.amountCents]));
+  const lineLabels = pf.years[0]?.lines.map((l) => l.label) ?? [];
+  for (const label of lineLabels) {
+    const row = sheet.addRow([label]);
+    const rowN = row.number;
+    const baseAmount = baseByLabel.get(label);
+    if (baseAmount !== undefined) setMoney(row, 0, baseAmount);
+    pf.years.forEach((y, i) => {
+      const line = y.lines.find((l) => l.label === label);
+      if (line) setMoney(row, i + 1, line.amountCents);
+    });
+    // Paired % cells: amount ÷ the SAME column's revenue (absolute row).
+    for (let pair = 0; pair < yearCount + 1; pair++) {
+      const col = colFor(pair);
+      const cell = row.getCell(3 + pair * 2);
+      cell.value = {
+        formula: `IF(${col}$${REVENUE_ROW}=0,"",${col}${rowN}/${col}$${REVENUE_ROW})`,
+      };
+      cell.numFmt = "0.0%";
+    }
+  }
+
+  const opexRow = sheet.addRow(["Total operating expenses"]);
+  opexRow.font = { bold: true };
+  pf.years.forEach((y, i) => setMoney(opexRow, i + 1, y.operatingExpensesCents));
+  const noiRow = sheet.addRow(["Net operating income"]);
+  noiRow.font = { bold: true };
+  pf.years.forEach((y, i) => setMoney(noiRow, i + 1, y.noiCents));
+  const cfadsRow = sheet.addRow(["CFADS"]);
+  cfadsRow.font = { bold: true };
+  pf.years.forEach((y, i) => setMoney(cfadsRow, i + 1, y.cfadsCents));
+  const dsRow = sheet.addRow(["Debt service"]);
+  pf.years.forEach((y, i) => setMoney(dsRow, i + 1, y.debtServiceCents));
+
+  // DSCR: live division of the CFADS and debt-service cells per year.
+  const dscrRow = sheet.addRow(["DSCR"]);
+  dscrRow.font = { bold: true };
+  pf.years.forEach((_, i) => {
+    const col = colFor(i + 1);
+    const cell = dscrRow.getCell(2 + (i + 1) * 2);
+    cell.value = {
+      formula: `IF(${col}${dsRow.number}=0,"",${col}${cfadsRow.number}/${col}${dsRow.number})`,
+    };
+    cell.numFmt = RATIO_FMT;
+  });
+  if (pf.loanScenarioName) {
+    sheet.addRow([]);
+    sheet.addRow([`Debt service from scenario: ${pf.loanScenarioName}`]);
+  }
+}
+
+/** The pro-forma inputs ARE the audit trail - they travel with the file. */
+function writeProformaAssumptions(sheet: Worksheet, pf: ExportProforma): void {
+  sheet.addRow([]);
+  const head = sheet.addRow(["Pro-forma assumptions", ""]);
+  head.font = { bold: true };
+  sheet.addRow(["Base period", `${pf.basePeriodLabel} (${pf.monthsCovered} months)`]);
+  pf.growthBpsByYear.forEach((bps, i) => {
+    sheet.addRow([`Y${i + 1} growth`, `${(bps / 100).toFixed(bps % 100 === 0 ? 0 : 2)}%`]);
+  });
+  sheet.addRow(["Owner replacement salary", centsToExcelNumber(pf.replacementSalaryCents)]);
+  sheet.getRow(sheet.rowCount).getCell(2).numFmt = MONEY_FMT;
+  for (const [key, treatment] of Object.entries(pf.treatments)) {
+    sheet.addRow([key, treatment]);
+  }
 }

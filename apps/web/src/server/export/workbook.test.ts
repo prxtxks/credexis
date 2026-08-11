@@ -108,3 +108,81 @@ describe("buildWorkbook (M10.1)", () => {
     expect(values).toContainEqual(["Policy pack", "sop-50-10-8-2026-03"]);
   });
 });
+
+describe("pro-forma forecast sheet (M16 - the bank template's shape)", () => {
+  const WITH_PF: ExportData = {
+    ...DATA,
+    proforma: {
+      entityName: "Acme Opco LLC",
+      basePeriodLabel: "FY2023",
+      monthsCovered: 12,
+      loanScenarioName: "SBA 7(a) - $1.2M",
+      growthBpsByYear: [0, 300, 300],
+      replacementSalaryCents: "6000000",
+      treatments: { "is.opex.rent": "fixed" },
+      baseAnnualized: {
+        revenueCents: "46469028",
+        lines: [{ label: "Rent", amountCents: "1200000" }],
+      },
+      years: [
+        {
+          label: "Year 1",
+          revenueCents: "46469028",
+          lines: [{ label: "Rent", amountCents: "1200000" }],
+          operatingExpensesCents: "1200000",
+          noiCents: "45269028",
+          cfadsCents: "39269028",
+          debtServiceCents: "1329600",
+        },
+      ],
+    },
+  };
+
+  it("renders the paired amount + % columns with LIVE percentage formulas", () => {
+    const wb = buildWorkbook(WITH_PF);
+    const sheet = wb.getWorksheet("Pro-Forma")!;
+    // Header: Line | FY2023 (annualized) | % | Year 1 | %
+    const header = sheet.getRow(2).values as unknown[];
+    expect(header).toContain("FY2023 (annualized)");
+    expect(header).toContain("Year 1");
+    // Revenue row carries money numbers; the line row's % cell is a formula
+    // dividing its amount by the revenue cell in the SAME column - the
+    // template's checkable %-of-sales pairing, never a baked number.
+    const rentRow = sheet.getRow(4);
+    expect(rentRow.getCell(2).value).toBeCloseTo(12000, 5);
+    const pct = rentRow.getCell(3).value as { formula?: string };
+    expect(pct.formula).toMatch(/B4\s*\/\s*B\$3/);
+  });
+
+  it("DSCR row divides CFADS by debt service as a live formula per year", () => {
+    const wb = buildWorkbook(WITH_PF);
+    const sheet = wb.getWorksheet("Pro-Forma")!;
+    let dscrRow = 0;
+    sheet.eachRow((row, n) => {
+      if (row.getCell(1).value === "DSCR") dscrRow = n;
+    });
+    expect(dscrRow).toBeGreaterThan(0);
+    const cell = sheet.getRow(dscrRow).getCell(4);
+    expect((cell.value as { formula?: string }).formula).toMatch(/D\d+\s*\/\s*D\d+/);
+  });
+
+  it("assumptions sheet records the pro-forma inputs (the audit trail)", () => {
+    const wb = buildWorkbook(WITH_PF);
+    const sheet = wb.getWorksheet("Assumptions")!;
+    const texts: string[] = [];
+    sheet.eachRow((row) => {
+      row.eachCell((c) => texts.push(String(c.value ?? "")));
+    });
+    expect(texts.join("|")).toContain("Base period");
+    expect(texts.join("|")).toContain("FY2023");
+    expect(texts.join("|")).toContain("Y2 growth");
+    expect(texts.join("|")).toContain("3%");
+    expect(texts.join("|")).toContain("is.opex.rent");
+  });
+
+  it("a deal without a projectable base keeps the legacy scenario summary", () => {
+    const wb = buildWorkbook(DATA);
+    const sheet = wb.getWorksheet("Pro-Forma")!;
+    expect(sheet.getRow(1).getCell(1).value).toBe("Metric");
+  });
+});

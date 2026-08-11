@@ -8,6 +8,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { assembleSpread, type SpreadFactRow, type TaxonomyNodeRow } from "@/server/spread/logic";
 import { buildWorkbook, type ExportData, type ExportSpreadRow } from "@/server/export/workbook";
+import { computeDealProforma } from "@/server/proforma/compute";
 import { formatRatio } from "@/lib/money-display";
 
 export async function GET(
@@ -207,6 +208,43 @@ export async function GET(
         }
       : null,
   };
+  // M16: the projected pro-forma - same computation as the workspace tab
+  // (ONE implementation), exported when the deal can produce one.
+  try {
+    const pf = await computeDealProforma(supabase, {
+      dealId,
+      scenarioId: scenarioParam,
+    });
+    if (pf.state === "ready") {
+      data.proforma = {
+        entityName: pf.entityName,
+        basePeriodLabel: pf.assumptions.basePeriodLabel,
+        monthsCovered: pf.assumptions.monthsCovered,
+        loanScenarioName: pf.loanScenarioName,
+        growthBpsByYear: pf.assumptions.revenueGrowthBpsByYear,
+        replacementSalaryCents: pf.assumptions.replacementSalaryCents,
+        treatments: pf.assumptions.lineTreatments,
+        baseAnnualized: {
+          revenueCents: pf.projection.baseAnnualized.revenueCents.toString(),
+          lines: pf.projection.baseAnnualized.lines.map((l) => ({
+            label: l.label,
+            amountCents: l.amountCents.toString(),
+          })),
+        },
+        years: pf.projection.years.map((y) => ({
+          label: y.label,
+          revenueCents: y.revenueCents.toString(),
+          lines: y.lines.map((l) => ({ label: l.label, amountCents: l.amountCents.toString() })),
+          operatingExpensesCents: y.operatingExpensesCents.toString(),
+          noiCents: y.noiCents.toString(),
+          cfadsCents: y.cfadsCents.toString(),
+          debtServiceCents: y.debtServiceCents.toString(),
+        })),
+      };
+    }
+  } catch {
+    /* a deal without a projectable base still exports its spreads */
+  }
   const workbook = buildWorkbook(data);
   const buffer = await workbook.xlsx.writeBuffer();
   const fileName = `${(dealRes.data.name as string).replace(/[^\w-]+/g, "_")}_credexis.xlsx`;
