@@ -131,7 +131,7 @@ async function advanceDealStatus(
  * trip and, unlike summing rows client-side, immune to PostgREST's
  * 1000-row page cap (the bug that once weakened the cost ceiling).
  */
-async function advanceIfReviewable(
+export async function advanceIfReviewable(
   client: ReturnType<typeof serviceClient>,
   log: LogContext,
   payload: { tenantId: string; dealId: string },

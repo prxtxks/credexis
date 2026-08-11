@@ -46,7 +46,13 @@ export default function AssignmentPage() {
   });
   const entities = trpc.assignment.entities.useQuery({ dealId });
   const assign = trpc.assignment.assign.useMutation({
-    onSuccess: () => void utils.assignment.list.invalidate({ dealId }),
+    onSuccess: (r) => {
+      void utils.assignment.list.invalidate({ dealId });
+      // M14.5: assigning an entity queues extraction for that span - say
+      // so, because facts arriving a minute later would otherwise look
+      // like magic (or, worse, like nothing happened).
+      if (r.extractionQueued) toast.success("Entity assigned - extraction queued");
+    },
     onError: (err) => toast.error(err.message),
   });
   // M13.5: reviewers own the page ranges too - edit and split, audited.

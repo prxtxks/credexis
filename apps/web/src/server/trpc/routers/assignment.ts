@@ -13,6 +13,7 @@ import {
   splitSpanAt,
   validateSpanEdit,
 } from "../../assignment/logic";
+import { triggerExtract } from "../../pipeline/trigger-client";
 
 /** One span row + its siblings on the same physical document (RLS-scoped). */
 async function spanWithSiblings(
@@ -107,11 +108,29 @@ export const assignmentRouter = router({
         .from("logical_documents")
         .update(patch)
         .eq("id", input.logicalDocumentId)
-        .select("id")
+        .select("id, document_id, entity_id, documents!inner(deal_id)")
         .maybeSingle();
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       if (!data) throw new TRPCError({ code: "NOT_FOUND", message: "logical document not found" });
-      return { logicalDocumentId: data.id as string };
+
+      // M14.5: assigning an entity is what UNBLOCKS extraction for this
+      // span (multi-entity deals skip it at ingest). Enqueue it here -
+      // best-effort: the assignment itself must never fail because the
+      // pipeline is unreachable, but the outcome is reported honestly.
+      let extractionQueued = false;
+      if (input.entityId) {
+        const result = await triggerExtract(
+          {
+            tenantId: ctx.profile.tenantId,
+            dealId: (data.documents as unknown as { deal_id: string }).deal_id,
+            documentId: data.document_id as string,
+            logicalDocumentId: data.id as string,
+          },
+          input.entityId,
+        );
+        extractionQueued = result.triggered;
+      }
+      return { logicalDocumentId: data.id as string, extractionQueued };
     }),
 
   /** Correct a span's page range (M13.5). Overlaps with sibling spans are
