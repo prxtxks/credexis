@@ -21,7 +21,22 @@ export function centsToExcelNumber(cents: string): number {
 
 const MONEY_FMT = "#,##0.00;[Red](#,##0.00)";
 const RATIO_FMT = "0.00";
-const HEADER_FILL = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0D7A5F" } } as const;
+const DEFAULT_PRIMARY = "#0D7A5F";
+const DEFAULT_ACCENT = "#134E3A";
+
+/** "#0D7A5F" → "FF0D7A5F" (exceljs ARGB). Invalid input falls back. */
+export function hexToArgb(hex: string, fallback: string): string {
+  const m = /^#([0-9a-fA-F]{6})$/.exec(hex);
+  return `FF${(m ? m[1]! : fallback.slice(1)).toUpperCase()}`;
+}
+
+/** The bank's identity on the file (M17) - org_branding, optional. */
+export interface ExportBranding {
+  displayName: string;
+  primaryColor: string;
+  accentColor: string;
+  footerText: string;
+}
 
 export interface ExportSpreadRow {
   label: string;
@@ -55,6 +70,7 @@ export interface ExportProforma {
 
 export interface ExportData {
   proforma?: ExportProforma;
+  branding?: ExportBranding;
   dealName: string;
   entityName: string;
   engineVersion: string;
@@ -82,10 +98,14 @@ export interface ExportData {
   } | null;
 }
 
-function styleHeader(sheet: Worksheet, row: number): void {
+function styleHeader(sheet: Worksheet, row: number, primaryArgb?: string): void {
   const r = sheet.getRow(row);
   r.font = { bold: true, color: { argb: "FFFFFFFF" } };
-  r.fill = HEADER_FILL;
+  r.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: primaryArgb ?? hexToArgb(DEFAULT_PRIMARY, DEFAULT_PRIMARY) },
+  };
 }
 
 function writeSpreadSheet(
@@ -93,11 +113,27 @@ function writeSpreadSheet(
   name: string,
   periods: string[],
   rows: ExportSpreadRow[],
+  branding?: ExportBranding,
 ): void {
   const sheet = workbook.addWorksheet(name);
   sheet.getColumn(1).width = 42;
+  // Title block (M17): the bank's name leads the sheet when branding is
+  // set - the file reads as THEIR work product, not our tool's.
+  if (branding && branding.displayName.trim() !== "") {
+    const title = sheet.addRow([`${branding.displayName} - ${name}`]);
+    title.font = { bold: true, size: 13, color: { argb: "FFFFFFFF" } };
+    title.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: hexToArgb(branding.accentColor, DEFAULT_ACCENT) },
+    };
+  }
   sheet.addRow(["Line item", ...periods]);
-  styleHeader(sheet, 1);
+  styleHeader(
+    sheet,
+    sheet.rowCount,
+    branding ? hexToArgb(branding.primaryColor, DEFAULT_PRIMARY) : undefined,
+  );
 
   for (const row of rows) {
     const values: (string | number | null)[] = [`${"  ".repeat(row.depth)}${row.label}`];
@@ -128,9 +164,9 @@ export function buildWorkbook(data: ExportData): Workbook {
   workbook.creator = "Credexis";
   workbook.created = new Date(data.generatedAt);
 
-  writeSpreadSheet(workbook, "Spread", data.periods, data.incomeStatement);
-  writeSpreadSheet(workbook, "Balance Sheet", data.periods, data.balanceSheet);
-  writeSpreadSheet(workbook, "Global CF", data.periods, data.globalCashFlow);
+  writeSpreadSheet(workbook, "Spread", data.periods, data.incomeStatement, data.branding);
+  writeSpreadSheet(workbook, "Balance Sheet", data.periods, data.balanceSheet, data.branding);
+  writeSpreadSheet(workbook, "Global CF", data.periods, data.globalCashFlow, data.branding);
 
   // ── Addbacks ─────────────────────────────────────────────────────────
   const addbacks = workbook.addWorksheet("Addbacks");
@@ -224,6 +260,9 @@ function writeAssumptions(sheet: Worksheet, data: ExportData): void {
     "Note",
     "Authoritative values are integer cents inside Credexis; Excel numbers are display copies.",
   ]);
+  if (data.branding && data.branding.footerText.trim() !== "") {
+    sheet.addRow(["Footer", data.branding.footerText]);
+  }
 }
 
 /**

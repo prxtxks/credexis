@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildWorkbook, centsToExcelNumber, type ExportData } from "./workbook";
+import { buildWorkbook, centsToExcelNumber, hexToArgb, type ExportData } from "./workbook";
 
 const DATA: ExportData = {
   dealName: "Acme Acquisition",
@@ -184,5 +184,42 @@ describe("pro-forma forecast sheet (M16 - the bank template's shape)", () => {
     const wb = buildWorkbook(DATA);
     const sheet = wb.getWorksheet("Pro-Forma")!;
     expect(sheet.getRow(1).getCell(1).value).toBe("Metric");
+  });
+});
+
+describe("export branding (M17 - the bank's identity on the file)", () => {
+  const BRANDED: ExportData = {
+    ...DATA,
+    branding: {
+      displayName: "First National Bank",
+      primaryColor: "#1A3C6E",
+      accentColor: "#0F2547",
+      footerText: "Confidential - internal credit review",
+    },
+  };
+
+  it("title block leads each spread sheet and the header wears the primary color", () => {
+    const wb = buildWorkbook(BRANDED);
+    const sheet = wb.getWorksheet("Spread")!;
+    expect(sheet.getRow(1).getCell(1).value).toBe("First National Bank - Spread");
+    const fill = sheet.getRow(2).getCell(1).fill as { fgColor?: { argb?: string } };
+    expect(fill.fgColor?.argb).toBe("FF1A3C6E");
+  });
+
+  it("footer text travels on the Assumptions sheet", () => {
+    const wb = buildWorkbook(BRANDED);
+    const texts: string[] = [];
+    wb.getWorksheet("Assumptions")!.eachRow((r) => r.eachCell((c) => texts.push(String(c.value))));
+    expect(texts.join("|")).toContain("Confidential - internal credit review");
+  });
+
+  it("unbranded exports keep the original anatomy (header at row 1)", () => {
+    const wb = buildWorkbook(DATA);
+    expect(wb.getWorksheet("Spread")!.getRow(1).getCell(1).value).toBe("Line item");
+  });
+
+  it("hexToArgb tolerates garbage with the fallback", () => {
+    expect(hexToArgb("#1A3C6E", "#000000")).toBe("FF1A3C6E");
+    expect(hexToArgb("teal", "#0D7A5F")).toBe("FF0D7A5F");
   });
 });

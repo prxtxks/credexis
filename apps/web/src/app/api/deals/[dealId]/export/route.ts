@@ -208,6 +208,19 @@ export async function GET(
         }
       : null,
   };
+  // M17: the org's export branding rides every workbook.
+  const { data: brand } = await supabase
+    .from("org_branding")
+    .select("display_name, primary_color, accent_color, footer_text")
+    .maybeSingle();
+  if (brand) {
+    data.branding = {
+      displayName: (brand.display_name as string) ?? "",
+      primaryColor: (brand.primary_color as string) ?? "#0D7A5F",
+      accentColor: (brand.accent_color as string) ?? "#134E3A",
+      footerText: (brand.footer_text as string) ?? "",
+    };
+  }
   // M16: the projected pro-forma - same computation as the workspace tab
   // (ONE implementation), exported when the deal can produce one.
   try {
