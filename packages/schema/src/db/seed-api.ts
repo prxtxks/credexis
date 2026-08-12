@@ -85,9 +85,14 @@ select count(*)::int as n from public.taxonomy_nodes;`;
       .trim()
       .replace(/^(total (?:for )?)?\d{3,5}(?: \d{1,4})* /, "$1")
       .trim();
-  const mappingValues = LEARNED_MAPPINGS_SEED.map(
-    (m) => `(null, '${esc(normLabel(m.label))}', '${esc(m.node)}', 0.95, 'human', 1)`,
-  ).join(",\n    ");
+  // Dedupe by label_norm: a single INSERT ... ON CONFLICT DO UPDATE may
+  // not touch one row twice (Postgres 21000), so the DB write must not
+  // depend on data-file discipline alone (a test enforces it there too).
+  const byNorm = new Map<string, string>();
+  for (const m of LEARNED_MAPPINGS_SEED) byNorm.set(normLabel(m.label), m.node);
+  const mappingValues = [...byNorm.entries()]
+    .map(([labelNorm, node]) => `(null, '${esc(labelNorm)}', '${esc(node)}', 0.95, 'human', 1)`)
+    .join(",\n    ");
   await runSql(
     ref,
     token,

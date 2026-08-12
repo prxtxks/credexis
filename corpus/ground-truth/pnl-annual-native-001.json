@@ -37,8 +37,9 @@
     {
       "taxonomy_node": "is.opex.payroll_taxes",
       "period": "FY2024",
-      "value_cents": "999794",
-      "page": 1
+      "value_cents": "1071074",
+      "page": 1,
+      "note": "Domain ruling 2026-08-12 (DOMAIN-RULINGS.md #1): payroll_taxes is semantic, not positional - printed 'Total Payroll Taxes 9,997.94' (p1) + '571 Payroll Taxes - Unemployment 712.80' (p1, outside the subsection) = 10,710.74"
     },
     {
       "taxonomy_node": "is.opex.rent",
