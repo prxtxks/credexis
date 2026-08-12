@@ -88,3 +88,13 @@ deals. This is real client PII from a partner bank's closed deal - do not
 share screenshots outside the team, and delete the tenant before any
 external demo env ships. The staged upload set (renamed, collision-free)
 lives at ~/Downloads/golden-deal/demo-upload for re-runs.
+
+Marketing screenshots come from the SYNTHETIC source-demo fixture instead
+(apps/web/e2e/source-demo.live.spec.ts): it seeds "Workspace Opco LLC"
+with a generated fake 1120-S whose facts carry real source_page/bbox
+lineage, verifies click-to-source, and saves
+apps/web/e2e/screenshots/source-viewer-hero.png. Run with
+`RUN_LIVE_E2E=1 SOURCE_DEMO_KEEP=1 pnpm --filter @credexis/web test:e2e
+e2e/source-demo.live.spec.ts` to keep the deal up (credentials printed)
+for manual capture; add E2E_TARGET_URL to shoot the deployed UI (the dev
+server draws the Next.js dev badge into screenshots).
