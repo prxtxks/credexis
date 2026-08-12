@@ -57,21 +57,38 @@ export async function computeDealProforma(supabase: any, params: ProformaCompute
   }
 
   // ── Accepted facts of the target, grouped by period ──
+  // Lineage columns ride along so every base line can DISCLOSE the printed
+  // source lines that built it (M21: a number an underwriter can open).
   const { data: facts, error: fErr } = await supabase
     .from("facts")
-    .select("taxonomy_node_key, value_cents, status, periods(label)")
+    .select(
+      "taxonomy_node_key, value_cents, status, method, source_page, registry_field_id, source_logical_document_id, periods(label)",
+    )
     .eq("entity_id", target.id as string)
     .in("status", ["accepted", "overridden"]);
   if (fErr) throw new DbError(fErr.message);
 
-  const byPeriod = new Map<string, Map<string, Cents[]>>();
+  interface FactMeta {
+    valueCents: Cents;
+    method: string;
+    page: number | null;
+    registryFieldId: string | null;
+    logicalDocumentId: string | null;
+  }
+  const byPeriod = new Map<string, Map<string, FactMeta[]>>();
   for (const f of facts ?? []) {
     const label = (f.periods as unknown as { label: string } | null)?.label;
     const key = f.taxonomy_node_key as string | null;
     if (!label || !key || !key.startsWith("is.")) continue;
-    const period = byPeriod.get(label) ?? new Map<string, Cents[]>();
+    const period = byPeriod.get(label) ?? new Map<string, FactMeta[]>();
     const list = period.get(key) ?? [];
-    list.push(cents(bigintFromDb(f.value_cents)));
+    list.push({
+      valueCents: cents(bigintFromDb(f.value_cents)),
+      method: f.method as string,
+      page: (f.source_page as number | null) ?? null,
+      registryFieldId: (f.registry_field_id as string | null) ?? null,
+      logicalDocumentId: (f.source_logical_document_id as string | null) ?? null,
+    });
     period.set(key, list);
     byPeriod.set(label, period);
   }
@@ -112,13 +129,36 @@ export async function computeDealProforma(supabase: any, params: ProformaCompute
   );
 
   // ── Assemble the base: revenue + every expense-side line ──
-  const sumKey = (key: string): Cents => sumCents(period.get(key) ?? []);
+  const sumKey = (key: string): Cents => sumCents((period.get(key) ?? []).map((m) => m.valueCents));
   const revenue =
     period.has("is.revenue.total") && sumKey("is.revenue.total") !== 0n
       ? sumKey("is.revenue.total")
       : sumCents(
           [...period.keys()].filter((k) => k.startsWith("is.revenue.")).map((k) => sumKey(k)),
         );
+
+  // Document descriptors for the base period's lineage disclosure -
+  // "PNL FY2024 · p. 1" is what an underwriter recognizes.
+  const docIds = [
+    ...new Set(
+      [...period.values()]
+        .flat()
+        .flatMap((m) => (m.logicalDocumentId ? [m.logicalDocumentId] : [])),
+    ),
+  ];
+  const docLabel = new Map<string, string>();
+  if (docIds.length > 0) {
+    const { data: ldocs, error: ldErr } = await supabase
+      .from("logical_documents")
+      .select("id, form_family, tax_year")
+      .in("id", docIds);
+    if (ldErr) throw new DbError(ldErr.message);
+    for (const ld of ldocs ?? []) {
+      const year = ld.tax_year !== null ? ` ${ld.tax_year}` : "";
+      docLabel.set(ld.id as string, `${ld.form_family}${year}`);
+    }
+  }
+
   const EXPENSE_PREFIXES = ["is.opex.", "is.other."];
   const lines = [...period.keys()]
     .filter((k) => EXPENSE_PREFIXES.some((p) => k.startsWith(p)))
@@ -135,6 +175,16 @@ export async function computeDealProforma(supabase: any, params: ProformaCompute
         label: NODE_LABEL.get(key) ?? key,
         amountCents: sumKey(key),
         treatment,
+        // Composition disclosure (M21): the base-period facts behind this
+        // line, one row per printed source. Rendered, never re-added, by
+        // the client; the engine's sums stay the only arithmetic.
+        sources: (period.get(key) ?? []).map((m) => ({
+          valueCents: m.valueCents,
+          method: m.method,
+          page: m.page,
+          registryFieldId: m.registryFieldId,
+          docLabel: m.logicalDocumentId ? (docLabel.get(m.logicalDocumentId) ?? null) : null,
+        })),
       };
     })
     .filter((l) => l.amountCents !== ZERO_CENTS);

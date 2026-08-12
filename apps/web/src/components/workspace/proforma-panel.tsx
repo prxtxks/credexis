@@ -20,6 +20,91 @@ import { cn } from "@/lib/utils";
 
 type Treatment = "ratio" | "fixed" | "excluded";
 
+interface LineSource {
+  valueCents: bigint;
+  method: string;
+  page: number | null;
+  registryFieldId: string | null;
+  docLabel: string | null;
+}
+
+const METHOD_LABEL: Record<string, string> = {
+  extract_consensus: "consensus",
+  extract_primary: "extracted",
+  extract_vision: "vision",
+  statement_suggested: "statement",
+  human: "human input",
+  override: "override",
+  transcript: "IRS transcript",
+};
+
+/**
+ * Composition disclosure (M21): the line label opens the printed source
+ * lines behind the number - doc, page, method, amount. When several
+ * printed lines roll into one category (Domain Ruling #1, e.g. payroll
+ * taxes + unemployment tax), the underwriter sees exactly that, in
+ * place, with no math done here (server sums; this renders).
+ */
+function LineLabel({ label, sources }: { label: string; sources: LineSource[] | undefined }) {
+  const [open, setOpen] = useState(false);
+  if (!sources || sources.length === 0) {
+    return <span>{label}</span>;
+  }
+  return (
+    <span className="relative inline-block">
+      <button
+        type="button"
+        className="decoration-border hover:decoration-foreground/60 cursor-help rounded-sm text-left underline decoration-dotted underline-offset-4"
+        aria-label={`Show the ${sources.length} source line${sources.length === 1 ? "" : "s"} behind ${label}`}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {label}
+        {sources.length > 1 ? (
+          <span className="bg-accent text-foreground/80 ml-1.5 rounded-full px-1.5 py-0.5 align-middle text-[10px] font-semibold tabular-nums">
+            ×{sources.length}
+          </span>
+        ) : null}
+      </button>
+      {open ? (
+        <>
+          <button
+            aria-label="Close source breakdown"
+            className="fixed inset-0 z-40 cursor-default"
+            onClick={() => setOpen(false)}
+          />
+          <div className="border-border bg-popover absolute top-full left-0 z-50 mt-1.5 w-80 rounded-xl border p-3 shadow-xl">
+            <p className="text-muted-foreground pb-2 text-[11px] font-semibold tracking-wider uppercase">
+              What built this number
+            </p>
+            <ul className="divide-border/60 divide-y">
+              {sources.map((s, i) => (
+                <li key={i} className="flex items-center justify-between gap-3 py-1.5 text-xs">
+                  <span className="text-muted-foreground min-w-0 truncate">
+                    {s.docLabel ?? "document"}
+                    {s.page !== null ? ` · p. ${s.page}` : ""}
+                    {s.registryFieldId ? ` · ${s.registryFieldId}` : ""}
+                    <span className="text-foreground/60">
+                      {" "}
+                      · {METHOD_LABEL[s.method] ?? s.method}
+                    </span>
+                  </span>
+                  <span className="tabular-nums">{formatCents(s.valueCents.toString())}</span>
+                </li>
+              ))}
+            </ul>
+            {sources.length > 1 ? (
+              <p className="text-muted-foreground border-border/60 mt-1 border-t pt-2 text-[11px]">
+                Several printed lines roll into this category; each stays verifiable at its source.
+                The total is computed by the engine.
+              </p>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+    </span>
+  );
+}
+
 function Empty({ msg }: { msg: string }) {
   return (
     <div className="glass-card text-muted-foreground flex h-full items-center justify-center rounded-xl px-8 text-center text-sm">
@@ -229,7 +314,12 @@ export function ProformaPanel({
                   0n;
                 return (
                   <tr key={line.key} className="hover:bg-accent/30">
-                    <td className="text-muted-foreground px-4 py-2">{line.label}</td>
+                    <td className="text-muted-foreground px-4 py-2">
+                      <LineLabel
+                        label={line.label}
+                        sources={(line as { sources?: LineSource[] }).sources}
+                      />
+                    </td>
                     <td className="px-4 py-2 text-right tabular-nums">
                       {formatCents(annual.toString())}
                     </td>
@@ -258,7 +348,8 @@ export function ProformaPanel({
             <Row
               label="Operating expenses"
               cells={[
-                sumLines(d.projection.baseAnnualized.lines),
+                // Engine-computed (Iron Law #3) - the client never adds money.
+                d.projection.baseAnnualized.operatingExpensesCents,
                 ...years.map((y) => y.operatingExpensesCents),
               ]}
             />
@@ -292,10 +383,6 @@ export function ProformaPanel({
       </div>
     </div>
   );
-}
-
-function sumLines(lines: { amountCents: bigint }[]): bigint {
-  return lines.reduce((a, l) => a + l.amountCents, 0n);
 }
 
 function Row({
