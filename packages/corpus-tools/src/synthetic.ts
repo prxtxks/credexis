@@ -266,9 +266,9 @@ export const SYNTHETIC_SPECS: SyntheticDocSpec[] = [
     tax_year: 2024,
     title: "Form W-2 (synthetic) — J. Guarantor / Widget Services Inc",
     fields: [
-      money("fw2.box1", "FY2024", "Box 1  Wages, tips, other comp", "9850000"),
-      money("fw2.box2", "FY2024", "Box 2  Federal income tax withheld", "1477500"),
-      money("fw2.box5", "FY2024", "Box 5  Medicare wages", "9850000"),
+      money("w2.box1", "FY2024", "Box 1  Wages, tips, other comp", "9850000"),
+      money("w2.box2", "FY2024", "Box 2  Federal income tax withheld", "1477500"),
+      money("w2.box5", "FY2024", "Box 5  Medicare wages", "9850000"),
     ],
   },
   {
