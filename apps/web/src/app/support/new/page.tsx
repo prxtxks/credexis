@@ -7,7 +7,7 @@
  * /support; the agent stays an honest stub until it is wired.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowUp, BookOpen, Mail } from "lucide-react";
@@ -37,6 +37,17 @@ export default function SupportNewCasePage() {
   const [topic, setTopic] = useState<string>("question");
   const [severity, setSeverity] = useState<string>("normal");
   const [draft, setDraft] = useState("");
+
+  // M18: failure notices deep-link here with the incident prefilled
+  // (?topic=bug&draft=...). window.location keeps the page prerenderable -
+  // useSearchParams would demand a Suspense boundary this app forbids.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const t = q.get("topic");
+    if (t && TOPICS.some((x) => x.value === t)) setTopic(t);
+    const d = q.get("draft");
+    if (d && d.trim() !== "") setDraft(d.slice(0, 2000));
+  }, []);
   const [thread, setThread] = useState<{ from: "you" | "agent"; text: string }[]>([]);
 
   function send() {

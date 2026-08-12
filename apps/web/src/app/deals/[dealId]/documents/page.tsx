@@ -28,6 +28,7 @@ import {
 import { trpc } from "@/lib/trpc/client";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
+import { FailureNotice, failureCode } from "@/components/ui/failure-notice";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PageLoading } from "@/components/ui/page-loading";
@@ -259,6 +260,29 @@ export default function DocumentsPage() {
                           <span>{formatBytes(d.bytes)}</span>
                           <code className="text-computed">{d.sha256Short}</code>
                         </div>
+
+                        {/* M18: a failed stage is a visible, actionable
+                            notice - not a hover tooltip. Precision rules:
+                            take the LAST run per stage (retries supersede),
+                            and ignore single-path failures - when one
+                            reader dies but consensus succeeds, the
+                            document is fine and the run log still shows
+                            the chip. Never cry wolf, never stay silent. */}
+                        {(() => {
+                          const lastByStage = new Map<string, (typeof stages)[number]>();
+                          for (const s of stages) lastByStage.set(s.stage, s);
+                          const fatal = [...lastByStage.values()].find(
+                            (s) => s.status === "failed" && !s.stage.startsWith("extract_path"),
+                          );
+                          return fatal ? (
+                            <FailureNotice
+                              className="mt-2.5"
+                              code={failureCode(fatal.error)}
+                              message={fatal.error}
+                              context={d.fileName}
+                            />
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                   </div>
