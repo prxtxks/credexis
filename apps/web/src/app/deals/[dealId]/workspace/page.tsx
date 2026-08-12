@@ -12,12 +12,11 @@
 import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, Minus, Plus } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { NAV_DEAL } from "@/components/nav-config";
 import { Button } from "@/components/ui/button";
-import { FieldSelect } from "@/components/ui/field-select";
 import { Switch } from "@/components/ui/switch";
 
 type DealStatus = "intake" | "parsing" | "review" | "complete";
@@ -65,6 +64,152 @@ function RailSection({ title, children }: { title: string; children: ReactNode }
       </h2>
       <div className="mt-1.5 space-y-0.5">{children}</div>
     </section>
+  );
+}
+
+/**
+ * Expandable rail card (ui-24, Pratik: the Travelodge deal has too many
+ * entities and documents for a flat rail). The dashboard Usage card's
+ * anatomy: a bordered container clamped to the first few rows, a
+ * bottom-center chevron circle straddling the edge, and - expanded - an
+ * internal scroll pane so the rail itself never grows unbounded.
+ */
+function RailCard({
+  title,
+  count,
+  itemCount,
+  children,
+}: {
+  title: string;
+  count?: number;
+  itemCount: number;
+  children: ReactNode;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const COLLAPSED_ROWS = 4;
+  const expandable = itemCount > COLLAPSED_ROWS;
+  return (
+    <section className="mb-5">
+      <h2 className="px-2.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+        {title}
+        {count !== undefined ? (
+          <span className="text-foreground/60 ml-1.5 tabular-nums normal-case">{count}</span>
+        ) : null}
+      </h2>
+      <div className="border-sidebar-border relative mt-1.5 rounded-lg border pb-1">
+        <div
+          className={cn(
+            "space-y-0.5 p-1",
+            expanded ? "scroll-pane max-h-64 overflow-y-auto" : "max-h-[164px] overflow-hidden",
+          )}
+        >
+          {children}
+        </div>
+        {expandable ? (
+          <button
+            type="button"
+            aria-label={expanded ? `Collapse ${title}` : `Show all ${title}`}
+            aria-expanded={expanded}
+            onClick={() => setExpanded((v) => !v)}
+            className="border-sidebar-border bg-popover hover:bg-accent absolute -bottom-3 left-1/2 flex size-6 -translate-x-1/2 items-center justify-center rounded-full border transition-colors duration-150"
+          >
+            <ChevronDown
+              aria-hidden="true"
+              className={cn(
+                "text-muted-foreground size-3.5 transition-transform duration-150",
+                expanded && "rotate-180",
+              )}
+            />
+          </button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+const STAGES = [
+  { value: "intake", label: "Intake", hint: "Documents arriving" },
+  { value: "parsing", label: "Parsing", hint: "Pipeline reading" },
+  { value: "review", label: "Review", hint: "Human judgment" },
+  { value: "complete", label: "Complete", hint: "Signed off" },
+] as const;
+
+/**
+ * Stage stepper (ui-24): the deal's lifecycle as a connected path instead
+ * of a dropdown. Completed stages fill, the current one breathes, and any
+ * stage is one click - same mutation, same capability as the select it
+ * replaces (review→complete stays a human judgment).
+ */
+function StatusStepper({
+  status,
+  disabled,
+  onSelect,
+}: {
+  status: string;
+  disabled: boolean;
+  onSelect: (s: DealStatus) => void;
+}) {
+  const currentIdx = STAGES.findIndex((s) => s.value === status);
+  return (
+    <div className="px-1 py-1">
+      {STAGES.map((s, i) => {
+        const done = i < currentIdx;
+        const current = i === currentIdx;
+        return (
+          <button
+            key={s.value}
+            type="button"
+            disabled={disabled || current}
+            aria-current={current ? "step" : undefined}
+            onClick={() => onSelect(s.value)}
+            className={cn(
+              "group relative flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors duration-150",
+              !current && "hover:bg-sidebar-accent/60",
+              disabled && "cursor-default opacity-60",
+            )}
+          >
+            {/* connector */}
+            {i < STAGES.length - 1 ? (
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "absolute top-[26px] left-[15px] h-[14px] w-px",
+                  done ? "bg-primary/60" : "bg-sidebar-border",
+                )}
+              />
+            ) : null}
+            <span
+              aria-hidden="true"
+              className={cn(
+                "flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors duration-150",
+                done && "border-primary bg-primary",
+                current && "border-primary bg-primary/15",
+                !done && !current && "border-sidebar-border bg-transparent",
+              )}
+            >
+              {done ? (
+                <Check aria-hidden="true" className="size-2.5 text-white" strokeWidth={3.5} />
+              ) : current ? (
+                <span className="bg-primary size-1.5 animate-pulse rounded-full" />
+              ) : null}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span
+                className={cn(
+                  "block text-[13px] font-medium",
+                  current ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+                )}
+              >
+                {s.label}
+              </span>
+              {current ? (
+                <span className="text-muted-foreground block text-[11px]">{s.hint}</span>
+              ) : null}
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -296,24 +441,18 @@ function WorkspaceInner() {
                   a deal reaches Review and sticks there permanently: the
                   pipeline advances intake→parsing→review, but review→complete
                   is a judgement nobody but an underwriter can make. */}
-              <div className="px-0.5 py-1">
-                <FieldSelect
-                  ariaLabel="Deal status"
-                  value={deal.data?.status ?? "intake"}
-                  onChange={(v) => setStatus.mutate({ dealId, status: v as DealStatus })}
-                  disabled={!deal.data || setStatus.isPending}
-                  options={[
-                    { value: "intake", label: "Intake" },
-                    { value: "parsing", label: "Parsing" },
-                    { value: "review", label: "Review" },
-                    { value: "complete", label: "Complete" },
-                  ]}
-                  className="w-full"
-                />
-              </div>
+              <StatusStepper
+                status={deal.data?.status ?? "intake"}
+                disabled={!deal.data || setStatus.isPending}
+                onSelect={(s) => setStatus.mutate({ dealId, status: s })}
+              />
             </RailSection>
 
-            <RailSection title="Entities">
+            <RailCard
+              title="Entities"
+              count={(entities.data ?? []).length}
+              itemCount={(entities.data ?? []).length}
+            >
               {(entities.data ?? []).map((e) => (
                 <button
                   key={e.id}
@@ -332,10 +471,14 @@ function WorkspaceInner() {
               {(entities.data ?? []).length === 0 && (
                 <p className="text-muted-foreground px-2.5 text-xs">No entities yet.</p>
               )}
-            </RailSection>
+            </RailCard>
 
-            <RailSection title="Documents">
-              {(docs.data ?? []).slice(0, 8).map((d) => (
+            <RailCard
+              title="Documents"
+              count={(docs.data ?? []).length}
+              itemCount={(docs.data ?? []).length}
+            >
+              {(docs.data ?? []).map((d) => (
                 <div
                   key={d.id}
                   className="text-muted-foreground flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-[13px]"
@@ -347,7 +490,10 @@ function WorkspaceInner() {
                   <span className="truncate">{d.fileName}</span>
                 </div>
               ))}
-            </RailSection>
+              {(docs.data ?? []).length === 0 && (
+                <p className="text-muted-foreground px-2.5 text-xs">No documents yet.</p>
+              )}
+            </RailCard>
 
             <RailSection title="IRS verification">
               <div className="flex h-9 items-center gap-2 rounded-lg px-2.5">
