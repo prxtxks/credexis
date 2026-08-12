@@ -92,7 +92,7 @@ export function NotificationsBell({ side = "down" }: { side?: "up" | "down" } = 
               ) : null}
             </div>
 
-            <div className="scroll-pane max-h-96 overflow-y-auto">
+            <div className="scroll-pane max-h-52 overflow-y-auto">
               {list.isLoading ? (
                 <div className="space-y-1 px-2 py-1">
                   {[0, 1, 2].map((i) => (
