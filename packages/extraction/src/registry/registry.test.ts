@@ -11,21 +11,18 @@ import {
 import { registryEntrySchema } from "./types.js";
 
 describe("Form Registry v1 (M4.1) — structural invariants", () => {
-  it("covers all 13 MVP form families × 2023-2025, business returns back to 2020", () => {
+  it("covers all 13 MVP form families × tax years 2020-2025", () => {
+    // M14.4 gave the business returns back-years; M14.8 completed the
+    // roster (Golden Deal 1's guarantors file 2020-2022 personal returns).
+    // Every year is verified against printed revisions in corpus-1 - a new
+    // family or year joins this invariant only with that verification.
     expect(REGISTRY_DEFINITIONS).toHaveLength(13);
     for (const def of REGISTRY_DEFINITIONS) {
-      for (const year of REGISTRY_TAX_YEARS) {
+      for (const year of [2020, 2021, 2022, ...REGISTRY_TAX_YEARS]) {
         expect(getRegistryEntry(def.formFamily, year), `${def.formFamily}:${year}`).not.toBeNull();
       }
     }
-    // M14.4: real deals carry returns back to 2020 - the business families
-    // add three back-years each (Golden Deal 1: 2020-2022 filings).
-    for (const family of ["1120S", "1120", "1065"] as const) {
-      for (const year of [2020, 2021, 2022]) {
-        expect(getRegistryEntry(family, year), `${family}:${year}`).not.toBeNull();
-      }
-    }
-    expect(listRegistryEntries()).toHaveLength(13 * 3 + 9);
+    expect(listRegistryEntries()).toHaveLength(13 * 6);
   });
 
   it("every entry passes zod validation (ids unique, relations resolve)", () => {
@@ -307,6 +304,68 @@ describe("back-years 2020-2022 (M14.4, Golden Deal 1: real returns predate 2023)
         f.fieldId.includes("schl"),
       );
       expect(then_).toEqual(now);
+    }
+  });
+});
+
+describe("personal-return back-years 2020-2022 (M14.8, Golden Deal 1 guarantors)", () => {
+  // Verified against printed revisions in corpus/signal-sweep (f1040-2020/
+  // 2021/2022, f1040s1-2020/2022, f4562-2019/2021): the 1040 is revised
+  // EVERY year - 2022 matches the 2023 base; 2021 splits the standard
+  // deduction to 12a and keeps single-line wages at 1; 2020 additionally
+  // totals adjustments at 10c. Schedule 1's 2020 revision predates the
+  // 2021 rewrite (combine = 9, total adjustments = 22, and NO "total
+  // other income" line). The 4562 is byte-stable throughout.
+  it("1040 2022 matches the base numbering", () => {
+    const by = new Map(
+      getRegistryEntry("1040", 2022)!.fields.map((f) => [f.fieldId, f.lineNumber]),
+    );
+    expect(by.get("f1040.line1a")).toBe("1a");
+    expect(by.get("f1040.line12")).toBe("12");
+    expect(by.get("f1040.line10")).toBe("10");
+  });
+
+  it("1040 2021: single-line wages, standard deduction at 12a", () => {
+    const by = new Map(
+      getRegistryEntry("1040", 2021)!.fields.map((f) => [f.fieldId, f.lineNumber]),
+    );
+    expect(by.get("f1040.line1a")).toBe("1");
+    expect(by.get("f1040.line12")).toBe("12a");
+    expect(by.get("f1040.line10")).toBe("10");
+    expect(by.get("f1040.line11")).toBe("11"); // AGI stable
+  });
+
+  it("1040 2020: single-line wages, adjustments total at 10c", () => {
+    const by = new Map(
+      getRegistryEntry("1040", 2020)!.fields.map((f) => [f.fieldId, f.lineNumber]),
+    );
+    expect(by.get("f1040.line1a")).toBe("1");
+    expect(by.get("f1040.line10")).toBe("10c");
+    expect(by.get("f1040.line12")).toBe("12");
+  });
+
+  it("Schedule 1 2020: combine at 9, adjustments total at 22, no total-other-income", () => {
+    const e = getRegistryEntry("1040_SCH_1", 2020)!;
+    const by = new Map(e.fields.map((f) => [f.fieldId, f.lineNumber]));
+    expect(by.get("f1040s1.line10")).toBe("9");
+    expect(by.get("f1040s1.line25")).toBe("22");
+    expect(by.has("f1040s1.line9")).toBe(false);
+    expect(by.get("f1040s1.line3")).toBe("3"); // business income stable
+  });
+
+  it("Schedule 1 2021/2022 match the base; 4562 stable for all back-years", () => {
+    for (const year of [2021, 2022]) {
+      const by = new Map(
+        getRegistryEntry("1040_SCH_1", year)!.fields.map((f) => [f.fieldId, f.lineNumber]),
+      );
+      expect(by.get("f1040s1.line9"), `sch1 ${year}`).toBe("9");
+      expect(by.get("f1040s1.line25"), `sch1 ${year}`).toBe("25");
+    }
+    for (const year of [2020, 2021, 2022]) {
+      const by = new Map(
+        getRegistryEntry("4562", year)!.fields.map((f) => [f.fieldId, f.lineNumber]),
+      );
+      expect(by.get("f4562.line22"), `4562 ${year}`).toBe("22");
     }
   });
 });
