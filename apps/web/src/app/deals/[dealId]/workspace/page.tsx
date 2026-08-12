@@ -16,6 +16,7 @@ import { Check, ChevronDown, ChevronLeft, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { NAV_DEAL } from "@/components/nav-config";
+import { DealNotFoundPanel, isDealNotFound } from "@/components/deal-not-found";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
@@ -276,7 +277,12 @@ function WorkspaceInner() {
   }
 
   const utils = trpc.useUtils();
-  const deal = trpc.deals.get.useQuery({ dealId });
+  const deal = trpc.deals.get.useQuery(
+    { dealId },
+    // NOT_FOUND is deterministic (row absent or RLS-hidden) - retrying
+    // only delays the terminal not-found state.
+    { retry: (count, err) => !isDealNotFound(err) && count < 3 },
+  );
   const setStatus = trpc.deals.setStatus.useMutation({
     onSuccess: () => {
       void utils.deals.get.invalidate({ dealId });
@@ -319,6 +325,16 @@ function WorkspaceInner() {
     if (value === null) next.delete(key);
     else next.set(key, value);
     router.replace(`${pathname}?${next.toString()}`);
+  }
+
+  // Terminal: the cockpit's empty-deal affordances ("ENTITIES 0", "Add an
+  // entity…") must never render for a deal the tenant cannot see.
+  if (isDealNotFound(deal.error)) {
+    return (
+      <div className="gradient-mesh flex h-screen items-center justify-center p-6">
+        <DealNotFoundPanel />
+      </div>
+    );
   }
 
   return (

@@ -19,6 +19,7 @@ import { trpc } from "@/lib/trpc/client";
 import { checklistFor } from "@/lib/doc-checklist";
 import { formatMicroUsd, formatRatio } from "@/lib/money-display";
 import { AppShell } from "@/components/app-shell";
+import { DealNotFoundPanel, isDealNotFound } from "@/components/deal-not-found";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/ui/pill";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,11 +55,28 @@ export default function DealOverviewPage() {
   const params = useParams<{ dealId: string }>();
   const dealId = params.dealId;
 
-  const deal = trpc.deals.get.useQuery({ dealId });
+  const deal = trpc.deals.get.useQuery(
+    { dealId },
+    // NOT_FOUND is deterministic (row absent or RLS-hidden) - retrying
+    // only delays the terminal not-found state.
+    { retry: (count, err) => !isDealNotFound(err) && count < 3 },
+  );
   const board = trpc.deals.board.useQuery();
   const docs = trpc.documents.list.useQuery({ dealId });
   const issues = trpc.issues.forDeal.useQuery({ dealId });
   const costs = trpc.pipeline.costs.useQuery(undefined, { staleTime: 60_000 });
+
+  // Terminal: skeletons and zero-count widgets on a deal the tenant cannot
+  // see read as a real (empty) deal - render the honest state instead.
+  if (isDealNotFound(deal.error)) {
+    return (
+      <AppShell breadcrumb="Deal not found">
+        <main className="mx-auto max-w-5xl px-4 py-24 sm:px-6 lg:px-8">
+          <DealNotFoundPanel />
+        </main>
+      </AppShell>
+    );
+  }
 
   const boardRow = board.data?.find((d) => d.id === dealId);
   const costRow = costs.data?.find((c) => c.dealId === dealId);

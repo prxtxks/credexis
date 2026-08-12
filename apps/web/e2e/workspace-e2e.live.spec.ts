@@ -48,7 +48,13 @@ const CLEANUP = `
   -- audit purge LAST: the fact/addback/scenario deletes above fire the
   -- audit trigger and create fresh rows (M6.6 lesson).
   delete from public.audit_log where tenant_id = '${T.tenantId}';
+  -- tenants_audit (migration 0013) fires AFTER DELETE and inserts an audit
+  -- row for the tenant that no longer exists - FK 23503, and the whole
+  -- cleanup transaction rolls back. Disable it around the final delete
+  -- (transactional DDL: a failure re-enables it via rollback).
+  alter table public.tenants disable trigger tenants_audit;
   delete from public.tenants where id = '${T.tenantId}';
+  alter table public.tenants enable trigger tenants_audit;
 `;
 
 /** NI $120k + bridge (interest 20k, tax 10k, D&A 30k) → CFADS $180k. */
@@ -188,5 +194,34 @@ test.describe("M8.9 workspace flow (live)", () => {
     const rows = factRes.body as Record<string, unknown>[];
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ status: "accepted", v: "20000000", created_by: reviewerId });
+  });
+
+  // RLS makes a nonexistent deal and another tenant's deal the same
+  // NOT_FOUND, so one absent id covers both. The cockpit and the overview
+  // must show the terminal state, never their empty-deal affordances
+  // ("ENTITIES 0" once read as a real empty deal).
+  test("foreign deal id shows not-found, not an empty cockpit", async ({ page }) => {
+    const foreignDealId = "00000000-0000-4000-a000-00000000dead";
+
+    await page.goto("/login");
+    await page.getByLabel("Email").fill(reviewerEmail);
+    await page.getByLabel("Password").fill(reviewerPassword);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page).not.toHaveURL(/\/login/, { timeout: 15_000 });
+
+    await page.goto(`/deals/${foreignDealId}/workspace`);
+    await expect(page.getByRole("heading", { name: "Deal not found" })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText("Add an entity to this deal to open its spread.")).toHaveCount(0);
+
+    await page.goto(`/deals/${foreignDealId}/overview`);
+    await expect(page.getByRole("heading", { name: "Deal not found" })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText("Underwriting state")).toHaveCount(0);
+
+    await page.getByRole("link", { name: "Back to deals" }).click();
+    await expect(page).toHaveURL(/\/$/);
   });
 });
