@@ -73,3 +73,13 @@ export async function triggerExtract(
     { idempotencyKey: `extract:${payload.logicalDocumentId}:${entityId}` },
   );
 }
+
+/**
+ * Re-extraction on demand (M18.2): NO idempotency key, deliberately - the
+ * assignment key (span, entity) would dedupe the retry into the original
+ * failed run. The task's own already-has-facts guard is the real dedupe:
+ * spamming this on a healthy span is a no-op.
+ */
+export async function triggerReextract(payload: ExtractPayload): Promise<TriggerResult> {
+  return triggerTask(EXTRACT_TASK_ID, { ...payload });
+}

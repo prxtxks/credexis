@@ -24,7 +24,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
@@ -91,6 +93,10 @@ export default function DocumentsPage() {
   const deal = trpc.deals.get.useQuery({ dealId });
   const docs = trpc.documents.list.useQuery({ dealId }, { refetchInterval: 2500 });
   const progress = trpc.pipeline.progress.useQuery({ dealId }, { refetchInterval: 2500 });
+  const reextract = trpc.pipeline.reextract.useMutation({
+    onSuccess: (r) => toast.success(`Extraction re-queued for ${r.enqueued} of ${r.spans} spans`),
+    onError: (e) => toast.error(e.message),
+  });
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<string | null>(null);
@@ -280,6 +286,25 @@ export default function DocumentsPage() {
                               code={failureCode(fatal.error)}
                               message={fatal.error}
                               context={d.fileName}
+                              action={
+                                fatal.stage.startsWith("extract") ? (
+                                  <button
+                                    type="button"
+                                    disabled={reextract.isPending}
+                                    onClick={() => reextract.mutate({ dealId, documentId: d.id })}
+                                    className="text-primary hover:text-primary/80 inline-flex items-center gap-1 text-[12px] font-medium transition-colors duration-150 disabled:opacity-50"
+                                  >
+                                    <RefreshCw
+                                      aria-hidden="true"
+                                      className={cn(
+                                        "size-3",
+                                        reextract.isPending && "animate-spin",
+                                      )}
+                                    />
+                                    Re-run extraction
+                                  </button>
+                                ) : undefined
+                              }
                             />
                           ) : null;
                         })()}

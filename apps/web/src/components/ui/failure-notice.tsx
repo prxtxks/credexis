@@ -46,6 +46,7 @@ export function FailureNotice({
   code,
   message,
   context,
+  action,
   className,
 }: {
   code: FailureCode;
@@ -53,6 +54,8 @@ export function FailureNotice({
   message?: string | null;
   /** What failed (file name, span) - prefills the support case. */
   context?: string;
+  /** Optional recovery control (e.g. re-run extraction) - leads the row. */
+  action?: React.ReactNode;
   className?: string;
 }) {
   const report = new URLSearchParams({
@@ -82,6 +85,7 @@ export function FailureNotice({
             </p>
           ) : null}
           <div className="mt-2 flex flex-wrap items-center gap-3">
+            {action}
             <a
               href={`${DOCS_ERRORS_BASE}/${code}`}
               target="_blank"
