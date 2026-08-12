@@ -510,3 +510,46 @@ describe("out-of-span guard (M14.6 - the Golden Deal duplicate-facts incident)",
     expect(consensus?.metadata).toMatchObject({ sliceFallback: true, outOfSpanDropped: 1 });
   });
 });
+
+describe("statement vendor outage (M18.3 - the Reducto 401 incident)", () => {
+  it("a dead layout vendor fails as extract_statement with the span id, and other spans proceed", async () => {
+    const db = new FakeDb();
+    db.entities = [{ id: "e-1", kind: "target" }];
+    const deadVendor = {
+      name: "reducto",
+      async parseLayout(): Promise<never> {
+        throw new Error("reducto /upload failed (401)");
+      },
+      async extractFields(): Promise<never> {
+        throw new Error("not a field adapter");
+      },
+    } as unknown as ExtractorAdapter;
+    const deps = baseDeps({
+      db,
+      statementLayout: deadVendor,
+      path1ForFamily: () => adapterReturning([{ ...cand("f1120s.line1a", "100."), page: 1 }]),
+    });
+    const pnl = {
+      id: "ld-pnl",
+      formFamily: "PNL",
+      taxYear: null,
+      pageStart: 1,
+      pageEnd: 2,
+      entityId: "e-1",
+    };
+    const tax = { ...LD_1120S, id: "ld-tax", entityId: "e-1" };
+    const result = await runExtractStage(deps, { ...INPUT, logicalDocuments: [pnl, tax] });
+
+    // The statement failure is ITS OWN run row - stage, error, span id -
+    // never a generic consensus failure pointing at the wrong stage.
+    const failed = db.runs.find((r) => r.stage === "extract_statement");
+    expect(failed).toMatchObject({ status: "failed" });
+    expect(failed?.error).toContain("reducto /upload failed (401)");
+    expect(failed?.metadata).toMatchObject({ logicalDocumentId: "ld-pnl" });
+
+    // The tax span still extracted - one span's vendor outage never
+    // spreads to its neighbors.
+    expect(db.facts.some((f) => f.source_logical_document_id === "ld-tax")).toBe(true);
+    expect(result.perDocument).toHaveLength(2);
+  });
+});

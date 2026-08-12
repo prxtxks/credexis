@@ -473,7 +473,44 @@ async function extractTaxForm(
 
 /* ── statements: grid → mapping → facts (always suggested) ────────────── */
 
+/**
+ * Wrapper (M18.3): a statement whose layout vendor dies must fail as ITS
+ * OWN extract_statement run - during the Reducto 401 outage these
+ * surfaced as generic extract_consensus failures, which pointed the
+ * failure notice (and the on-call human) at the wrong stage. The failed
+ * row keeps the span id, so the notice's Re-run action targets exactly
+ * the span that needs the retry.
+ */
 async function extractStatement(
+  deps: ExtractStageDeps,
+  input: ExtractStageInput,
+  ld: ExtractLogicalDocument,
+  entityId: string,
+  now: () => number,
+): Promise<number> {
+  const t0 = now();
+  try {
+    return await extractStatementInner(deps, input, ld, entityId, now);
+  } catch (e) {
+    await deps.db.insertExtractionRun(
+      runRow(
+        input,
+        "extract_statement",
+        deps.statementLayout?.name ?? "extract-stage",
+        null,
+        null,
+        "failed",
+        (e as Error).message,
+        0n,
+        now() - t0,
+        { logicalDocumentId: ld.id, formFamily: ld.formFamily },
+      ),
+    );
+    return 0;
+  }
+}
+
+async function extractStatementInner(
   deps: ExtractStageDeps,
   input: ExtractStageInput,
   ld: ExtractLogicalDocument,
