@@ -7,7 +7,8 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { protectedProcedure, router } from "../init";
+import { protectedProcedure, router, underwriterProcedure } from "../init";
+import { triggerReextract } from "../../pipeline/trigger-client";
 
 /** Blueprint §12 per-deal COGS envelope: $10.00 = 10,000,000 micro-USD. */
 const COST_ENVELOPE_MICRO_USD = 10_000_000n;
@@ -152,6 +153,45 @@ export const pipelineRouter = router({
         startedAt: r.started_at as string,
         finishedAt: (r.finished_at as string | null) ?? null,
       }));
+    }),
+
+  /**
+   * Re-run extraction for one document (M18.2): recovers documents whose
+   * consensus failed transiently (the flagship's 7 vendor-401 casualties)
+   * and spans whose only facts were repaired away. Safe to spam: the
+   * extract-document task skips any span that already has facts.
+   */
+  reextract: underwriterProcedure
+    .input(z.object({ dealId: z.string().uuid(), documentId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { data: spans, error } = await ctx.supabase
+        .from("logical_documents")
+        .select("id, form_family, documents!inner(deal_id)")
+        .eq("document_id", input.documentId)
+        .eq("documents.deal_id", input.dealId);
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+      if (!spans || spans.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "no spans for this document" });
+      }
+      let enqueued = 0;
+      const reasons: string[] = [];
+      for (const span of spans) {
+        const r = await triggerReextract({
+          tenantId: ctx.profile.tenantId,
+          dealId: input.dealId,
+          documentId: input.documentId,
+          logicalDocumentId: span.id as string,
+        });
+        if (r.triggered) enqueued += 1;
+        else if (r.reason) reasons.push(r.reason);
+      }
+      if (enqueued === 0) {
+        throw new TRPCError({
+          code: "SERVICE_UNAVAILABLE",
+          message: `extraction could not be enqueued: ${reasons[0] ?? "unknown"}`,
+        });
+      }
+      return { enqueued, spans: spans.length };
     }),
 
   progress: protectedProcedure
