@@ -9,6 +9,8 @@
  * G5 gate does the parsed-vs-transcript comparison.
  */
 
+import { SandboxTranscriptProvider } from "./sandbox.js";
+
 export interface ConsentRequest {
   entityName: string;
   /** EIN/SSN handling stays inside the provider; we pass a reference only. */
@@ -50,8 +52,12 @@ export function resolveProvider(env: {
   TRANSCRIPT_PROVIDER?: string | undefined;
   TRANSCRIPT_PROVIDER_API_KEY?: string | undefined;
 }): TranscriptProvider | null {
+  // "sandbox" (M19): synthetic data, local/demo environments ONLY - it
+  // exists to integration-test and demonstrate the consent→fetch→G5 flow.
+  // The provider name is stored on every row, so sandbox data can never
+  // masquerade as IRS truth.
+  if (env.TRANSCRIPT_PROVIDER === "sandbox") return new SandboxTranscriptProvider();
   // M9.1 [PRATIK]: TaxStatus vs Halcyon evaluation → ADR-0003 → the chosen
-  // adapter registers here. Until then: absent.
-  void env;
+  // REAL adapter registers here with its API key. Until then: absent.
   return null;
 }

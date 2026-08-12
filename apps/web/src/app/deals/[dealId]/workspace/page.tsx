@@ -303,6 +303,16 @@ function WorkspaceInner() {
   const requestConsent = trpc.transcripts.requestConsent.useMutation({
     onSuccess: () => void utils.transcripts.forDeal.invalidate({ dealId }),
   });
+  const fetchTranscripts = trpc.transcripts.fetchFromProvider.useMutation({
+    onSuccess: (r) => {
+      toast.success(
+        `${r.inserted} transcript lines ingested - G5 is comparing them against the parsed values`,
+      );
+      void utils.transcripts.forDeal.invalidate({ dealId });
+      void utils.issues.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   function setParam(key: string, value: string | null) {
     const next = new URLSearchParams(search.toString());
@@ -517,8 +527,19 @@ function WorkspaceInner() {
                         className="text-muted-foreground flex h-8 items-center gap-2 px-2.5 text-xs"
                       >
                         <span className="min-w-0 flex-1 truncate">{e.name}</span>
-                        {consent ? (
-                          <span>{consent.status}</span>
+                        {consent?.status === "signed" ? (
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={() => fetchTranscripts.mutate({ dealId, entityId: e.id })}
+                            disabled={fetchTranscripts.isPending}
+                          >
+                            Fetch transcripts
+                          </Button>
+                        ) : consent ? (
+                          <span className={consent.status === "retrieved" ? "text-primary" : ""}>
+                            {consent.status === "retrieved" ? "retrieved ✓" : consent.status}
+                          </span>
                         ) : (
                           <Button
                             size="xs"
