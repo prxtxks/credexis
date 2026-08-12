@@ -320,6 +320,22 @@ export interface MappedLabel {
   confidence: number;
 }
 
+/**
+ * Container nodes aggregate their children; a statement VALUE mapped onto
+ * one displays as the aggregate's own number (the Golden Deal's $349
+ * "Operating expenses", M14.7). Any resolution targeting a container -
+ * learned, fuzzy, or LLM - demotes to unmapped: the review queue owns the
+ * judgment, and the bad answer is never learned.
+ */
+const CONTAINER_KEYS: ReadonlySet<string> = new Set(
+  TAXONOMY_V1.map((n) => n.parentKey).filter((k): k is string => k !== null),
+);
+
+function leafOnly(m: MappedLabel): MappedLabel {
+  if (m.taxonomyNodeKey === null || !CONTAINER_KEYS.has(m.taxonomyNodeKey)) return m;
+  return { ...m, taxonomyNodeKey: null, method: "unmapped", confidence: 0 };
+}
+
 export async function mapLabels(
   labels: string[],
   statement: "PNL" | "BALANCE_SHEET",
@@ -339,22 +355,22 @@ export async function mapLabels(
 
     const tenantExact = await store.findExact(tenantId, labelNorm);
     if (tenantExact) {
-      results.set(label, hit(label, labelNorm, tenantExact, "exact_tenant"));
+      results.set(label, leafOnly(hit(label, labelNorm, tenantExact, "exact_tenant")));
       continue;
     }
     const tenantFuzzy = fuzzyFind(labelNorm, tenantPool);
     if (tenantFuzzy) {
-      results.set(label, hit(label, labelNorm, tenantFuzzy, "fuzzy_tenant"));
+      results.set(label, leafOnly(hit(label, labelNorm, tenantFuzzy, "fuzzy_tenant")));
       continue;
     }
     const globalExact = await store.findExact(null, labelNorm);
     if (globalExact) {
-      results.set(label, hit(label, labelNorm, globalExact, "exact_global"));
+      results.set(label, leafOnly(hit(label, labelNorm, globalExact, "exact_global")));
       continue;
     }
     const globalFuzzy = fuzzyFind(labelNorm, globalPool);
     if (globalFuzzy) {
-      results.set(label, hit(label, labelNorm, globalFuzzy, "fuzzy_global"));
+      results.set(label, leafOnly(hit(label, labelNorm, globalFuzzy, "fuzzy_global")));
       continue;
     }
     unresolved.push(label);
@@ -363,19 +379,21 @@ export async function mapLabels(
   if (unresolved.length > 0 && classifier) {
     for (const c of await classifier.classifyLabels(unresolved, statement)) {
       const labelNorm = normalizeLabel(c.label);
-      results.set(c.label, {
+      const resolved = leafOnly({
         label: c.label,
         labelNorm,
         taxonomyNodeKey: c.taxonomyNodeKey,
         method: c.taxonomyNodeKey === null ? "unmapped" : "llm",
         confidence: c.confidence,
       });
-      // Cost decay: LLM answers become tenant learned mappings immediately.
-      if (c.taxonomyNodeKey !== null) {
+      results.set(c.label, resolved);
+      // Cost decay: LLM answers become tenant learned mappings immediately
+      // - but only leaf answers; a demoted container is never learned.
+      if (resolved.taxonomyNodeKey !== null) {
         await store.upsert(tenantId, {
           labelNorm,
-          taxonomyNodeKey: c.taxonomyNodeKey,
-          confidence: c.confidence,
+          taxonomyNodeKey: resolved.taxonomyNodeKey,
+          confidence: resolved.confidence,
           source: "llm",
           usageCount: 1,
         });

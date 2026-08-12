@@ -8,6 +8,7 @@
  */
 
 import { mulCentsByInt, type Cents } from "@credexis/shared";
+import type { Bbox } from "../types.js";
 import type { TypedRow } from "./row-typing.js";
 import type { PeriodBinding } from "./period-binding.js";
 import type { MappedLabel } from "./taxonomy-mapper.js";
@@ -28,6 +29,10 @@ export interface StatementFactDraft {
   /** Unit-scaled integer cents ("in thousands" already applied). */
   valueCents: Cents;
   page: number;
+  /** The value CELL's geometry (M14.7) - click-to-source highlights the
+   *  number the way tax-path facts always could. Null when the vendor
+   *  gave no cell box. */
+  bbox: Bbox | null;
   sourceLabel: string;
   mappingMethod: MappedLabel["method"];
 }
@@ -113,6 +118,7 @@ export function validateStructure(
               periodLabel: period.label,
               valueCents: mulCentsByInt(v, BigInt(binding.scale)),
               page: opts.page,
+              bbox: t.row.cells.get(col)?.bbox ?? null,
               sourceLabel: t.row.label,
               mappingMethod: mapping.method,
               rowType: "item",
@@ -141,6 +147,7 @@ export function validateStructure(
                 periodLabel: period.label,
                 valueCents: mulCentsByInt(v, BigInt(binding.scale)),
                 page: opts.page,
+                bbox: t.row.cells.get(col)?.bbox ?? null,
                 sourceLabel: t.row.label,
                 mappingMethod: mapping.method,
                 rowType: t.type,

@@ -572,7 +572,9 @@ async function extractStatement(
         value_cents: draft.valueCents.toString(),
         source_logical_document_id: ld.id,
         source_page: slice.sliced ? draft.page : draft.page - ld.pageStart + 1,
-        source_bbox: null, // grid-level geometry joins with the bake-off vendor work
+        // M14.7: the value cell's geometry - the green mark on statement
+        // facts, same lineage contract as the tax path.
+        source_bbox: draft.bbox,
         method: "vendor",
         confidence: mapping?.confidence ?? 0.5,
         // Statement mapping is judgment - the review queue owns judgment.

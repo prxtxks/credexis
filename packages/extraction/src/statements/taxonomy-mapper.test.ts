@@ -251,3 +251,50 @@ describe("cost levers (M10.5, verified live 2026-07-20)", () => {
     expect(cached.text).toContain("is.opex.royalties_franchise"); // guidance included
   });
 });
+
+describe("container-node guard (M14.7 - the $349 'Operating expenses' incident)", () => {
+  // The Golden Deal P&L prints "General Business Expenses 349.00"; a
+  // learned mapping pointed that label at is.opex - the CONTAINER - so
+  // the spread showed 349.00 as Operating expenses' own value. A
+  // statement fact on a node that has children is never a valid mapping:
+  // containers aggregate, leaves carry values.
+  it("demotes a learned mapping that targets a container to unmapped", async () => {
+    const store = new InMemoryMappingsStore();
+    await store.upsert("t-1", {
+      labelNorm: normalizeLabel("General Business Expenses"),
+      taxonomyNodeKey: "is.opex",
+      confidence: 0.9,
+      source: "llm",
+      usageCount: 5,
+    });
+    const [m] = await mapLabels(["General Business Expenses"], "PNL", "t-1", store, null);
+    expect(m!.taxonomyNodeKey).toBeNull();
+    expect(m!.method).toBe("unmapped");
+  });
+
+  it("demotes an LLM answer that targets a container and never learns it", async () => {
+    const store = new InMemoryMappingsStore();
+    const classifier = {
+      async classifyLabels(labels: string[]) {
+        return labels.map((label) => ({ label, taxonomyNodeKey: "is.opex", confidence: 0.8 }));
+      },
+    };
+    const [m] = await mapLabels(["Weird Aggregate Line"], "PNL", "t-1", store, classifier as never);
+    expect(m!.taxonomyNodeKey).toBeNull();
+    // The bad answer must not become a learned mapping either.
+    expect(await store.findExact("t-1", normalizeLabel("Weird Aggregate Line"))).toBeNull();
+  });
+
+  it("leaf mappings pass through untouched", async () => {
+    const store = new InMemoryMappingsStore();
+    await store.upsert("t-1", {
+      labelNorm: normalizeLabel("Rent"),
+      taxonomyNodeKey: "is.opex.rent",
+      confidence: 0.95,
+      source: "human",
+      usageCount: 3,
+    });
+    const [m] = await mapLabels(["Rent"], "PNL", "t-1", store, null);
+    expect(m!.taxonomyNodeKey).toBe("is.opex.rent");
+  });
+});
