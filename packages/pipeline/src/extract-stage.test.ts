@@ -424,10 +424,18 @@ describe("runExtractStage - span coverage (M13.5 regression)", () => {
    */
   it("interleaved fragments of one form are BOTH extracted, not collapsed", async () => {
     const db = new FakeDb();
+    // A whole-file read (slice fallback) returns findings from BOTH
+    // fragments' pages; the M14.6 page-ownership guard means each span
+    // keeps exactly the finding on its own pages - both extract, neither
+    // collapses, and nothing is double-counted.
+    const whole = [
+      { ...cand("f1120s.line1c", "121125"), page: 2 },
+      { ...cand("f1120s.line2", "50000"), page: 7 },
+    ];
     const deps = baseDeps({
       db,
-      path1ForFamily: () => adapterReturning([cand("f1120s.line1c", "121125")]),
-      path2: adapterReturning([cand("f1120s.line1c", "121125")]),
+      path1ForFamily: () => adapterReturning(whole),
+      path2: adapterReturning(whole),
     });
     const front = { ...LD_1120S, id: "ld-front", pageStart: 1, pageEnd: 3 };
     const back = { ...LD_1120S, id: "ld-back", pageStart: 6, pageEnd: 9 };
@@ -468,5 +476,37 @@ describe("runExtractStage - span coverage (M13.5 regression)", () => {
     expect(skipped).toHaveLength(1);
     expect(skipped[0]!.logicalDocumentId).toBe("ld-inner");
     expect(skipped[0]!.skipped).toContain("duplicate span");
+  });
+});
+
+describe("out-of-span guard (M14.6 - the Golden Deal duplicate-facts incident)", () => {
+  // Four fragment spans of one return each got a whole-file read (slice
+  // fallback) and re-extracted page 1's tax line; the spread summed the
+  // same printed $14,309 four times. A candidate on a page outside the
+  // span is proof the reading escaped the span - it must be dropped, and
+  // the drop must be visible in the run metadata.
+  it("drops whole-file candidates whose page belongs to another span", async () => {
+    const db = new FakeDb();
+    db.entities = [{ id: "e-1", kind: "target" }];
+    const deps = baseDeps({
+      db,
+      path1ForFamily: () =>
+        adapterReturning([
+          // The real line 12, printed on physical page 7 - NOT this span's.
+          { ...cand("f1120s.line12", "14,309."), page: 7 },
+          // A value genuinely on this span's pages survives.
+          { ...cand("f1120s.line1a", "100."), page: 14 },
+        ]),
+    });
+    const fragment = { ...LD_1120S, id: "ld-frag", pageStart: 14, pageEnd: 15 };
+    await runExtractStage(deps, { ...INPUT, logicalDocuments: [fragment] });
+
+    expect(db.facts.some((f) => f.registry_field_id === "f1120s.line12")).toBe(false);
+    const kept = db.facts.find((f) => f.registry_field_id === "f1120s.line1a");
+    expect(kept).toBeDefined();
+    expect(kept!.source_page).toBe(1); // global 14 → span-relative 1
+
+    const consensus = db.runs.find((r) => r.stage === "extract_consensus");
+    expect(consensus?.metadata).toMatchObject({ sliceFallback: true, outOfSpanDropped: 1 });
   });
 });
