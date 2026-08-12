@@ -16,6 +16,7 @@ import {
 } from "@credexis/extraction";
 import { createEmailSender, identityReviewEmail, resolveDealLimits } from "@credexis/shared";
 import { StructuralScanner } from "../scan/structural.js";
+import { buildStatementLayout } from "../adapter-roster.js";
 import { runIngest, type IngestResult } from "../ingest.js";
 import { logEvent, type LogContext } from "../log.js";
 import { runExtractStage } from "../extract-stage.js";
@@ -331,11 +332,14 @@ export const ingestDocument = task({
                 // unavailable, Path 1 is null and reconciliation degrades to
                 // the Claude-vision reader (path2) alone - a real, accurate
                 // reader whose single-source values route to review - never
-                // to a bad reader. Azure stays a bench-only eval contender;
-                // re-promote only with data.
+                // to a bad reader.
+                // ADDENDUM (M18.4, 2026-08-12): statement LAYOUT - geometry,
+                // not field semantics - now falls back Reducto→Azure, benched
+                // against golden-deal P&Ls (see adapter-roster.ts). Field
+                // extraction stays Reducto-only.
                 path1ForFamily: () => reducto,
                 path2: vision,
-                statementLayout: reducto,
+                statementLayout: buildStatementLayout(),
                 labelClassifier: anthropicKey
                   ? new AnthropicLabelClassifier({ apiKey: anthropicKey })
                   : null,

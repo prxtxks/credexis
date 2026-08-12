@@ -638,6 +638,13 @@ async function extractStatementInner(
         grids: grids.length,
         facts: inserted,
         unmappedLabels: unmapped,
+        // M18.4: a served-by-fallback layout is visible in the run log -
+        // duck-typed so the stage stays adapter-agnostic.
+        ...((deps.statementLayout as { lastFailover?: unknown }).lastFailover
+          ? {
+              layoutFailover: (deps.statementLayout as { lastFailover?: unknown }).lastFailover,
+            }
+          : {}),
       },
     ),
   );
