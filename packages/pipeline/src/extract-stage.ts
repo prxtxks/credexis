@@ -393,11 +393,31 @@ async function extractTaxForm(
 
   const fieldById = new Map(entry.fields.map((f) => [f.fieldId, f]));
   const rows: FactInsert[] = [];
+  const spanLength = ld.pageEnd - ld.pageStart + 1;
+  let outOfSpan = 0;
   for (const f of withValue) {
     const score = scored.get(f.fieldId);
     if (!score || score.decision === "reject") continue;
     const value = f.valueCents ?? f.path1?.cents ?? f.path2?.cents ?? null;
     if (value === null) continue; // both paths read "absent" - no fact (null-vs-zero)
+    // OUT-OF-SPAN GUARD (M14.6). When the slice fell back to the whole
+    // file, the vendor legitimately reads pages that belong to OTHER
+    // spans - on the Golden Deal, four fragment spans of one return each
+    // re-extracted page 1's tax line, and the spread SUMMED the same
+    // printed $14,309 four times ($57,236 shown to the banker). A page
+    // outside this span's range is proof the reading escaped the span:
+    // drop it - the span that owns that page extracts it exactly once.
+    // The same check bounds sliced reads (a vendor page past the slice
+    // length is a hallucinated citation, equally untrustworthy).
+    if (f.page !== null) {
+      const inRange = slice.sliced
+        ? f.page >= 1 && f.page <= spanLength
+        : f.page >= ld.pageStart && f.page <= ld.pageEnd;
+      if (!inRange) {
+        outOfSpan += 1;
+        continue;
+      }
+    }
     // Derived lines (AGI, taxable income) have no taxonomy placement by
     // design - they insert as registry-only facts (null taxonomy) so G4/G5
     // and the Tax Spread see them; statement aggregation never does.
@@ -441,6 +461,10 @@ async function extractTaxForm(
         facts: inserted,
         autoAccepted: rows.filter((r) => r.status === "accepted").length,
         relationViolations: reconciled.relationChecks.filter((c) => c.status === "violated").length,
+        // M14.6 honesty: a whole-file fallback and its dropped out-of-span
+        // readings are visible in the run log, never silent.
+        sliceFallback: !slice.sliced,
+        outOfSpanDropped: outOfSpan,
       },
     ),
   );
