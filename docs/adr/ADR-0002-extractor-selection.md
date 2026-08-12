@@ -116,3 +116,26 @@ review-owned by design.
 - Corpus growth past ~30 docs or any new form family (1065/1120/K-1).
 - A candidate ships a major model revision.
 - Silent-wrong > 0 in production attributable to Path-1 quality.
+
+## Addendum (2026-08-12, M18.4): statement layout falls back to Azure
+
+The Reducto credit outage forced the question this ADR left open. The
+demotion above is about `prebuilt-tax` READING FIELDS - it hallucinated
+1099s on real CPA bundles, and no bad reader stands in for a good one.
+Statement LAYOUT is a different job: transcribe table geometry; every
+interpretation happens in our own typing/mapping chain behind G1/G2
+arithmetic gates, and statement facts are suggested-only regardless of
+vendor.
+
+Bench (the data this ADR demands): Azure `prebuilt-layout` on golden-deal
+P&Ls whose Reducto-derived facts were already in production - identical
+values, faithful row labels, cell bboxes present (click-to-source
+intact). Example, ProfitandLoss-TravelodgebyWyndhamMerrill (8): Room
+Revenue 343,384.91, Total for Income 342,350.49, General business
+expenses 349.00 - all exact.
+
+Decision: `statementLayout` runs as a fallback chain (Reducto primary →
+Azure `prebuilt-layout`), built in one place (`adapter-roster.ts`).
+Failovers are recorded in the run row (`layoutFailover`). FIELD
+extraction (Path 1) remains Reducto-only; Azure `prebuilt-tax` stays
+benched.

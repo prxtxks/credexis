@@ -24,6 +24,7 @@ import {
   ReductoAdapter,
 } from "@credexis/extraction";
 import { logEvent } from "../log.js";
+import { buildStatementLayout } from "../adapter-roster.js";
 import { runExtractStage } from "../extract-stage.js";
 import {
   serviceClient,
@@ -130,11 +131,12 @@ export const extractDocument = task({
       const extract = await runExtractStage(
         {
           db: supabaseExtractDb(client),
-          // Adapter roster mirrors ingest-document (ADR-0002): Reducto is
-          // Path 1, Claude vision is Path 2, Azure stays benched.
+          // Adapter roster mirrors ingest-document (ADR-0002 + M18.4
+          // addendum): Reducto is Path 1, Claude vision is Path 2, and
+          // statement layout falls back Reducto→Azure (adapter-roster.ts).
           path1ForFamily: () => reducto,
           path2: vision,
-          statementLayout: reducto,
+          statementLayout: buildStatementLayout(),
           labelClassifier: anthropicKey
             ? new AnthropicLabelClassifier({ apiKey: anthropicKey })
             : null,
