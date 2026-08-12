@@ -277,7 +277,6 @@ export const SYNTHETIC_SPECS: SyntheticDocSpec[] = [
     tax_year: 2024,
     title: "Form 4562 (synthetic) — Widget Services Inc",
     fields: [
-      money("f4562.line1", "FY2024", "1   Maximum amount (Sec 179)", "122000000"),
       money("f4562.line12", "FY2024", "12  Section 179 expense deduction", "1800000"),
       money("f4562.line22", "FY2024", "22  Total depreciation", "2950000"),
     ],
