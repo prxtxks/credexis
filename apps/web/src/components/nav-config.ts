@@ -44,6 +44,7 @@ export const NAV_SETTINGS: { href: string; label: string }[] = [
   { href: "/settings", label: "General" },
   { href: "/settings/notifications", label: "Notifications" },
   { href: "/settings/security", label: "Security" },
+  { href: "/settings/branding", label: "Branding" },
 ];
 
 /**

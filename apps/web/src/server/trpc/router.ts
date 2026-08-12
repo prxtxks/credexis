@@ -2,6 +2,7 @@ import { protectedProcedure, publicProcedure, router } from "./init";
 import { addbacksRouter } from "./routers/addbacks";
 import { assignmentRouter, identitiesRouter } from "./routers/assignment";
 import { auditRouter } from "./routers/audit";
+import { brandingRouter } from "./routers/branding";
 import { dealsRouter } from "./routers/deals";
 import { documentsRouter } from "./routers/documents";
 import { issuesRouter } from "./routers/issues";
@@ -88,6 +89,7 @@ export const appRouter = router({
 
   /** Audit trail + hash-chain verification (M12.3): reads through RLS. */
   audit: auditRouter,
+  branding: brandingRouter,
 
   /** Borrower portal, broker side (M12.1). */
   borrowers: borrowersRouter,
