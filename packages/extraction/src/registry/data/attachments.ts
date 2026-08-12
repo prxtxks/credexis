@@ -6,7 +6,7 @@
  */
 
 import type { FormDefinition } from "../types.js";
-import { identityText, money } from "./helpers.js";
+import { identityText, money, yearVariant } from "./helpers.js";
 
 export const F4562: FormDefinition = {
   formFamily: "4562",
@@ -49,30 +49,43 @@ export const F4562: FormDefinition = {
       },
     ],
   },
-  overrides: { 2024: {}, 2025: {} },
+  overrides: { 2020: {}, 2021: {}, 2022: {}, 2024: {}, 2025: {} },
+};
+
+const F8825_BASE: FormDefinition["base"] = {
+  fields: [
+    money("f8825.line2", "2", "Gross rents", {
+      taxonomyNodeKey: "is.revenue.rental_income",
+    }),
+    money("f8825.line14", "14", "Depreciation", {
+      taxonomyNodeKey: "is.opex.depreciation",
+    }),
+    money("f8825.line16", "16", "Total expenses per property"),
+    money("f8825.line17", "17", "Income or (loss) per property"),
+    money("f8825.line21", "21", "Net rental real estate income (loss)", {
+      taxonomyNodeKey: "is.other.rental_income_nonop",
+    }),
+  ],
+  relations: [],
+  flows: [],
+};
+
+/** The December 2025 revision renumbered the tail (corpus f8825-current
+ *  vs f8825-2018, 2026-08-12): 15/16 became Reserved, 17 = Other
+ *  deductions, so Total expenses prints at 18, Income/(loss) at 19, and
+ *  Net rental real estate at 23. TY2020-2024 use the stable Nov-2018
+ *  revision - the base numbering. */
+const F8825_2025 = {
+  fields: yearVariant(F8825_BASE.fields, {
+    renumber: { "f8825.line16": "18", "f8825.line17": "19", "f8825.line21": "23" },
+  }),
 };
 
 export const F8825: FormDefinition = {
   formFamily: "8825",
   baseYear: 2023,
-  base: {
-    fields: [
-      money("f8825.line2", "2", "Gross rents", {
-        taxonomyNodeKey: "is.revenue.rental_income",
-      }),
-      money("f8825.line14", "14", "Depreciation", {
-        taxonomyNodeKey: "is.opex.depreciation",
-      }),
-      money("f8825.line16", "16", "Total expenses per property"),
-      money("f8825.line17", "17", "Income or (loss) per property"),
-      money("f8825.line21", "21", "Net rental real estate income (loss)", {
-        taxonomyNodeKey: "is.other.rental_income_nonop",
-      }),
-    ],
-    relations: [],
-    flows: [],
-  },
-  overrides: { 2024: {}, 2025: {} },
+  base: F8825_BASE,
+  overrides: { 2020: {}, 2021: {}, 2022: {}, 2024: {}, 2025: F8825_2025 },
 };
 
 export const F1125E: FormDefinition = {
@@ -119,7 +132,7 @@ export const F1125E: FormDefinition = {
       },
     ],
   },
-  overrides: { 2024: {}, 2025: {} },
+  overrides: { 2020: {}, 2021: {}, 2022: {}, 2024: {}, 2025: {} },
 };
 
 export const K1_1120S: FormDefinition = {
@@ -168,7 +181,7 @@ export const K1_1120S: FormDefinition = {
     relations: [],
     flows: [],
   },
-  overrides: { 2024: {}, 2025: {} },
+  overrides: { 2020: {}, 2021: {}, 2022: {}, 2024: {}, 2025: {} },
 };
 
 export const K1_1065: FormDefinition = {
@@ -199,7 +212,7 @@ export const K1_1065: FormDefinition = {
     relations: [],
     flows: [],
   },
-  overrides: { 2024: {}, 2025: {} },
+  overrides: { 2020: {}, 2021: {}, 2022: {}, 2024: {}, 2025: {} },
 };
 
 export const W2: FormDefinition = {
@@ -235,5 +248,5 @@ export const W2: FormDefinition = {
     relations: [],
     flows: [],
   },
-  overrides: { 2024: {}, 2025: {} },
+  overrides: { 2020: {}, 2021: {}, 2022: {}, 2024: {}, 2025: {} },
 };

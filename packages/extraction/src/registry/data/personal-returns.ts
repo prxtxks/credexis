@@ -5,121 +5,152 @@
  */
 
 import type { FormDefinition } from "../types.js";
-import { identityText, money } from "./helpers.js";
+import { identityText, money, yearVariant } from "./helpers.js";
+
+const F1040_BASE: FormDefinition["base"] = {
+  fields: [
+    identityText(
+      "f1040.taxpayer_name",
+      "Name of taxpayer (first name, middle initial, last name as printed at the top of Form 1040)",
+      "Concatenate the printed first name, middle initial, and last name boxes. Primary taxpayer only — not the spouse.",
+    ),
+    money("f1040.line1a", "1a", "Total amount from Form(s) W-2, box 1", {
+      aliases: ["Wages, salaries, tips"],
+      taxonomyNodeKey: "pcf.income.wages",
+    }),
+    money("f1040.line2b", "2b", "Taxable interest", {
+      taxonomyNodeKey: "pcf.income.interest_dividends",
+    }),
+    money("f1040.line3b", "3b", "Ordinary dividends", {
+      taxonomyNodeKey: "pcf.income.interest_dividends",
+    }),
+    money("f1040.line4b", "4b", "IRA distributions — taxable amount", {
+      taxonomyNodeKey: "pcf.income.retirement",
+    }),
+    money("f1040.line5b", "5b", "Pensions and annuities — taxable amount", {
+      taxonomyNodeKey: "pcf.income.retirement",
+    }),
+    money("f1040.line6b", "6b", "Social security benefits — taxable amount", {
+      taxonomyNodeKey: "pcf.income.social_security",
+    }),
+    money("f1040.line7", "7", "Capital gain or (loss)", {
+      taxonomyNodeKey: "pcf.income.capital_gains",
+    }),
+    money("f1040.line8", "8", "Additional income from Schedule 1, line 10", {
+      taxonomyNodeKey: "pcf.income.other",
+    }),
+    money("f1040.line9", "9", "Total income", { taxonomyNodeKey: "pcf.income.total" }),
+    money("f1040.line10", "10", "Adjustments to income from Schedule 1, line 26", {
+      taxonomyNodeKey: "pcf.outflow.other",
+    }),
+    money("f1040.line11", "11", "Adjusted gross income", {
+      aliases: ["AGI"],
+    }),
+    money("f1040.line12", "12", "Standard deduction or itemized deductions"),
+    money("f1040.line15", "15", "Taxable income"),
+    money("f1040.line22", "22", "Total tax before other taxes", { pageHint: 2 }),
+    money("f1040.line24", "24", "Total tax", {
+      pageHint: 2,
+      taxonomyNodeKey: "pcf.outflow.federal_taxes",
+    }),
+  ],
+  relations: [
+    {
+      id: "1040.agi",
+      type: "difference",
+      result: "f1040.line11",
+      operands: ["f1040.line9", "f1040.line10"],
+      toleranceCents: 100n,
+      description: "11 = 9 − 10",
+    },
+    {
+      id: "1040.total_income",
+      type: "sum",
+      result: "f1040.line9",
+      operands: [
+        "f1040.line1a",
+        "f1040.line2b",
+        "f1040.line3b",
+        "f1040.line4b",
+        "f1040.line5b",
+        "f1040.line6b",
+        "f1040.line7",
+        "f1040.line8",
+      ],
+      // 1040 line 9 also folds in 1b–1h edge lines we don't extract →
+      // wider tolerance; a gate hit here routes to review, never blocks alone.
+      toleranceCents: 10_000n,
+      description: "9 ≈ Σ(1a, 2b..8)",
+    },
+  ],
+  flows: [],
+};
+
+/** Back-years verified against printed revisions (corpus f1040-2020/2021/
+ *  2022, 2026-08-12). 2022 matches the base; 2021 keeps single-line wages
+ *  ("1") and splits the standard deduction to "12a"; 2020 additionally
+ *  totals adjustments at "10c" (its AGI math is line 9 minus 10c). Field
+ *  ids never change - printed line numbers tell each year's truth. */
+const F1040_2021 = {
+  fields: yearVariant(F1040_BASE.fields, {
+    renumber: { "f1040.line1a": "1", "f1040.line12": "12a" },
+  }),
+};
+const F1040_2020 = {
+  fields: yearVariant(F1040_BASE.fields, {
+    renumber: { "f1040.line1a": "1", "f1040.line10": "10c" },
+  }),
+};
 
 export const F1040: FormDefinition = {
   formFamily: "1040",
   baseYear: 2023,
-  base: {
-    fields: [
-      identityText(
-        "f1040.taxpayer_name",
-        "Name of taxpayer (first name, middle initial, last name as printed at the top of Form 1040)",
-        "Concatenate the printed first name, middle initial, and last name boxes. Primary taxpayer only — not the spouse.",
-      ),
-      money("f1040.line1a", "1a", "Total amount from Form(s) W-2, box 1", {
-        aliases: ["Wages, salaries, tips"],
-        taxonomyNodeKey: "pcf.income.wages",
-      }),
-      money("f1040.line2b", "2b", "Taxable interest", {
-        taxonomyNodeKey: "pcf.income.interest_dividends",
-      }),
-      money("f1040.line3b", "3b", "Ordinary dividends", {
-        taxonomyNodeKey: "pcf.income.interest_dividends",
-      }),
-      money("f1040.line4b", "4b", "IRA distributions — taxable amount", {
-        taxonomyNodeKey: "pcf.income.retirement",
-      }),
-      money("f1040.line5b", "5b", "Pensions and annuities — taxable amount", {
-        taxonomyNodeKey: "pcf.income.retirement",
-      }),
-      money("f1040.line6b", "6b", "Social security benefits — taxable amount", {
-        taxonomyNodeKey: "pcf.income.social_security",
-      }),
-      money("f1040.line7", "7", "Capital gain or (loss)", {
-        taxonomyNodeKey: "pcf.income.capital_gains",
-      }),
-      money("f1040.line8", "8", "Additional income from Schedule 1, line 10", {
-        taxonomyNodeKey: "pcf.income.other",
-      }),
-      money("f1040.line9", "9", "Total income", { taxonomyNodeKey: "pcf.income.total" }),
-      money("f1040.line10", "10", "Adjustments to income from Schedule 1, line 26", {
-        taxonomyNodeKey: "pcf.outflow.other",
-      }),
-      money("f1040.line11", "11", "Adjusted gross income", {
-        aliases: ["AGI"],
-      }),
-      money("f1040.line12", "12", "Standard deduction or itemized deductions"),
-      money("f1040.line15", "15", "Taxable income"),
-      money("f1040.line22", "22", "Total tax before other taxes", { pageHint: 2 }),
-      money("f1040.line24", "24", "Total tax", {
-        pageHint: 2,
-        taxonomyNodeKey: "pcf.outflow.federal_taxes",
-      }),
-    ],
-    relations: [
-      {
-        id: "1040.agi",
-        type: "difference",
-        result: "f1040.line11",
-        operands: ["f1040.line9", "f1040.line10"],
-        toleranceCents: 100n,
-        description: "11 = 9 − 10",
-      },
-      {
-        id: "1040.total_income",
-        type: "sum",
-        result: "f1040.line9",
-        operands: [
-          "f1040.line1a",
-          "f1040.line2b",
-          "f1040.line3b",
-          "f1040.line4b",
-          "f1040.line5b",
-          "f1040.line6b",
-          "f1040.line7",
-          "f1040.line8",
-        ],
-        // 1040 line 9 also folds in 1b–1h edge lines we don't extract →
-        // wider tolerance; a gate hit here routes to review, never blocks alone.
-        toleranceCents: 10_000n,
-        description: "9 ≈ Σ(1a, 2b..8)",
-      },
-    ],
-    flows: [],
-  },
-  overrides: { 2024: {}, 2025: {} },
+  base: F1040_BASE,
+  overrides: { 2020: F1040_2020, 2021: F1040_2021, 2022: {}, 2024: {}, 2025: {} },
+};
+
+const F1040_SCH_1_BASE: FormDefinition["base"] = {
+  fields: [
+    money("f1040s1.line3", "3", "Business income or (loss) (Schedule C)", {
+      taxonomyNodeKey: "pcf.income.business",
+    }),
+    money("f1040s1.line5", "5", "Rental real estate, partnerships, S corps (Schedule E)", {
+      taxonomyNodeKey: "pcf.income.k1",
+    }),
+    money("f1040s1.line7", "7", "Unemployment compensation"),
+    money("f1040s1.line9", "9", "Total other income"),
+    money("f1040s1.line10", "10", "Additional income (to Form 1040, line 8)"),
+    money("f1040s1.line25", "25", "Total adjustments", { pageHint: 2 }),
+  ],
+  relations: [],
+  flows: [
+    {
+      id: "sch1.to_1040",
+      fromField: "f1040s1.line10",
+      toFamily: "1040",
+      toField: "f1040.line8",
+      toleranceCents: 0n,
+      description: "Schedule 1 line 10 → 1040 line 8",
+    },
+  ],
+};
+
+/** 2020 revision predates the 2021 rewrite (corpus f1040s1-2020): the
+ *  combine line prints at 9, total adjustments at 22, and "Total other
+ *  income" does not exist that year. 2021/2022 match the base
+ *  (f1040s1-2021/2022). */
+const F1040_SCH_1_2020 = {
+  fields: yearVariant(F1040_SCH_1_BASE.fields, {
+    dropIds: ["f1040s1.line9"],
+    renumber: { "f1040s1.line10": "9", "f1040s1.line25": "22" },
+  }),
 };
 
 export const F1040_SCH_1: FormDefinition = {
   formFamily: "1040_SCH_1",
   baseYear: 2023,
-  base: {
-    fields: [
-      money("f1040s1.line3", "3", "Business income or (loss) (Schedule C)", {
-        taxonomyNodeKey: "pcf.income.business",
-      }),
-      money("f1040s1.line5", "5", "Rental real estate, partnerships, S corps (Schedule E)", {
-        taxonomyNodeKey: "pcf.income.k1",
-      }),
-      money("f1040s1.line7", "7", "Unemployment compensation"),
-      money("f1040s1.line9", "9", "Total other income"),
-      money("f1040s1.line10", "10", "Additional income (to Form 1040, line 8)"),
-      money("f1040s1.line25", "25", "Total adjustments", { pageHint: 2 }),
-    ],
-    relations: [],
-    flows: [
-      {
-        id: "sch1.to_1040",
-        fromField: "f1040s1.line10",
-        toFamily: "1040",
-        toField: "f1040.line8",
-        toleranceCents: 0n,
-        description: "Schedule 1 line 10 → 1040 line 8",
-      },
-    ],
-  },
-  overrides: { 2024: {}, 2025: {} },
+  base: F1040_SCH_1_BASE,
+  overrides: { 2020: F1040_SCH_1_2020, 2021: {}, 2022: {}, 2024: {}, 2025: {} },
 };
 
 export const F1040_SCH_C: FormDefinition = {
@@ -198,7 +229,9 @@ export const F1040_SCH_C: FormDefinition = {
       },
     ],
   },
-  overrides: { 2024: {}, 2025: {} },
+  // TY2020-2022 verified stable against the 2019/2021 printed revisions
+  // for every mapped line (corpus, 2026-08-12).
+  overrides: { 2020: {}, 2021: {}, 2022: {}, 2024: {}, 2025: {} },
 };
 
 export const F1040_SCH_E: FormDefinition = {
@@ -220,5 +253,7 @@ export const F1040_SCH_E: FormDefinition = {
     relations: [],
     flows: [],
   },
-  overrides: { 2024: {}, 2025: {} },
+  // TY2020-2022 verified stable against the 2019/2021 printed revisions
+  // for every mapped line (corpus, 2026-08-12).
+  overrides: { 2020: {}, 2021: {}, 2022: {}, 2024: {}, 2025: {} },
 };

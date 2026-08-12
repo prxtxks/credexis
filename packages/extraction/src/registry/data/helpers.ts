@@ -40,3 +40,24 @@ export function identityText(fieldId: string, label: string, hint?: string): Reg
     taxonomyNodeKey: null,
   };
 }
+
+/**
+ * Year-variant derivation (M14.8): the printed form renumbered or dropped
+ * lines while field IDENTITY stays fixed. Returns base fields minus
+ * `dropIds`, with printed lineNumbers remapped per `renumber`.
+ * Verified-against-printed-forms discipline: every entry in `renumber`
+ * must cite a corpus PDF in the calling definition's comment.
+ */
+export function yearVariant(
+  fields: RegistryField[],
+  opts: { dropIds?: string[]; renumber?: Record<string, string> },
+): RegistryField[] {
+  const drop = new Set(opts.dropIds ?? []);
+  const map = opts.renumber ?? {};
+  return fields
+    .filter((f) => !drop.has(f.fieldId))
+    .map((f) => {
+      const to = map[f.fieldId];
+      return to === undefined ? f : { ...f, lineNumber: to };
+    });
+}
