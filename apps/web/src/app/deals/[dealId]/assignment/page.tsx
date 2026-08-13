@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { ASSIGNABLE_FAMILIES } from "@/lib/form-families";
 import { AppShell } from "@/components/app-shell";
+import { DealNotFoundPanel, isDealNotFound } from "@/components/deal-not-found";
 import { Button } from "@/components/ui/button";
 import { FieldSelect } from "@/components/ui/field-select";
 import { Input } from "@/components/ui/input";
@@ -37,7 +38,12 @@ export default function AssignmentPage() {
   const params = useParams<{ dealId: string }>();
   const dealId = params.dealId;
   const utils = trpc.useUtils();
-  const deal = trpc.deals.get.useQuery({ dealId });
+  const deal = trpc.deals.get.useQuery(
+    { dealId },
+    // NOT_FOUND is deterministic (row absent or RLS-hidden) - retrying
+    // only delays the terminal not-found state.
+    { retry: (count, err) => !isDealNotFound(err) && count < 3 },
+  );
   const list = trpc.assignment.list.useQuery({ dealId });
   // M11.6: printed-name identity matches per logical document.
   const identities = trpc.identities.forDeal.useQuery({ dealId });
@@ -166,6 +172,19 @@ export default function AssignmentPage() {
           return next;
         }),
     });
+  }
+
+  // Terminal: an empty assignment table ("No logical documents yet") on a
+  // deal the tenant cannot see reads as a real (empty) deal - render the
+  // honest state instead.
+  if (isDealNotFound(deal.error)) {
+    return (
+      <AppShell breadcrumb="Deal not found">
+        <main className="mx-auto max-w-5xl px-4 py-24 sm:px-6 lg:px-8">
+          <DealNotFoundPanel />
+        </main>
+      </AppShell>
+    );
   }
 
   const rows = list.data ?? [];

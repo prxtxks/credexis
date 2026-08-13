@@ -221,6 +221,22 @@ test.describe("M8.9 workspace flow (live)", () => {
     });
     await expect(page.getByText("Underwriting state")).toHaveCount(0);
 
+    // The remaining deal pages share the pattern - each must show the
+    // terminal panel, never its own empty-deal affordance.
+    const pages: Array<[route: string, affordance: string]> = [
+      ["documents", "Drop files or click to browse"],
+      ["review", "Review queue"],
+      ["assignment", "Document assignment"],
+      ["borrower", "Borrower portal"],
+    ];
+    for (const [route, affordance] of pages) {
+      await page.goto(`/deals/${foreignDealId}/${route}`);
+      await expect(page.getByRole("heading", { name: "Deal not found" })).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect(page.getByText(affordance)).toHaveCount(0);
+    }
+
     await page.getByRole("link", { name: "Back to deals" }).click();
     await expect(page).toHaveURL(/\/$/);
   });

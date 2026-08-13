@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { AppShell } from "@/components/app-shell";
+import { DealNotFoundPanel, isDealNotFound } from "@/components/deal-not-found";
 import { Badge } from "@/components/ui/badge";
 import { FailureNotice, failureCode } from "@/components/ui/failure-notice";
 import { Button } from "@/components/ui/button";
@@ -90,7 +91,12 @@ export default function DocumentsPage() {
   const params = useParams<{ dealId: string }>();
   const dealId = params.dealId;
   const utils = trpc.useUtils();
-  const deal = trpc.deals.get.useQuery({ dealId });
+  const deal = trpc.deals.get.useQuery(
+    { dealId },
+    // NOT_FOUND is deterministic (row absent or RLS-hidden) - retrying
+    // only delays the terminal not-found state.
+    { retry: (count, err) => !isDealNotFound(err) && count < 3 },
+  );
   const docs = trpc.documents.list.useQuery({ dealId }, { refetchInterval: 2500 });
   const progress = trpc.pipeline.progress.useQuery({ dealId }, { refetchInterval: 2500 });
   const reextract = trpc.pipeline.reextract.useMutation({
@@ -125,6 +131,18 @@ export default function DocumentsPage() {
     setUploading(null);
     void utils.documents.list.invalidate({ dealId });
     if (inputRef.current) inputRef.current.value = "";
+  }
+
+  // Terminal: the drop zone and empty document list on a deal the tenant
+  // cannot see read as a real (empty) deal - render the honest state instead.
+  if (isDealNotFound(deal.error)) {
+    return (
+      <AppShell breadcrumb="Deal not found">
+        <main className="mx-auto max-w-4xl px-4 py-24 sm:px-6 lg:px-8">
+          <DealNotFoundPanel />
+        </main>
+      </AppShell>
+    );
   }
 
   const rows = docs.data ?? [];

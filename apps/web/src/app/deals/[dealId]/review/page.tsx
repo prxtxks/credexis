@@ -25,6 +25,7 @@ import { useParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { formatCents, parseDollarsInput } from "@/lib/money-display";
 import { AppShell } from "@/components/app-shell";
+import { DealNotFoundPanel, isDealNotFound } from "@/components/deal-not-found";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -45,7 +46,12 @@ export default function ReviewPage() {
   const dealId = params.dealId;
 
   const utils = trpc.useUtils();
-  const deal = trpc.deals.get.useQuery({ dealId });
+  const deal = trpc.deals.get.useQuery(
+    { dealId },
+    // NOT_FOUND is deterministic (row absent or RLS-hidden) - retrying
+    // only delays the terminal not-found state.
+    { retry: (count, err) => !isDealNotFound(err) && count < 3 },
+  );
   const queue = trpc.review.queue.useQuery({ dealId });
   const progress = trpc.review.progress.useQuery({ dealId });
 
@@ -129,6 +135,18 @@ export default function ReviewPage() {
       {content}
     </AppShell>
   );
+
+  // Terminal: an empty review queue ("Queue clear") on a deal the tenant
+  // cannot see reads as a real reviewed deal - render the honest state instead.
+  if (isDealNotFound(deal.error)) {
+    return (
+      <AppShell breadcrumb="Deal not found">
+        <main className="mx-auto max-w-4xl px-4 py-24 sm:px-6 lg:px-8">
+          <DealNotFoundPanel />
+        </main>
+      </AppShell>
+    );
+  }
 
   if (queue.isLoading) {
     return shell(
