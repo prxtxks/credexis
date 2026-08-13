@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-13T20:18:49.678Z",
+  "updated_at": "2026-08-13T20:36:30.374Z",
   "documents": [
     {
       "id": "1040-2024-native-001",
@@ -49,6 +49,13 @@
       "ground_truth_path": "ground-truth/1120s-2024-native-001.json",
       "pdf_sha256": "463edecaab52c5cdaabeee6ebf352b599c8c54cace29b31a8ec3a50b0c96ca1e",
       "pdf_bytes": 855720,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "4562-2024-native-001",
+      "ground_truth_path": "ground-truth/4562-2024-native-001.json",
+      "pdf_sha256": "922e44acf8485bf9536ba7936e2a19bf480fe54294a304efa57625e972681fed",
+      "pdf_bytes": 567021,
       "pdf_bucket_key": null
     },
     {

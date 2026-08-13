@@ -1,0 +1,58 @@
+{
+  "id": "4562-2024-native-001",
+  "form_family": "4562",
+  "tax_year": 2024,
+  "entity": "target",
+  "quality": "native",
+  "synthetic": false,
+  "pdf_sha256": "922e44acf8485bf9536ba7936e2a19bf480fe54294a304efa57625e972681fed",
+  "page_count": 31,
+  "labeled_by": "pratik + claude (AI draft, human number-verified 2026-08-12)",
+  "labeled_at": "2026-08-12T00:00:00Z",
+  "fields": [
+    {
+      "registry_field_id": "f4562.line1",
+      "period": "FY2024",
+      "value_cents": null,
+      "page": 20,
+      "note": "flag: f4562.line1 appears in corpus/ground-truth/synthetic-4562-2024-001.json but is NOT defined in the F4562 registry base field list (only line12/14/17/22 are). Human to confirm whether line1 belongs in GT. Blank on this form either way."
+    },
+    {
+      "registry_field_id": "f4562.line12",
+      "period": "FY2024",
+      "value_cents": null,
+      "page": 20
+    },
+    {
+      "registry_field_id": "f4562.line14",
+      "period": "FY2024",
+      "value_cents": null,
+      "page": 20
+    },
+    {
+      "registry_field_id": "f4562.line17",
+      "period": "FY2024",
+      "value_cents": "2112500",
+      "page": 20
+    },
+    {
+      "registry_field_id": "f4562.line22",
+      "period": "FY2024",
+      "value_cents": "2112500",
+      "page": 20
+    }
+  ],
+  "flags": [
+    "Wisconsin state Form WI4562 is on PDF page 45 (last page) — NOT labeled in this GT. It prints WI-specific Part I limits (lines 1/3/5) and blank lines 17/22; must not be confused with the federal form on pages 20-21.",
+    "Federal 4562 page 2 (PDF page 21) Part VI Amortization: line 43 = 668 and line 44 = 668 are printed, but the registry defines no f4562.line43/line44 fields, so they are not labeled. Amortization does not flow into line 22.",
+    "f4562.line1 registry discrepancy — see field note above."
+  ],
+  "arithmetic_checks": [
+    "line 22 = line 12 + lines 14-17 + lines 19/20 col (g) + line 21: only line 17 (21,125) is printed among the components; 21,125 = 21,125. CONSISTENT.",
+    "line 12 vs lines 9/10/11 limits: Part I is entirely blank; nothing checkable.",
+    "line 44 = line 43 + column (f) amounts (page 21): 668 = 668 (no current-year rows). CONSISTENT (not a registry field)."
+  ],
+  "cross_checks": [
+    "Parent 1120-S page 1 (PDF page 8) line 14 'Depreciation from Form 4562' = 21,125; federal 4562 line 22 = 21,125. AGREE (flow 4562.to_1120s, tolerance 0)."
+  ]
+}
