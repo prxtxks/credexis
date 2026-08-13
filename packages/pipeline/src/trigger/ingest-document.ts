@@ -13,6 +13,7 @@ import {
   AnthropicPageClassifier,
   AnthropicVisionAdapter,
   ReductoAdapter,
+  type ClassifierUsage,
 } from "@credexis/extraction";
 import { createEmailSender, identityReviewEmail, resolveDealLimits } from "@credexis/shared";
 import { StructuralScanner } from "../scan/structural.js";
@@ -190,7 +191,7 @@ export const ingestDocument = task({
     await advanceDealStatus(client, log, payload, "parsing");
 
     const anthropicKey = process.env["ANTHROPIC_API_KEY"];
-    const llmUsage: { model: string; inputTokens: number; outputTokens: number }[] = [];
+    const llmUsage: ClassifierUsage[] = [];
 
     // No key → deterministic-only classification; unresolved pages land in
     // the review queue instead of being guessed (Iron Law #1).
