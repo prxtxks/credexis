@@ -36,6 +36,13 @@ describe("deterministic page signals (M3.5)", () => {
 
   it("statement keywords apply only without IRS signals", () => {
     expect(detectPageSignals("ACME LLC\nProfit and Loss\nJan - Dec 2024").formFamily).toBe("PNL");
+    // CPA compilation title (M22, Raj Krupa fixture): no "profit and
+    // loss" anywhere on the page.
+    expect(
+      detectPageSignals(
+        "RAJ KRUPA HOTEL, LLC\nSTATEMENT OF REVENUES & EXPENSES -\nINCOME TAX BASIS\nPERIOD ENDED DECEMBER 31, 2024",
+      ).formFamily,
+    ).toBe("PNL");
     expect(detectPageSignals("ACME LLC\nBalance Sheet\nAs of Dec 31").formFamily).toBe(
       "BALANCE_SHEET",
     );

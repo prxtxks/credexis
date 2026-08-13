@@ -158,6 +158,55 @@ export function parsePeriodHeader(raw: string): CanonicalPeriod | null {
     }
   }
 
+  // CPA compilation titles (M22): "For the Year Ended December 31, 2024",
+  // "Twelve Months Ended June 30, 2025", "Period Ended December 31, 2024".
+  // The "ended" keyword is what makes these safe to parse — bare
+  // month-day-year strings are print-date footers, never periods.
+  m =
+    /^(?:for the )?((?:fiscal |calendar )?years?|twelve months|12 months|period) ended? ([a-z]+)\.? (\d{1,2}),? (\d{4})$/i.exec(
+      text,
+    );
+  if (m?.[1] && m[2] && m[3] && m[4]) {
+    const span = m[1].toLowerCase();
+    const mm = month(m[2]);
+    const d = Number(m[3]);
+    const y = Number(m[4]);
+    if (mm !== null && d >= 1 && d <= eom(y, mm)) {
+      const calendarYearEnd = mm === 12 && d === 31;
+      // "Period ended" states only the END date. A calendar year-end
+      // reads as the fiscal year (the standard annual-compilation
+      // reading; statement facts are suggested-only, so review
+      // confirms). Any other end date is genuinely ambiguous
+      // (YTD? quarter? month?) → refuse, review owns it.
+      if (span === "period" && !calendarYearEnd) return null;
+      if (calendarYearEnd) {
+        return {
+          kind: "fiscal_year",
+          startDate: iso(y, 1, 1),
+          endDate: iso(y, 12, 31),
+          label: `FY${y}`,
+        };
+      }
+      // Non-calendar year/twelve-month span: exact dates, one year less
+      // a day back from the stated end.
+      const startY = mm === 12 ? y : y - 1;
+      const startM = mm === 12 ? 1 : mm + 1;
+      const wholeMonths = d === eom(y, mm);
+      const start = wholeMonths
+        ? iso(startY, startM, 1)
+        : iso(y - 1, mm, d + 1 > eom(y - 1, mm) ? 1 : d + 1);
+      return {
+        kind: span.startsWith("twelve") || span.startsWith("12") ? "ttm" : "fiscal_year",
+        startDate: start,
+        endDate: iso(y, mm, d),
+        label:
+          span.startsWith("twelve") || span.startsWith("12")
+            ? `TTM ${y}-${String(mm).padStart(2, "0")}`
+            : `FYE ${iso(y, mm, d)}`,
+      };
+    }
+  }
+
   // As-of date: "As of Dec 31, 2024", "December 31, 2024" (balance sheets)
   m = /^(?:as of )?([a-z]+)\.? (\d{1,2}),? (\d{4})$/i.exec(text);
   if (m?.[1] && m[2] && m[3]) {
@@ -246,6 +295,10 @@ const PERIOD_SUBSTRING_RES = [
   /as of [a-z]+\.? \d{1,2},? \d{4}/gi,
   // "TTM Jun 2025", "Trailing Twelve Months ended June 30, 2025"
   /(?:ttm|trailing twelve months)(?: ended?)? [a-z]+\.? ?(?:\d{1,2},? )?\d{4}/gi,
+  // "For the Year Ended December 31, 2024", "Period Ended December 31,
+  // 2024" (M22, CPA compilation titles). The "ended" keyword keeps
+  // print-date footers unmatchable; parsePeriodHeader re-validates.
+  /(?:for the )?(?:(?:fiscal |calendar )?years?|twelve months|12 months|period) ended? [a-z]+\.? \d{1,2},? \d{4}/gi,
   // "April 1-30, 2025" — same-month day ranges (QuickBooks custom-range
   // reports; the actual Travelodge title format). Print-date footers
   // ("Monday, September 29, 2025") carry no day-range dash → no match.
