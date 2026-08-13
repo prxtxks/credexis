@@ -41,6 +41,7 @@ import {
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { AppShell } from "@/components/app-shell";
+import { DealNotFoundPanel, isDealNotFound } from "@/components/deal-not-found";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -85,7 +86,12 @@ export default function BorrowerInvitesPage() {
   const utils = trpc.useUtils();
 
   const me = trpc.me.useQuery();
-  const deal = trpc.deals.get.useQuery({ dealId });
+  const deal = trpc.deals.get.useQuery(
+    { dealId },
+    // NOT_FOUND is deterministic (row absent or RLS-hidden) - retrying
+    // only delays the terminal not-found state.
+    { retry: (count, err) => !isDealNotFound(err) && count < 3 },
+  );
   const borrowers = trpc.borrowers.list.useQuery();
   const entities = trpc.assignment.entities.useQuery({ dealId });
   const invites = trpc.borrowerInvites.forDeal.useQuery({ dealId });
@@ -163,6 +169,19 @@ export default function BorrowerInvitesPage() {
     },
     onError: (e) => toast.error(e.message),
   });
+
+  // Terminal: the invite composer and "No borrower invitations yet" on a
+  // deal the tenant cannot see read as a real (empty) deal - render the
+  // honest state instead.
+  if (isDealNotFound(deal.error)) {
+    return (
+      <AppShell breadcrumb="Deal not found">
+        <main className="mx-auto max-w-4xl px-4 py-24 sm:px-6 lg:px-8">
+          <DealNotFoundPanel />
+        </main>
+      </AppShell>
+    );
+  }
 
   const canWrite = WRITE_ROLES.includes(me.data?.role ?? "");
   const rows = invites.data ?? [];
