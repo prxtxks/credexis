@@ -7,7 +7,7 @@
   "synthetic": false,
   "pdf_sha256": "90be8dba78aaea3a69dc6fcebdfa024e4f6a6710a7f63a368501f7014214d67b",
   "page_count": 25,
-  "labeled_by": "claude (AI draft, arithmetic-verified vs parent return x allocation)",
+  "labeled_by": "pratik + claude (AI draft, human number-verified 2026-08-12)",
   "labeled_at": "2026-07-20T18:00:00Z",
   "fields": [
     {
@@ -15,7 +15,7 @@
       "period": "FY2023",
       "value_cents": "5556400",
       "page": 7,
-      "note": "Ordinary business income (loss) — other registry boxes (2, 4, 5a, 11, 16d) blank on this K-1"
+      "note": "Ordinary business income (loss) \u2014 other registry boxes (2, 4, 5a, 11, 16d) blank on this K-1"
     }
   ]
 }

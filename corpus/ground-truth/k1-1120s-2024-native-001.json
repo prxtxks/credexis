@@ -7,7 +7,7 @@
   "synthetic": false,
   "pdf_sha256": "463edecaab52c5cdaabeee6ebf352b599c8c54cace29b31a8ec3a50b0c96ca1e",
   "page_count": 36,
-  "labeled_by": "claude (AI draft, arithmetic-verified vs parent return x allocation)",
+  "labeled_by": "pratik + claude (AI draft, human number-verified 2026-08-12)",
   "labeled_at": "2026-07-20T18:00:00Z",
   "fields": [
     {
@@ -15,14 +15,14 @@
       "period": "FY2024",
       "value_cents": "-2181200",
       "page": 7,
-      "note": "Ordinary business income (loss) — boxes 2, 4, 5a, 11, 16d blank on this K-1"
+      "note": "Ordinary business income (loss) \u2014 boxes 2, 4, 5a, 11, 16d blank on this K-1"
     },
     {
       "registry_field_id": "k1s.box17ac",
       "period": "FY2024",
       "value_cents": "70678900",
       "page": 7,
-      "note": "Box 17 code AC — gross receipts for section 448(c) (3-yr average; not parent line 1a). Visually verified 2026-07-20; first extraction wrongly filed this amount under box 11."
+      "note": "Box 17 code AC \u2014 gross receipts for section 448(c) (3-yr average; not parent line 1a). Visually verified 2026-07-20; first extraction wrongly filed this amount under box 11."
     }
   ]
 }

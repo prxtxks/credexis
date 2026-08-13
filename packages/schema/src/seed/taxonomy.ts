@@ -78,6 +78,9 @@ const IS: Row[] = [
   ["is.opex.repairs_maintenance", "is.opex", "Repairs and maintenance"],
   ["is.opex.janitorial", "is.opex", "Cleaning and janitorial"],
   ["is.opex.supplies", "is.opex", "Supplies"],
+  // Added by domain ruling 2026-08-12 (docs/DOMAIN-RULINGS.md #3): printed on
+  // multiple real hotel P&Ls; distinct from consumable supplies.
+  ["is.opex.small_equipment", "is.opex", "Small tools and equipment"],
   ["is.opex.office_expense", "is.opex", "Office expense"],
   ["is.opex.postage_shipping", "is.opex", "Postage and shipping (out)"],
   ["is.opex.printing", "is.opex", "Printing and reproduction"],
