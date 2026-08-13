@@ -17,8 +17,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
   createMessageMaybeBatch,
-  BATCH_DISCOUNT_NUM,
-  BATCH_DISCOUNT_DEN,
+  priceUsageMicroUsd,
   type BatchOptions,
 } from "./anthropic-batch.js";
 import { z } from "zod";
@@ -161,7 +160,7 @@ export class AnthropicVisionAdapter implements ExtractorAdapter {
     // Field definitions are identical for every document of a (family,
     // year) — a cacheable prefix. The variable document follows in the
     // user turn, so cache hits cover instructions + field list + schema.
-    const { message: response } = await createMessageMaybeBatch(
+    const { message: response, batched } = await createMessageMaybeBatch(
       this.client,
       {
         model: this.model,
@@ -218,8 +217,6 @@ export class AnthropicVisionAdapter implements ExtractorAdapter {
       });
     });
 
-    const inTokens = BigInt(response.usage.input_tokens);
-    const outTokens = BigInt(response.usage.output_tokens);
     return {
       candidates,
       run: {
@@ -227,11 +224,7 @@ export class AnthropicVisionAdapter implements ExtractorAdapter {
         vendorVersion: this.version,
         model: response.model,
         pageCount: doc.pageCount ?? 1,
-        costMicroUsd:
-          ((inTokens * this.inRate + outTokens * this.outRate) *
-            (this.batch ? BATCH_DISCOUNT_NUM : 1n)) /
-          (this.batch ? BATCH_DISCOUNT_DEN : 1n) /
-          1_000_000n,
+        costMicroUsd: priceUsageMicroUsd(response.usage, this.inRate, this.outRate, batched),
       },
     };
   }

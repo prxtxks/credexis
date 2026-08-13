@@ -481,6 +481,18 @@ async function extractTaxForm(
  * row keeps the span id, so the notice's Re-run action targets exactly
  * the span that needs the retry.
  */
+/** Money already billed by the statement chain, tracked across the
+ *  success/failure boundary: the layout vendor and the label classifier
+ *  spend before anything downstream can throw, so BOTH run-row paths must
+ *  report what accrued instead of 0 (the invisible-spend bug: /costs and
+ *  the bake-off column undercounted every statement document). Classifier
+ *  spend is a delta against its instance-cumulative counter, because one
+ *  classifier serves many logical documents. */
+interface StatementSpend {
+  layoutMicroUsd: bigint;
+  classifierBaselineMicroUsd: bigint;
+}
+
 async function extractStatement(
   deps: ExtractStageDeps,
   input: ExtractStageInput,
@@ -489,9 +501,15 @@ async function extractStatement(
   now: () => number,
 ): Promise<number> {
   const t0 = now();
+  const spend: StatementSpend = {
+    layoutMicroUsd: 0n,
+    classifierBaselineMicroUsd: deps.labelClassifier?.costMicroUsd ?? 0n,
+  };
   try {
-    return await extractStatementInner(deps, input, ld, entityId, now);
+    return await extractStatementInner(deps, input, ld, entityId, now, spend);
   } catch (e) {
+    const classifierMicroUsd =
+      (deps.labelClassifier?.costMicroUsd ?? 0n) - spend.classifierBaselineMicroUsd;
     await deps.db.insertExtractionRun(
       runRow(
         input,
@@ -501,9 +519,15 @@ async function extractStatement(
         null,
         "failed",
         (e as Error).message,
-        0n,
+        spend.layoutMicroUsd + classifierMicroUsd,
         now() - t0,
-        { logicalDocumentId: ld.id, formFamily: ld.formFamily },
+        {
+          logicalDocumentId: ld.id,
+          formFamily: ld.formFamily,
+          // Strings, not bigint: metadata is JSON over the wire.
+          layoutCostMicroUsd: spend.layoutMicroUsd.toString(),
+          labelClassifierCostMicroUsd: classifierMicroUsd.toString(),
+        },
       ),
     );
     return 0;
@@ -516,6 +540,7 @@ async function extractStatementInner(
   ld: ExtractLogicalDocument,
   entityId: string,
   now: () => number,
+  spend: StatementSpend,
 ): Promise<number> {
   if (!deps.statementLayout) {
     await deps.db.insertExtractionRun(
@@ -545,6 +570,7 @@ async function extractStatementInner(
     bytes: slice.bytes,
     mimeType: input.mimeType,
   });
+  spend.layoutMicroUsd = layout.run.costMicroUsd;
   const pages = slice.sliced
     ? layout.pages
     : layout.pages.filter((p) => p.page >= ld.pageStart && p.page <= ld.pageEnd);
@@ -621,6 +647,8 @@ async function extractStatementInner(
     inserted += rows.length > 0 ? await deps.db.insertFacts(rows) : 0;
   }
 
+  const classifierMicroUsd =
+    (deps.labelClassifier?.costMicroUsd ?? 0n) - spend.classifierBaselineMicroUsd;
   await deps.db.insertExtractionRun(
     runRow(
       input,
@@ -630,7 +658,7 @@ async function extractStatementInner(
       pages.length,
       "succeeded",
       null,
-      0n,
+      spend.layoutMicroUsd + classifierMicroUsd,
       now() - t0,
       {
         logicalDocumentId: ld.id,
@@ -638,6 +666,13 @@ async function extractStatementInner(
         grids: grids.length,
         facts: inserted,
         unmappedLabels: unmapped,
+        // Cost lineage: the row's costMicroUsd totals the chain; the
+        // breakdown names who billed what (strings - metadata is JSON and
+        // bigint doesn't serialize). layoutVendor is the SERVING vendor,
+        // truthful under the M18.4 Reducto→Azure failover.
+        layoutVendor: layout.run.vendor,
+        layoutCostMicroUsd: spend.layoutMicroUsd.toString(),
+        labelClassifierCostMicroUsd: classifierMicroUsd.toString(),
         // M18.4: a served-by-fallback layout is visible in the run log -
         // duck-typed so the stage stays adapter-agnostic.
         ...((deps.statementLayout as { lastFailover?: unknown }).lastFailover

@@ -310,7 +310,11 @@ describe("runExtractStage - statements", () => {
       registry_field_id: null,
     });
     expect(db.periods.has("FY2024")).toBe(true);
-    expect(db.runs.at(-1)).toMatchObject({ stage: "extract_statement", status: "succeeded" });
+    expect(db.runs.at(-1)).toMatchObject({
+      stage: "extract_statement",
+      status: "succeeded",
+      costMicroUsd: 1000n, // the layout vendor's real spend, never 0
+    });
   });
 });
 
@@ -551,5 +555,134 @@ describe("statement vendor outage (M18.3 - the Reducto 401 incident)", () => {
     // spreads to its neighbors.
     expect(db.facts.some((f) => f.source_logical_document_id === "ld-tax")).toBe(true);
     expect(result.perDocument).toHaveLength(2);
+  });
+});
+
+describe("statement cost accounting (the invisible-spend fix)", () => {
+  // extract_statement rows used to carry 0n while the layout vendor and
+  // the label classifier billed real money - /costs and the bake-off cost
+  // column undercounted every statement document.
+  const pnlLayout = (): LayoutParseResult => ({
+    pages: [
+      {
+        page: 1,
+        textBlocks: [],
+        tables: [
+          {
+            page: 1,
+            bbox: { x: 0.1, y: 0.1, w: 0.8, h: 0.5 },
+            cells: [
+              { rowIndex: 0, colIndex: 0, text: "", bbox: { x: 0.1, y: 0.1, w: 0.2, h: 0.02 } },
+              {
+                rowIndex: 0,
+                colIndex: 1,
+                text: "FY2024",
+                bbox: { x: 0.5, y: 0.1, w: 0.2, h: 0.02 },
+              },
+              { rowIndex: 1, colIndex: 0, text: "Rent", bbox: { x: 0.1, y: 0.2, w: 0.2, h: 0.02 } },
+              {
+                rowIndex: 1,
+                colIndex: 1,
+                text: "12,000.00",
+                bbox: { x: 0.5, y: 0.2, w: 0.2, h: 0.02 },
+              },
+              {
+                rowIndex: 2,
+                colIndex: 0,
+                text: "Zorbified Fees",
+                bbox: { x: 0.1, y: 0.3, w: 0.2, h: 0.02 },
+              },
+              {
+                rowIndex: 2,
+                colIndex: 1,
+                text: "500.00",
+                bbox: { x: 0.5, y: 0.3, w: 0.2, h: 0.02 },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    run: { ...RUN },
+  });
+  const layoutAdapter = (): ExtractorAdapter =>
+    ({
+      name: "layout",
+      async parseLayout() {
+        return pnlLayout();
+      },
+      async extractFields() {
+        throw new Error("unused");
+      },
+    }) as unknown as ExtractorAdapter;
+  const rentStore = async () => {
+    const store = new InMemoryMappingsStore();
+    await store.upsert(null, {
+      labelNorm: "rent",
+      taxonomyNodeKey: "is.opex.rent",
+      confidence: 1,
+      source: "human",
+      usageCount: 1,
+    });
+    return store;
+  };
+  const PNL_LD = {
+    id: "ld-p",
+    formFamily: "PNL",
+    taxYear: null,
+    pageStart: 1,
+    pageEnd: 1,
+    entityId: "ent-1",
+  };
+  // A billing classifier per the LabelClassifier contract: cumulative
+  // lifetime spend; the stage attributes per-document deltas.
+  class CostedClassifier {
+    costMicroUsd = 0n;
+    async classifyLabels(labels: string[]) {
+      this.costMicroUsd += 40n;
+      return labels.map((label) => ({ label, taxonomyNodeKey: null, confidence: 0 }));
+    }
+  }
+
+  it("the run row totals layout + classifier spend, breakdown in metadata", async () => {
+    const db = new FakeDb();
+    const deps = baseDeps({
+      db,
+      statementLayout: layoutAdapter(),
+      mappingsStore: await rentStore(),
+      labelClassifier: new CostedClassifier(),
+    });
+    await runExtractStage(deps, { ...INPUT, logicalDocuments: [PNL_LD] });
+
+    const run = db.runs.at(-1)!;
+    expect(run).toMatchObject({
+      stage: "extract_statement",
+      status: "succeeded",
+      costMicroUsd: 1040n, // 1000 layout + 40 classifier
+    });
+    expect(run.metadata).toMatchObject({
+      layoutVendor: "fake", // the SERVING vendor (M18.4 failover honesty)
+      layoutCostMicroUsd: "1000",
+      labelClassifierCostMicroUsd: "40",
+    });
+  });
+
+  it("a failure AFTER the layout call still reports the accrued spend", async () => {
+    class ExplodingFactsDb extends FakeDb {
+      override async insertFacts(): Promise<number> {
+        throw new Error("facts insert: db down");
+      }
+    }
+    const db = new ExplodingFactsDb();
+    const deps = baseDeps({
+      db,
+      statementLayout: layoutAdapter(),
+      mappingsStore: await rentStore(),
+    });
+    await runExtractStage(deps, { ...INPUT, logicalDocuments: [PNL_LD] });
+
+    const failed = db.runs.find((r) => r.stage === "extract_statement");
+    expect(failed).toMatchObject({ status: "failed", costMicroUsd: 1000n });
+    expect(failed?.metadata).toMatchObject({ layoutCostMicroUsd: "1000" });
   });
 });

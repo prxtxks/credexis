@@ -250,6 +250,49 @@ describe("cost levers (M10.5, verified live 2026-07-20)", () => {
     expect(cached.text).toContain("Chart of accounts");
     expect(cached.text).toContain("is.opex.royalties_franchise"); // guidance included
   });
+
+  it("accumulates real spend in integer micro-USD, cache tokens included", async () => {
+    // The classifier makes paid Claude calls: the pipeline reads this
+    // counter into extraction_runs, so unpriced calls are invisible spend.
+    const recorded = {
+      id: "msg_cost",
+      type: "message",
+      role: "assistant",
+      model: "claude-haiku-4-5",
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            mappings: [{ label: "Rent", taxonomy_node: "is.opex.rent", confidence: 0.95 }],
+          }),
+        },
+      ],
+      stop_reason: "end_turn",
+      stop_sequence: null,
+      usage: {
+        input_tokens: 500,
+        output_tokens: 40,
+        cache_creation_input_tokens: 1000,
+        cache_read_input_tokens: 2048,
+      },
+    };
+    const classifier = new AnthropicLabelClassifier({
+      apiKey: "test",
+      fetch: async () =>
+        new Response(JSON.stringify(recorded), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+    });
+    expect(classifier.costMicroUsd).toBe(0n);
+    await classifyOnce(classifier);
+    // Haiku 4.5: 500 in @ $1/MTok + 40 out @ $5/MTok = 700 µ$;
+    // + 1000 cache-write @ $1 × 1.25 = 1250 µ$;
+    // + 2048 cache-read @ $1 × 0.1 = 204.8 → single final floor: 2154 µ$.
+    expect(classifier.costMicroUsd).toBe(2154n);
+    await classifyOnce(classifier);
+    expect(classifier.costMicroUsd).toBe(4308n); // cumulative across calls
+  });
 });
 
 describe("container-node guard (M14.7 - the $349 'Operating expenses' incident)", () => {

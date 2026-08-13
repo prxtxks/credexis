@@ -63,3 +63,35 @@ export async function createMessageMaybeBatch(
 /** Batch pricing is 50% of sync — applied at the caller's cost accounting. */
 export const BATCH_DISCOUNT_NUM = 1n;
 export const BATCH_DISCOUNT_DEN = 2n;
+
+/** The usage block of a Messages API response (cache fields are nullable). */
+export interface PricedUsage {
+  input_tokens: number;
+  output_tokens: number;
+  cache_creation_input_tokens?: number | null;
+  cache_read_input_tokens?: number | null;
+}
+
+/**
+ * Real-usage pricing in integer micro-USD. Cache tokens are real spend:
+ * writes bill at 1.25x the input rate and reads at 0.1x (5-minute
+ * ephemeral TTL — the only kind these adapters set), and the batch
+ * discount covers every token. Exact integer math: 1.25 = 25/20 and
+ * 0.1 = 2/20, so terms accumulate in twentieths of (tokens × rate per
+ * MTok) and divide exactly once at the end.
+ */
+export function priceUsageMicroUsd(
+  usage: PricedUsage,
+  inputMicroUsdPerMtok: bigint,
+  outputMicroUsdPerMtok: bigint,
+  batched: boolean,
+): bigint {
+  const twentieths =
+    (BigInt(usage.input_tokens) * inputMicroUsdPerMtok +
+      BigInt(usage.output_tokens) * outputMicroUsdPerMtok) *
+      20n +
+    BigInt(usage.cache_creation_input_tokens ?? 0) * inputMicroUsdPerMtok * 25n +
+    BigInt(usage.cache_read_input_tokens ?? 0) * inputMicroUsdPerMtok * 2n;
+  const discounted = batched ? (twentieths * BATCH_DISCOUNT_NUM) / BATCH_DISCOUNT_DEN : twentieths;
+  return discounted / 20_000_000n;
+}

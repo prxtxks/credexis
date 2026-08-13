@@ -13,7 +13,11 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import { createMessageMaybeBatch, type BatchOptions } from "../adapters/anthropic-batch.js";
+import {
+  createMessageMaybeBatch,
+  priceUsageMicroUsd,
+  type BatchOptions,
+} from "../adapters/anthropic-batch.js";
 import { z } from "zod";
 import { TAXONOMY_V1 } from "@credexis/schema";
 
@@ -137,6 +141,13 @@ export interface LabelClassifier {
     labels: string[],
     statement: "PNL" | "BALANCE_SHEET",
   ): Promise<LabelClassification[]>;
+  /**
+   * Cumulative lifetime spend of this instance in integer micro-USD.
+   * Billing implementations must keep it monotonic — a call that throws
+   * after the API responded still spent the tokens — so callers attribute
+   * per-document cost by snapshot-and-subtract around their work.
+   */
+  readonly costMicroUsd?: bigint;
 }
 
 const llmResponseSchema = z.object({
@@ -188,10 +199,18 @@ Rules:
 - A label naming a person or company alone is not mappable → null.
 - Sub-account labels ("Insurance:Business") map by their leaf meaning.`;
 
+/** Sticker pricing 2026-08 (Haiku 4.5: $1/$5 per MTok). */
+const CLASSIFIER_INPUT_RATE = 1_000_000n;
+const CLASSIFIER_OUTPUT_RATE = 5_000_000n;
+
 export class AnthropicLabelClassifier implements LabelClassifier {
   private client: Anthropic;
   readonly model: string;
   private batch: BatchOptions | null;
+  private inRate: bigint;
+  private outRate: bigint;
+  /** Cumulative real spend (integer micro-USD) — see LabelClassifier. */
+  costMicroUsd = 0n;
 
   constructor(cfg: {
     apiKey: string;
@@ -199,9 +218,14 @@ export class AnthropicLabelClassifier implements LabelClassifier {
     fetch?: typeof globalThis.fetch;
     /** Message Batches API (50% off) — eval/bake-off callers only. */
     batch?: BatchOptions | null;
+    /** Pricing (integer micro-USD per MTok) for cost accounting. */
+    inputMicroUsdPerMtok?: bigint;
+    outputMicroUsdPerMtok?: bigint;
   }) {
     this.model = cfg.model ?? "claude-haiku-4-5";
     this.batch = cfg.batch ?? null;
+    this.inRate = cfg.inputMicroUsdPerMtok ?? CLASSIFIER_INPUT_RATE;
+    this.outRate = cfg.outputMicroUsdPerMtok ?? CLASSIFIER_OUTPUT_RATE;
     this.client = new Anthropic({ apiKey: cfg.apiKey, ...(cfg.fetch ? { fetch: cfg.fetch } : {}) });
   }
 
@@ -224,7 +248,7 @@ export class AnthropicLabelClassifier implements LabelClassifier {
 
     // The taxonomy list is identical for every call of a statement kind —
     // a cacheable prefix (~200 nodes); labels vary per call in the user turn.
-    const { message: response } = await createMessageMaybeBatch(
+    const { message: response, batched } = await createMessageMaybeBatch(
       this.client,
       {
         model: this.model,
@@ -282,6 +306,10 @@ export class AnthropicLabelClassifier implements LabelClassifier {
       },
       this.batch,
     );
+
+    // Spend is booked the moment usage is known — a refusal or parse
+    // failure below already billed these tokens.
+    this.costMicroUsd += priceUsageMicroUsd(response.usage, this.inRate, this.outRate, batched);
 
     if (response.stop_reason === "refusal") throw new Error("label-classifier: refused");
     const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === "text");
