@@ -234,12 +234,23 @@ For each page report:
 Null is always acceptable; guessing is not. You never infer values, only
 classify.`;
 
+/** Token usage of one classifier API call, as reported to `onUsage`. Cache
+ *  tokens are billed too (writes at 1.25x the input rate, reads at 0.1x) —
+ *  omitting them under-reported spend on every cached call. */
+export interface ClassifierUsage {
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationInputTokens: number;
+  cacheReadInputTokens: number;
+}
+
 export interface AnthropicPageClassifierConfig {
   apiKey: string;
   model?: string; // Blueprint §4.1: Haiku-class for page classification
   fetch?: typeof globalThis.fetch;
   /** Token usage per API call — the pipeline's cost recorder (M3.2) hooks in here. */
-  onUsage?: (usage: { model: string; inputTokens: number; outputTokens: number }) => void;
+  onUsage?: (usage: ClassifierUsage) => void;
 }
 
 /** Vision/text LLM classification (Blueprint §4.1 second pass). */
@@ -356,7 +367,11 @@ export class AnthropicPageClassifier implements PageClassifier {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 8000,
-      system: SYSTEM_PROMPT,
+      // The system prompt is the stable prefix shared by every batch of a
+      // bundle (and across bundles). Below the model's minimum cacheable
+      // length the marker is a documented no-op, so it is safe to set
+      // unconditionally — and pricing below already counts cache tokens.
+      system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
       output_config: { format: { type: "json_schema", schema: LLM_JSON_SCHEMA } },
       messages: [{ role: "user", content }],
     });
@@ -365,6 +380,8 @@ export class AnthropicPageClassifier implements PageClassifier {
       model: this.model,
       inputTokens: response.usage.input_tokens,
       outputTokens: response.usage.output_tokens,
+      cacheCreationInputTokens: response.usage.cache_creation_input_tokens ?? 0,
+      cacheReadInputTokens: response.usage.cache_read_input_tokens ?? 0,
     });
     if (response.stop_reason === "refusal") {
       throw new Error("page-classifier: request refused");

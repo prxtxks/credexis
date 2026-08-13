@@ -25,7 +25,7 @@ import {
   renderPageImages,
   type PdfText,
 } from "./pdf.js";
-import { anthropicCostMicroUsd } from "./pricing.js";
+import { anthropicCostMicroUsd, type TokenUsage } from "./pricing.js";
 import type { DbPort, DocumentRow, StoragePort, VirusScanner, VirusScanStatus } from "./ports.js";
 
 export const PIPELINE_VERSION = "0.1.0";
@@ -95,7 +95,7 @@ export interface IngestDeps {
   scanner: VirusScanner | null;
   classifier: PageClassifier | null;
   /** LLM usage drained after classification (wired to the classifier's onUsage). */
-  takeLlmUsage?: () => { model: string; inputTokens: number; outputTokens: number }[];
+  takeLlmUsage?: () => (TokenUsage & { model: string })[];
   /** Injectable for tests; defaults to unpdf. */
   extractPdf?: (bytes: Uint8Array) => Promise<PdfText>;
   /** Seam for tests: render scanned pages to PNG (M13.6). */

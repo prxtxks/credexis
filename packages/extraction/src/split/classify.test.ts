@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AnthropicPageClassifier, validateLlmClaim } from "./classify.js";
+import { AnthropicPageClassifier, validateLlmClaim, type ClassifierUsage } from "./classify.js";
 
 /** Recorded Messages API response (structured output) — synthetic fixture. */
 const RECORDED_RESPONSE = {
@@ -37,10 +37,11 @@ const RECORDED_RESPONSE = {
   usage: { input_tokens: 900, output_tokens: 60 },
 };
 
-function recordedFetch(capture?: { body?: unknown }): typeof fetch {
+function recordedFetch(capture?: { body?: unknown }, usage?: Record<string, number>): typeof fetch {
   return async (_url, init) => {
     if (capture && init?.body) capture.body = JSON.parse(init.body as string);
-    return new Response(JSON.stringify(RECORDED_RESPONSE), {
+    const response = usage ? { ...RECORDED_RESPONSE, usage } : RECORDED_RESPONSE;
+    return new Response(JSON.stringify(response), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
@@ -74,14 +75,59 @@ describe("AnthropicPageClassifier (recorded responses — no live calls)", () =>
   });
 
   it("reports token usage through onUsage (M3.2 cost recording seam)", async () => {
-    const seen: { model: string; inputTokens: number; outputTokens: number }[] = [];
+    const seen: ClassifierUsage[] = [];
     const classifier = new AnthropicPageClassifier({
       apiKey: "test",
       fetch: recordedFetch(),
       onUsage: (u) => seen.push(u),
     });
     await classifier.classifyPages([{ page: 1, text: "x" }]);
-    expect(seen).toEqual([{ model: "claude-haiku-4-5", inputTokens: 900, outputTokens: 60 }]);
+    // Cache fields absent from the response report as 0, never undefined.
+    expect(seen).toEqual([
+      {
+        model: "claude-haiku-4-5",
+        inputTokens: 900,
+        outputTokens: 60,
+        cacheCreationInputTokens: 0,
+        cacheReadInputTokens: 0,
+      },
+    ]);
+  });
+
+  it("reports prompt-cache tokens through onUsage - cached calls are real spend", async () => {
+    const seen: ClassifierUsage[] = [];
+    const classifier = new AnthropicPageClassifier({
+      apiKey: "test",
+      fetch: recordedFetch(undefined, {
+        input_tokens: 100,
+        output_tokens: 60,
+        cache_creation_input_tokens: 800,
+        cache_read_input_tokens: 12_000,
+      }),
+      onUsage: (u) => seen.push(u),
+    });
+    await classifier.classifyPages([{ page: 1, text: "x" }]);
+    expect(seen).toEqual([
+      {
+        model: "claude-haiku-4-5",
+        inputTokens: 100,
+        outputTokens: 60,
+        cacheCreationInputTokens: 800,
+        cacheReadInputTokens: 12_000,
+      },
+    ]);
+  });
+
+  it("marks the system prompt as a prompt-cache prefix (ephemeral)", async () => {
+    const capture: { body?: unknown } = {};
+    const classifier = new AnthropicPageClassifier({
+      apiKey: "test",
+      fetch: recordedFetch(capture),
+    });
+    await classifier.classifyPages([{ page: 1, text: "x" }]);
+    const body = capture.body as { system: { text: string; cache_control?: unknown }[] };
+    expect(body.system).toHaveLength(1);
+    expect(body.system[0]!.cache_control).toEqual({ type: "ephemeral" });
   });
 
   it("sends page images when provided (vision path)", async () => {
