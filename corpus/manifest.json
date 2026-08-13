@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-12T18:52:44.267Z",
+  "updated_at": "2026-08-13T20:18:49.678Z",
   "documents": [
     {
       "id": "1040-2024-native-001",
@@ -33,6 +33,13 @@
     {
       "id": "1120s-2023-scanned-001",
       "ground_truth_path": "ground-truth/1120s-2023-scanned-001.json",
+      "pdf_sha256": "56e7f1f37abed1b08f968c4923464cf8647f44a8d2418ea49e61648f83d479d1",
+      "pdf_bytes": 1538330,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "1120s-2023-scanned-002",
+      "ground_truth_path": "ground-truth/1120s-2023-scanned-002.json",
       "pdf_sha256": "56e7f1f37abed1b08f968c4923464cf8647f44a8d2418ea49e61648f83d479d1",
       "pdf_bytes": 1538330,
       "pdf_bucket_key": null
@@ -91,6 +98,20 @@
       "ground_truth_path": "ground-truth/pnl-annual-native-003.json",
       "pdf_sha256": "d02f9c6ca52dbc30b9f543c17a1b79e700a0c68596f0ef1601d78d8099f763b2",
       "pdf_bytes": 172937,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "pnl-annual-native-005",
+      "ground_truth_path": "ground-truth/pnl-annual-native-005.json",
+      "pdf_sha256": "dd178e51b75b5d89ac3034afbad3c335b1c85c237e8398cb0f49a6769f5ddce9",
+      "pdf_bytes": 25288,
+      "pdf_bucket_key": null
+    },
+    {
+      "id": "pnl-annual-scanned-001",
+      "ground_truth_path": "ground-truth/pnl-annual-scanned-001.json",
+      "pdf_sha256": "1f7e1c93e9e25b31a0ab4b9588ab8a8b61a153013b751310540bf913267060ab",
+      "pdf_bytes": 37856,
       "pdf_bucket_key": null
     },
     {

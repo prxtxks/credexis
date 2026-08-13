@@ -1,0 +1,280 @@
+{
+  "id": "pnl-annual-scanned-001",
+  "form_family": "PNL",
+  "tax_year": null,
+  "entity": "target",
+  "quality": "scanned",
+  "synthetic": false,
+  "pdf_sha256": "1f7e1c93e9e25b31a0ab4b9588ab8a8b61a153013b751310540bf913267060ab",
+  "page_count": 1,
+  "labeled_by": "pratik + claude (AI draft, human number-verified 2026-08-12)",
+  "labeled_at": "2026-08-12T00:00:00Z",
+  "fields": [
+    {
+      "taxonomy_node": "is.revenue.product_sales",
+      "period": "FY2024",
+      "value_cents": "95042801",
+      "page": 1,
+      "note": "Merchandise Sales — RELABEL PASS: canonical 'Product sales' node fits retail merchandise revenue; sole printed Income component"
+    },
+    {
+      "taxonomy_node": "is.revenue.total",
+      "period": "FY2024",
+      "value_cents": "95042801",
+      "page": 1,
+      "note": "Total Income (= sole component Merchandise Sales, now labeled is.revenue.product_sales)"
+    },
+    {
+      "taxonomy_node": "is.cogs.purchases",
+      "period": "FY2024",
+      "value_cents": "66753360",
+      "page": 1,
+      "note": "Purchases — RELABEL PASS: exact canonical node label ('Purchases'); sole printed COGS component"
+    },
+    {
+      "taxonomy_node": "is.cogs.total",
+      "period": "FY2024",
+      "value_cents": "66753360",
+      "page": 1,
+      "note": "Total COGS (= sole component Purchases, now labeled is.cogs.purchases)"
+    },
+    {
+      "taxonomy_node": "is.gross_profit",
+      "period": "FY2024",
+      "value_cents": "28289441",
+      "page": 1,
+      "note": "Gross Profit"
+    },
+    {
+      "taxonomy_node": "is.opex.marketing_advertising",
+      "period": "FY2024",
+      "value_cents": "50100",
+      "page": 1,
+      "note": "Advertising and Promotion"
+    },
+    {
+      "taxonomy_node": "is.opex.vehicle",
+      "period": "FY2024",
+      "value_cents": "728637",
+      "page": 1,
+      "note": "Automobile Expense (matches batch-2 precedent)"
+    },
+    {
+      "taxonomy_node": "is.opex.bad_debt",
+      "period": "FY2024",
+      "value_cents": "102064",
+      "page": 1,
+      "note": "Bad Debt Expense — RELABEL PASS promotion (canonical node existed all along)"
+    },
+    {
+      "taxonomy_node": "is.opex.bank_charges",
+      "period": "FY2024",
+      "value_cents": "44530",
+      "page": 1,
+      "note": "Bank Service Charges"
+    },
+    {
+      "taxonomy_node": "is.opex.employee_benefits",
+      "period": "FY2024",
+      "value_cents": "67001",
+      "page": 1,
+      "note": "employee Appreciation [sic, lowercase e as printed] — RELABEL PASS JUDGMENT CALL: employee appreciation spend read as employee benefits"
+    },
+    {
+      "taxonomy_node": "is.opex.insurance",
+      "period": "FY2024",
+      "value_cents": "690340",
+      "page": 1,
+      "note": "Insurance Expense"
+    },
+    {
+      "taxonomy_node": "is.other.interest_expense",
+      "period": "FY2024",
+      "value_cents": "4909225",
+      "page": 1,
+      "note": "Interest Expense — printed positive INSIDE the operating Expense block; included in printed Total Expense (see header note)"
+    },
+    {
+      "taxonomy_node": "is.opex.licenses_permits",
+      "period": "FY2024",
+      "value_cents": "87600",
+      "page": 1,
+      "note": "Licenses and Permits"
+    },
+    {
+      "taxonomy_node": "is.opex.meals",
+      "period": "FY2024",
+      "value_cents": "81986",
+      "page": 1,
+      "note": "Meals and Entertainment — RELABEL PASS promotion (canonical node existed all along)"
+    },
+    {
+      "taxonomy_node": "is.opex.merchant_fees",
+      "period": "FY2024",
+      "value_cents": "1312935",
+      "page": 1,
+      "note": "Merchant Account Fees"
+    },
+    {
+      "taxonomy_node": "is.opex.office_expense",
+      "period": "FY2024",
+      "value_cents": "6421",
+      "page": 1,
+      "note": "Office Supplies — JUDGMENT CALL: office expense (is.opex.supplies is occupied by the separate 'Supplies' line)"
+    },
+    {
+      "taxonomy_node": "is.opex.contract_labor",
+      "period": "FY2024",
+      "value_cents": "341650",
+      "page": 1,
+      "note": "Outside Services — RELABEL PASS: outside/contracted services bound to canonical contract-labor node"
+    },
+    {
+      "taxonomy_node": "is.opex.payroll_taxes",
+      "period": "FY2024",
+      "value_cents": "574422",
+      "page": 1,
+      "note": "Payroll Tax Expense"
+    },
+    {
+      "taxonomy_node": "is.opex.property_taxes",
+      "period": "FY2024",
+      "value_cents": "1025875",
+      "page": 1,
+      "note": "SUM per DOMAIN-RULINGS.md #1 (semantic category): Personal Property Taxes 836.63 (page 1) + Real Estate Taxes 9,422.12 (page 1) = 10,258.75"
+    },
+    {
+      "taxonomy_node": "is.opex.postage_shipping",
+      "period": "FY2024",
+      "value_cents": "44646",
+      "page": 1,
+      "note": "Postage and Delivery"
+    },
+    {
+      "taxonomy_node": "is.opex.professional_fees",
+      "period": "FY2024",
+      "value_cents": "434350",
+      "page": 1,
+      "note": "Professional Fees"
+    },
+    {
+      "taxonomy_node": "is.opex.repairs_maintenance",
+      "period": "FY2024",
+      "value_cents": "758941",
+      "page": 1,
+      "note": "SUM per DOMAIN-RULINGS.md #1: Repairs and Maintenance 5,704.41 (page 1) + Snow Removal Expense 1,885.00 (page 1, JUDGMENT CALL: grounds upkeep read as repairs/maintenance) = 7,589.41"
+    },
+    {
+      "taxonomy_node": "is.opex.other_taxes",
+      "period": "FY2024",
+      "value_cents": "4808857",
+      "page": 1,
+      "note": "Sales Tax Expense — RELABEL PASS: 'Taxes and licenses (other)'; the two property-tax lines went to is.opex.property_taxes, dissolving the old three-way tax conflict"
+    },
+    {
+      "taxonomy_node": "is.opex.security",
+      "period": "FY2024",
+      "value_cents": "31650",
+      "page": 1,
+      "note": "Security Expense"
+    },
+    {
+      "taxonomy_node": "is.opex.software",
+      "period": "FY2024",
+      "value_cents": "163320",
+      "page": 1,
+      "note": "SUM per DOMAIN-RULINGS.md #1: Software Fees 0.00 (page 1, zero IS printed — labeling rule 2) + Point of Sale System Fee 1,633.20 (page 1, POS software service fee) = 1,633.20"
+    },
+    {
+      "taxonomy_node": "is.opex.supplies",
+      "period": "FY2024",
+      "value_cents": "315586",
+      "page": 1,
+      "note": "Supplies"
+    },
+    {
+      "taxonomy_node": "is.opex.telephone_internet",
+      "period": "FY2024",
+      "value_cents": "539138",
+      "page": 1,
+      "note": "SUM per DOMAIN-RULINGS.md #1: Telephone Expense 2,182.55 (page 1) + Computer and Internet Expenses 3,208.83 (page 1) = 5,391.38 — canonical node is 'Telephone and internet'"
+    },
+    {
+      "taxonomy_node": "is.opex.travel",
+      "period": "FY2024",
+      "value_cents": "225996",
+      "page": 1,
+      "note": "Travel Expenses — RELABEL PASS promotion (canonical node existed all along)"
+    },
+    {
+      "taxonomy_node": "is.opex.utilities",
+      "period": "FY2024",
+      "value_cents": "1780907",
+      "page": 1,
+      "note": "Utilities"
+    },
+    {
+      "taxonomy_node": "is.opex.salaries_wages",
+      "period": "FY2024",
+      "value_cents": "4259902",
+      "page": 1,
+      "note": "Wages — the separate 'Wages - Officer' 28,680.00 line is its own semantic category (is.opex.officer_comp), NOT summed here"
+    },
+    {
+      "taxonomy_node": "is.opex.officer_comp",
+      "period": "FY2024",
+      "value_cents": "2868000",
+      "page": 1,
+      "note": "Wages - Officer — RELABEL PASS promotion (canonical officer-compensation node existed all along)"
+    },
+    {
+      "taxonomy_node": "is.opex.total",
+      "period": "FY2024",
+      "value_cents": "26796993",
+      "page": 1,
+      "note": "Total Expense — includes the 2 still-flagged expense lines (Lottery Expense, Loan Origination fees) and Interest Expense; excludes Cash Short (Over), printed below in Other Expense (see header notes)"
+    },
+    {
+      "taxonomy_node": "is.operating_income",
+      "period": "FY2024",
+      "value_cents": "1492448",
+      "page": 1,
+      "note": "Net Ordinary Income (matches batch-2 precedent)"
+    },
+    {
+      "taxonomy_node": "is.other.interest_income",
+      "period": "FY2024",
+      "value_cents": "927",
+      "page": 1,
+      "note": "Interest Income 9.27 — Other Income section"
+    },
+    {
+      "taxonomy_node": "is.other.other_income",
+      "period": "FY2024",
+      "value_cents": "73846",
+      "page": 1,
+      "note": "SUM per DOMAIN-RULINGS.md #1: Rebate Received 377.80 (page 1) + Sales Tax Discount Earned 360.66 (page 1) = 738.46 (batch-3-005 precedent binds sales-tax discounts here); 'Lottery Commission Income' 35.33 stays flagged (see header)"
+    },
+    {
+      "taxonomy_node": "is.opex.misc",
+      "period": "FY2024",
+      "value_cents": "9790",
+      "page": 1,
+      "note": "Cash Short (Over) — RELABEL PASS JUDGMENT CALL: register over/short is an operating misc expense by economic meaning, though PRINTED in the Other Expense section (so NOT inside printed Total Expense; same by-meaning principle as the Interest Expense note, opposite direction)"
+    },
+    {
+      "taxonomy_node": "is.other.total",
+      "period": "FY2024",
+      "value_cents": "68516",
+      "page": 1,
+      "note": "Net Other Income — RELABEL PASS JUDGMENT CALL: canonical is.other.total ('Total other income (expense)') is the NET of the section (783.06 − 97.90 = 685.16), matching batch-3-005's 'TOTAL OTHER INCOME (EXPENSES)' binding"
+    },
+    {
+      "taxonomy_node": "is.net_income",
+      "period": "FY2024",
+      "value_cents": "1560964",
+      "page": 1,
+      "note": "Net Income — bottom line"
+    }
+  ]
+}
