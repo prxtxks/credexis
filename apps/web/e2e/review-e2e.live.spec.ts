@@ -46,7 +46,13 @@ const CLEANUP = `
   -- audit trigger, creating fresh audit_log rows - purging audit_log any
   -- earlier leaves those behind and the tenants delete hits the FK.
   delete from public.audit_log where tenant_id = '${T.tenantId}';
+  -- tenants_audit (migration 0013) fires AFTER DELETE and inserts an audit
+  -- row for the tenant that no longer exists - FK 23503, and the whole
+  -- cleanup transaction rolls back. Disable it around the final delete
+  -- (transactional DDL: a failure re-enables it via rollback).
+  alter table public.tenants disable trigger tenants_audit;
   delete from public.tenants where id = '${T.tenantId}';
+  alter table public.tenants enable trigger tenants_audit;
   delete from public.policy_packs where id = '${T.packId}';
 `;
 
