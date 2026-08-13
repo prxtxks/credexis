@@ -90,7 +90,14 @@ export interface ProformaYear {
 
 export interface ProformaResult {
   /** The base period annualized - Year 0, what the history supports. */
-  baseAnnualized: { periodLabel: string; revenueCents: Cents; lines: ProformaLine[] };
+  baseAnnualized: {
+    periodLabel: string;
+    revenueCents: Cents;
+    lines: ProformaLine[];
+    /** Sum of the annualized non-excluded lines - computed HERE so the
+     *  client never adds money (Iron Law #3). */
+    operatingExpensesCents: Cents;
+  };
   years: ProformaYear[];
 }
 
@@ -113,14 +120,16 @@ export function projectProforma(
 
   const annualRevenue = annualize(base.revenueCents, base.monthsCovered);
   const projectable = base.lines.filter((l) => l.treatment !== "excluded");
+  const annualizedLines = projectable.map((l) => ({
+    key: l.key,
+    label: l.label,
+    amountCents: annualize(l.amountCents, base.monthsCovered),
+  }));
   const baseAnnualized = {
     periodLabel: `${base.periodLabel} (annualized)`,
     revenueCents: annualRevenue,
-    lines: projectable.map((l) => ({
-      key: l.key,
-      label: l.label,
-      amountCents: annualize(l.amountCents, base.monthsCovered),
-    })),
+    lines: annualizedLines,
+    operatingExpensesCents: sumCents(annualizedLines.map((l) => l.amountCents)),
   };
 
   // Annual debt service is level across years for a fixed-rate loan; for
