@@ -1,0 +1,231 @@
+{
+  "id": "pnl-annual-native-005",
+  "form_family": "PNL",
+  "tax_year": null,
+  "entity": "target",
+  "quality": "native",
+  "synthetic": false,
+  "pdf_sha256": "dd178e51b75b5d89ac3034afbad3c335b1c85c237e8398cb0f49a6769f5ddce9",
+  "page_count": 1,
+  "labeled_by": "pratik + claude (AI draft, human number-verified 2026-08-12)",
+  "labeled_at": "2026-08-12T00:00:00Z",
+  "fields": [
+    {
+      "taxonomy_node": "is.revenue.rental_income",
+      "period": "FY2024",
+      "value_cents": "87062612",
+      "page": 1,
+      "note": "ROOM RENTAL (hotel room revenue — no dedicated node; matches pnl-t12-native-001 precedent)"
+    },
+    {
+      "taxonomy_node": "is.revenue.other",
+      "period": "FY2024",
+      "value_cents": "1268658",
+      "page": 1,
+      "note": "MISC. INCOME"
+    },
+    {
+      "taxonomy_node": "is.revenue.total",
+      "period": "FY2024",
+      "value_cents": "88331270",
+      "page": 1,
+      "note": "TOTAL REVENUE"
+    },
+    {
+      "taxonomy_node": "is.opex.marketing_advertising",
+      "period": "FY2024",
+      "value_cents": "598",
+      "page": 1,
+      "note": "ADVERTISING 5.98 (yes, five dollars ninety-eight — as printed)"
+    },
+    {
+      "taxonomy_node": "is.opex.amortization",
+      "period": "FY2024",
+      "value_cents": "857196",
+      "page": 1,
+      "note": "AMORTIZATION EXPENSE"
+    },
+    {
+      "taxonomy_node": "is.opex.merchant_fees",
+      "period": "FY2024",
+      "value_cents": "2317180",
+      "page": 1,
+      "note": "CREDIT CARD FEES"
+    },
+    {
+      "taxonomy_node": "is.opex.depreciation",
+      "period": "FY2024",
+      "value_cents": "8250816",
+      "page": 1,
+      "note": "DEPRECIATION"
+    },
+    {
+      "taxonomy_node": "is.opex.dues_subscriptions",
+      "period": "FY2024",
+      "value_cents": "299",
+      "page": 1,
+      "note": "DUES & SUBSCRIPTIONS 2.99 (as printed)"
+    },
+    {
+      "taxonomy_node": "is.opex.royalties_franchise",
+      "period": "FY2024",
+      "value_cents": "10444900",
+      "page": 1,
+      "note": "FRANCHISE FEE EXPENSE"
+    },
+    {
+      "taxonomy_node": "is.opex.insurance",
+      "period": "FY2024",
+      "value_cents": "4729363",
+      "page": 1,
+      "note": "INSURANCE"
+    },
+    {
+      "taxonomy_node": "is.opex.professional_fees",
+      "period": "FY2024",
+      "value_cents": "731055",
+      "page": 1,
+      "note": "LEGAL & ACCOUNTING — JUDGMENT CALL (combined; matches pnl-t12-native-001)"
+    },
+    {
+      "taxonomy_node": "is.opex.licenses_permits",
+      "period": "FY2024",
+      "value_cents": "48600",
+      "page": 1,
+      "note": "LICENSES, PERMITS & FEES"
+    },
+    {
+      "taxonomy_node": "is.opex.repairs_maintenance",
+      "period": "FY2024",
+      "value_cents": "6482914",
+      "page": 1,
+      "note": "MAINTENANCE & REPAIRS"
+    },
+    {
+      "taxonomy_node": "is.opex.meals",
+      "period": "FY2024",
+      "value_cents": "138496",
+      "page": 1,
+      "note": "MEALS & ENTERTAINMENT — RELABEL PASS promotion (canonical node existed all along; completes the opex component sum to the printed total)"
+    },
+    {
+      "taxonomy_node": "is.opex.office_expense",
+      "period": "FY2024",
+      "value_cents": "129936",
+      "page": 1,
+      "note": "OFFICE EXPENSE"
+    },
+    {
+      "taxonomy_node": "is.opex.salaries_wages",
+      "period": "FY2024",
+      "value_cents": "14114108",
+      "page": 1,
+      "note": "SALARIES (officer portion 27,450.00 broken out only in the excluded Add-Backs block)"
+    },
+    {
+      "taxonomy_node": "is.opex.security",
+      "period": "FY2024",
+      "value_cents": "495000",
+      "page": 1,
+      "note": "SECURITY"
+    },
+    {
+      "taxonomy_node": "is.opex.supplies",
+      "period": "FY2024",
+      "value_cents": "3076510",
+      "page": 1,
+      "note": "OPERATING SUPPLIES"
+    },
+    {
+      "taxonomy_node": "is.opex.other_taxes",
+      "period": "FY2024",
+      "value_cents": "1392795",
+      "page": 1,
+      "note": "TAXES - GENERAL"
+    },
+    {
+      "taxonomy_node": "is.opex.payroll_taxes",
+      "period": "FY2024",
+      "value_cents": "1159686",
+      "page": 1,
+      "note": "TAXES - PAYROLL"
+    },
+    {
+      "taxonomy_node": "is.opex.telephone_internet",
+      "period": "FY2024",
+      "value_cents": "36258",
+      "page": 1,
+      "note": "TELEPHONE-CELL PHONE"
+    },
+    {
+      "taxonomy_node": "is.opex.commissions_paid",
+      "period": "FY2024",
+      "value_cents": "1453727",
+      "page": 1,
+      "note": "TRAVEL AGENT FEES — JUDGMENT CALL (OTA commissions; matches pnl-t12-native-001)"
+    },
+    {
+      "taxonomy_node": "is.opex.utilities",
+      "period": "FY2024",
+      "value_cents": "11227188",
+      "page": 1,
+      "note": "UTILITIES"
+    },
+    {
+      "taxonomy_node": "is.opex.total",
+      "period": "FY2024",
+      "value_cents": "67086625",
+      "page": 1,
+      "note": "TOTAL OPERATING EXPENSES — all 20 printed components now labeled (MEALS & ENTERTAINMENT promoted in relabel pass); components sum to this total exactly"
+    },
+    {
+      "taxonomy_node": "is.operating_income",
+      "period": "FY2024",
+      "value_cents": "21244645",
+      "page": 1,
+      "note": "OPERATING INCOME (LOSS)"
+    },
+    {
+      "taxonomy_node": "is.other.other_income",
+      "period": "FY2024",
+      "value_cents": "50602",
+      "page": 1,
+      "note": "SALES TAX DISCOUNTS — Other Income (Expenses) section"
+    },
+    {
+      "taxonomy_node": "is.other.interest_income",
+      "period": "FY2024",
+      "value_cents": "18",
+      "page": 1,
+      "note": "INTEREST REVENUE 0.18"
+    },
+    {
+      "taxonomy_node": "is.other.interest_expense",
+      "period": "FY2024",
+      "value_cents": "-29576216",
+      "page": 1,
+      "note": "INTEREST EXPENSE (295,762.16) — parenthesized, Other Income (Expenses) section"
+    },
+    {
+      "taxonomy_node": "is.other.total",
+      "period": "FY2024",
+      "value_cents": "-29525596",
+      "page": 1,
+      "note": "TOTAL OTHER INCOME (EXPENSES) (295,255.96) — RELABEL PASS promotion to canonical 'Total other income (expense)'; parenthesized = negative, as printed (506.02 + 0.18 − 295,762.16)"
+    },
+    {
+      "taxonomy_node": "is.pretax_income",
+      "period": "FY2024",
+      "value_cents": "-8280951",
+      "page": 1,
+      "note": "NET INCOME (LOSS) BEFORE TAXES (82,809.51) — RELABEL PASS promotion to canonical 'Income before taxes'; no tax provision line printed below it"
+    },
+    {
+      "taxonomy_node": "is.net_income",
+      "period": "FY2024",
+      "value_cents": "-8280951",
+      "page": 1,
+      "note": "NET INCOME (LOSS) (82,809.51) — bottom line; identical to the labeled is.pretax_income line (no tax provision printed)"
+    }
+  ]
+}

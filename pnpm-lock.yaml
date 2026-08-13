@@ -31,7 +31,7 @@ overrides:
   brace-expansion: '>=5.0.8'
   ip-address: '>=10.3.1'
   js-yaml@4: '>=4.3.1'
-  nanoid@<4: '>=3.3.16'
+  nanoid@<4: '>=3.3.18'
 
 importers:
 
@@ -4636,9 +4636,9 @@ packages:
     resolution: {integrity: sha512-jtpsQDetTnvS2Ts1fiRdci5rx0VYws5jGyC+4IYOTnIQ/wwdf6JdomlHBwqC3bJYOvaKu0C2GSZ1A60anrYpaA==}
     engines: {node: '>=20.17'}
 
-  nanoid@3.3.17:
-    resolution: {integrity: sha512-xQLf0A3HOMlgHq0n247/LRuAOYmB7dXJ/DvAxGvsSBij45XtBSmQycu+F8ODbHwns/XyFZagyL1+J0Offw1E0g==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+  nanoid@6.0.1:
+    resolution: {integrity: sha512-3wVS3i51pE2pi1k5FFL/95BGfVS0kSsvDVuGXHOtxox/TywUmtgq+3qiTOTbs9J7KfHaXPiN171k/A6dBnaXFw==}
+    engines: {node: ^22 || ^24 || >=26}
     hasBin: true
 
   natural-compare@1.4.0:
@@ -7966,7 +7966,7 @@ snapshots:
       execa: 8.0.1
       humanize-duration: 3.34.0
       jose: 5.10.0
-      nanoid: 3.3.17
+      nanoid: 6.0.1
       prom-client: 15.1.3
       socket.io: 4.7.4(supports-color@10.2.2)
       socket.io-client: 4.7.5(supports-color@10.2.2)
@@ -9846,7 +9846,7 @@ snapshots:
 
   nano-spawn@1.0.3: {}
 
-  nanoid@3.3.17: {}
+  nanoid@6.0.1: {}
 
   natural-compare@1.4.0: {}
 
@@ -10068,7 +10068,7 @@ snapshots:
 
   postcss@8.5.25:
     dependencies:
-      nanoid: 3.3.17
+      nanoid: 6.0.1
       picocolors: 1.1.1
       source-map-js: 1.2.1
 

@@ -1,0 +1,175 @@
+{
+  "id": "pnl-annual-native-002",
+  "form_family": "PNL",
+  "tax_year": null,
+  "entity": "target",
+  "quality": "native",
+  "synthetic": false,
+  "pdf_sha256": "54f1e0f7e0b68c19ab67210e9152e978c32699af067add6c84432dd96a042e9e",
+  "page_count": 1,
+  "labeled_by": "pratik + claude (AI draft, human number-verified 2026-08-12)",
+  "labeled_at": "2026-08-12T00:00:00Z",
+  "fields": [
+    {
+      "taxonomy_node": "is.revenue.rental_income",
+      "period": "FY2024",
+      "value_cents": "50110500",
+      "page": 1,
+      "note": "Lodging Sales (hotel room revenue — precedent: pnl-t12/pnl-monthly)"
+    },
+    {
+      "taxonomy_node": "is.revenue.total",
+      "period": "FY2024",
+      "value_cents": "50110500",
+      "page": 1,
+      "note": "Total Income"
+    },
+    {
+      "taxonomy_node": "is.gross_profit",
+      "period": "FY2024",
+      "value_cents": "50110500",
+      "page": 1,
+      "note": "Gross Profit (no COGS section printed)"
+    },
+    {
+      "taxonomy_node": "is.opex.vehicle",
+      "period": "FY2024",
+      "value_cents": "6300",
+      "page": 1,
+      "note": "Automobile Expense"
+    },
+    {
+      "taxonomy_node": "is.opex.bank_charges",
+      "period": "FY2024",
+      "value_cents": "16000",
+      "page": 1,
+      "note": "Bank Service Charges"
+    },
+    {
+      "taxonomy_node": "is.opex.merchant_fees",
+      "period": "FY2024",
+      "value_cents": "1237200",
+      "page": 1,
+      "note": "Credit Cards Processing Fees"
+    },
+    {
+      "taxonomy_node": "is.opex.dues_subscriptions",
+      "period": "FY2024",
+      "value_cents": "679000",
+      "page": 1,
+      "note": "Dues and Subscriptions"
+    },
+    {
+      "taxonomy_node": "is.opex.royalties_franchise",
+      "period": "FY2024",
+      "value_cents": "5279200",
+      "page": 1,
+      "note": "Franchise Fees"
+    },
+    {
+      "taxonomy_node": "is.opex.insurance",
+      "period": "FY2024",
+      "value_cents": "37400",
+      "page": 1,
+      "note": "Insurance Expense"
+    },
+    {
+      "taxonomy_node": "is.opex.supplies",
+      "period": "FY2024",
+      "value_cents": "3281400",
+      "page": 1,
+      "note": "Linens and Lodging Supplies"
+    },
+    {
+      "taxonomy_node": "is.opex.commissions_paid",
+      "period": "FY2024",
+      "value_cents": "732800",
+      "page": 1,
+      "note": "OTA Fees — JUDGMENT CALL: OTA commissions (precedent: pnl-monthly-native-001)"
+    },
+    {
+      "taxonomy_node": "is.opex.salaries_wages",
+      "period": "FY2024",
+      "value_cents": "2580000",
+      "page": 1,
+      "note": "Payroll Expenses (precedent: pnl-monthly-native-001)"
+    },
+    {
+      "taxonomy_node": "is.opex.postage_shipping",
+      "period": "FY2024",
+      "value_cents": "20100",
+      "page": 1,
+      "note": "Postage Expense"
+    },
+    {
+      "taxonomy_node": "is.opex.professional_fees",
+      "period": "FY2024",
+      "value_cents": "101600",
+      "page": 1,
+      "note": "Professional Fees — a separate 'Accounting Fees' line also exists; see flag"
+    },
+    {
+      "taxonomy_node": "is.opex.repairs_maintenance",
+      "period": "FY2024",
+      "value_cents": "1294800",
+      "page": 1,
+      "note": "Repairs and Maintenance"
+    },
+    {
+      "taxonomy_node": "is.opex.other_taxes",
+      "period": "FY2024",
+      "value_cents": "2181900",
+      "page": 1,
+      "note": "Taxes Expense — JUDGMENT CALL: generic taxes line (precedent: TAXES - GENERAL in pnl-t12); no separate payroll-tax line printed"
+    },
+    {
+      "taxonomy_node": "is.opex.utilities",
+      "period": "FY2024",
+      "value_cents": "4352800",
+      "page": 1,
+      "note": "Utilities"
+    },
+    {
+      "taxonomy_node": "is.opex.total",
+      "period": "FY2024",
+      "value_cents": "23794200",
+      "page": 1,
+      "note": "Total Expense — includes the six flagged lines below (labeled components alone sum to 218,005.00)"
+    },
+    {
+      "taxonomy_node": "is.operating_income",
+      "period": "FY2024",
+      "value_cents": "26316300",
+      "page": 1,
+      "note": "Net Ordinary Income"
+    },
+    {
+      "taxonomy_node": "is.opex.amortization",
+      "period": "FY2024",
+      "value_cents": "66800",
+      "page": 1,
+      "note": "Amortization Expense — printed under Other Income/Expense > Other Expense (below Net Ordinary Income)"
+    },
+    {
+      "taxonomy_node": "is.opex.depreciation",
+      "period": "FY2024",
+      "value_cents": "2112500",
+      "page": 1,
+      "note": "Depreciation Expense — printed under Other Income/Expense > Other Expense"
+    },
+    {
+      "taxonomy_node": "is.other.interest_expense",
+      "period": "FY2024",
+      "value_cents": "3250100",
+      "page": 1,
+      "note": "Interest Expense — printed positive under Other Expense (no parentheses)"
+    },
+    {
+      "taxonomy_node": "is.net_income",
+      "period": "FY2024",
+      "value_cents": "20886900",
+      "page": 1,
+      "note": "Net Income"
+    }
+  ]
+}

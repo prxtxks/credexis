@@ -12,6 +12,20 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@credexis/web", "start", "--port", "3100"],
       "port": 3100
+    },
+    {
+      "name": "site",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "/Users/ghostface/credexis-site",
+        "--",
+        "-p",
+        "3311"
+      ],
+      "port": 3311
     }
   ]
 }
