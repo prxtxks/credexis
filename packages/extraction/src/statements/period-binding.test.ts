@@ -256,6 +256,71 @@ describe("real CPA statement headers (bake-off findings, 2026-07-20)", () => {
     expect(binding.byColumn.get(1)).toMatchObject({ label: "As of 2025-05-31" });
   });
 
+  it("parses '<span> ended <date>' CPA compilation titles (M22)", () => {
+    // Unambiguous full-year spans, any phrasing:
+    expect(parsePeriodHeader("For the Year Ended December 31, 2024")).toMatchObject({
+      kind: "fiscal_year",
+      startDate: "2024-01-01",
+      endDate: "2024-12-31",
+      label: "FY2024",
+    });
+    expect(parsePeriodHeader("Twelve Months Ended June 30, 2025")).toMatchObject({
+      kind: "ttm",
+      startDate: "2024-07-01",
+      endDate: "2025-06-30",
+    });
+    // Non-calendar fiscal year end keeps its exact dates:
+    expect(parsePeriodHeader("Fiscal Year Ended June 30, 2025")).toMatchObject({
+      kind: "fiscal_year",
+      startDate: "2024-07-01",
+      endDate: "2025-06-30",
+    });
+    // "Period ended" states only the END. A calendar year-end reads as
+    // the fiscal year (the standard annual-compilation reading; the
+    // fact is suggested-only, review confirms). Any other date is
+    // genuinely ambiguous (YTD? quarter? month?) → refuse.
+    expect(parsePeriodHeader("Period Ended December 31, 2024")).toMatchObject({
+      kind: "fiscal_year",
+      label: "FY2024",
+    });
+    expect(parsePeriodHeader("Period Ended June 30, 2025")).toBeNull();
+  });
+
+  it("binds the Raj Krupa fixture title (M22: period only in the title block)", () => {
+    const grid: StatementGrid = {
+      page: 1,
+      bbox: { x: 0, y: 0, w: 1, h: 1 },
+      columnIds: [1],
+      rows: [
+        {
+          rowIndex: 0,
+          label: "ROOM RENTAL",
+          labelX: 0,
+          cells: new Map([[1, { text: "870,626.12", bbox: null }]]),
+        },
+      ],
+    };
+    const pages = [
+      {
+        page: 1,
+        textBlocks: [
+          {
+            text: "RAJ KRUPA HOTEL, LLC STATEMENT OF REVENUES & EXPENSES - INCOME TAX BASIS SUBSTANTIALLY ALL DISCLOSURES OMITTED PERIOD ENDED DECEMBER 31, 2024",
+            bbox: { x: 0.2, y: 0.02, w: 0.6, h: 0.08 },
+          },
+        ],
+        tables: [],
+      },
+    ];
+    const binding = bindPeriods(grid, pages as never);
+    expect(binding.byColumn.get(1)).toMatchObject({ label: "FY2024" });
+  });
+
+  it("'ended' phrasing never binds from print-date footers", () => {
+    // A footer date has no "ended" keyword — must stay unbindable.
+    expect(findPeriodInText("Printed Thursday, February 6, 2025 02:13 PM")).toBeNull();
+  });
+
   it("never guesses for MULTI-column grids from page text (review owns it)", () => {
     const grid: StatementGrid = {
       page: 1,

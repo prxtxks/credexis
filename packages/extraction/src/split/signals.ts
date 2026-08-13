@@ -154,7 +154,13 @@ const STATEMENT_PATTERNS: ReadonlyArray<[RegExp, FormFamily, string]> = [
   // so the generic "balance sheet" keyword must not get first claim. A
   // balance sheet never says "debt schedule"; the reverse is routine.
   [/debt schedule|schedule of (?:liabilities|debts|loans)/i, "DEBT_SCHEDULE", "debt-keyword"],
-  [/profit\s*(?:and|&)\s*loss|income statement|statement of operations/i, "PNL", "pnl-keyword"],
+  [
+    // "statement of revenues & expenses" is CPA-compilation phrasing for
+    // a P&L (M22, Raj Krupa fixture — the page never says "profit").
+    /profit\s*(?:and|&)\s*loss|income statement|statement of operations|statement of revenues?\s*(?:and|&)\s*expenses/i,
+    "PNL",
+    "pnl-keyword",
+  ],
   [/balance sheet/i, "BALANCE_SHEET", "bs-keyword"],
 ];
 
