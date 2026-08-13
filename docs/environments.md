@@ -170,8 +170,12 @@ unless its flag is set alongside the credentials it needs in `.env.local`:
   ids (Trigger.dev log viewer / any drain).
 - **Cost dashboard**: `/costs` aggregates extraction_runs per deal — spend
   by stage, failed-run count, and a ⚠ flag over the $10/deal envelope
-  (Blueprint §12). Source-map upload needs `SENTRY_ORG` / `SENTRY_PROJECT`
-  / `SENTRY_AUTH_TOKEN` (optional; runtime capture works without).
+  (Blueprint §12). Statement spend counts too: the `extract_statement` row
+  totals the layout vendor call plus the label classifier (breakdown and
+  serving vendor in run metadata), and Anthropic cost accounting prices
+  prompt-cache tokens (writes 1.25x input rate, reads 0.1x). Source-map
+  upload needs `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN`
+  (optional; runtime capture works without).
 
 ## Repository & CI
 

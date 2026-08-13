@@ -97,6 +97,32 @@ describe("AnthropicVisionAdapter (recorded responses — no live calls)", () => 
     expect(result.run.costMicroUsd).toBe(8250n);
   });
 
+  it("prices prompt-cache tokens: writes at 1.25x the input rate, reads at 0.1x", async () => {
+    // Prompt-cached calls used to under-report - cache_creation and
+    // cache_read tokens were dropped from the bill entirely.
+    const cached = {
+      ...RECORDED_RESPONSE,
+      usage: {
+        input_tokens: 2000,
+        output_tokens: 150,
+        cache_creation_input_tokens: 1000,
+        cache_read_input_tokens: 5000,
+      },
+    };
+    const adapter = new AnthropicVisionAdapter({
+      apiKey: "test-key",
+      fetch: async () =>
+        new Response(JSON.stringify(cached), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+    });
+    const result = await adapter.extractFields(DOC, FIELDS);
+    // 8250 uncached (as above) + 1000 write @ $3 × 1.25 = 3750
+    // + 5000 read @ $3 × 0.1 = 1500 → 13500 µ$.
+    expect(result.run.costMicroUsd).toBe(13500n);
+  });
+
   it("sends structured outputs + disabled thinking + frozen system prompt (no sampling params)", async () => {
     const capture: { body?: unknown } = {};
     const adapter = new AnthropicVisionAdapter({
