@@ -17,6 +17,8 @@ coverage/
 playwright-report/
 test-results/
 .playwright/
+# Hero captures from the source-demo live spec (regenerable, never shipped in git)
+apps/web/e2e/screenshots/
 
 # Logs
 *.log
