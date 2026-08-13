@@ -166,6 +166,7 @@ Companion to `ARCHITECTURE.md` (the spec) and `POSTMORTEM_V1.md` (the traps). Ex
 ## M10 — Export, hardening, launch
 
 - **M10.1 XLSX export (exceljs):** banker workbook — Spread, Addbacks, Global CF, Pro-Forma, Assumptions tabs; formulas live where feasible; branding; snapshot test against golden workbook.
+  - ✅ Shipped (2026-07-19, #52): banker tabs with live formulas where feasible (addbacks SUMIF, DSCR division); integer cents become Excel doubles at exactly one boundary, by string slicing; provenance (engine + pinned pack versions) on Assumptions; download link in the workspace header. Branding landed later under M17. **Criterion note:** the original "snapshot test against golden workbook" was satisfied with structural/formula unit tests (`apps/web/src/server/export/workbook.test.ts` — 13 as of M17, covering tabs, cell placement, live formulas, provenance, branding) plus a live e2e assertion that a real .xlsx downloads — not a byte-level golden-workbook snapshot.
 - **M10.2 Observability:** Sentry (web + jobs), structured logs with run ids, cost dashboard from extraction_runs, alerting on failure rates/cost anomalies.
 - **M10.3 Security pass:** dependency audit; authz test suite (every route × role matrix); rate limits; signed-URL TTL review; log PII scrub verification; restore-from-backup drill.
 - **M10.4 SOC 2 groundwork:** access review doc, vendor register, change-management policy (PR-based), incident runbook in `/docs`.
@@ -248,6 +249,20 @@ binding requirements. Standing rules in synthesis §4 apply to every PR.
 
 - **M15 Pro-forma projection:** `projectProforma()` in packages/engine/src/proforma reproduces the Golden Deal workbook's method — %-of-revenue expense scaling in exact integer arithmetic (the acceptance test reproduces JadeRock's printed advertising figure to the cent), linear YTD annualization, per-year compounding growth, fixed and excluded treatments, debt service from the existing amortizer, DSCR as CFADS over annual debt service. The tRPC layer anchors the base on ACCEPTED facts of the deal's target entity and stores ONLY the human's assumptions (`proforma_assumptions`, migration 0036, RLS + audit) — the projection is recomputed server-side on every read, and the assumption record is the lineage of every projected number. The workspace Pro-Forma tab renders it: assumption strip with live preview, treatment per line, DSCR row tinted against the 1.25 eyeball line.
   - ✅ Shipped (2026-08-11, #195; fixes #196 same day): the loan lookup reads `loan_scenarios` (the queried `scenarios` table never existed — any projection with a scenario selected 500'd), and extracted subtotal facts are never projected alongside their component lines (which double-counted opex and understated NOI). Verified live on the Travelodge deal — DSCR renders per year from the amortized scenario.
+
+---
+
+## M16 — Pro-forma forecast sheet (export matches the bank template)
+
+- **M16 Pro-forma forecast in the XLSX export:** Pratik's directive — "exporting into excel exactly as our template." Pro-forma computation moved to ONE shared implementation (`apps/web/src/server/proforma/compute.ts`) behind both the tRPC endpoint and the export route, so the workbook a banker downloads can never disagree with the tab they reviewed. The Pro-Forma sheet renders the template's forecast anatomy (modeled on the Golden Deal's real JadeRock workbook): line rows against paired amount + %-of-revenue columns per year, totals, CFADS, debt service, DSCR — the % cells and DSCR are LIVE Excel formulas referencing the money cells, never baked percentages. Assumptions (base period, growth by year, owner salary, per-line treatments) travel on their own sheet. Deals without a projectable base keep the legacy scenario summary.
+  - ✅ Shipped (2026-08-11, #199): verified against the live Travelodge deal — sheet titles on the target entity, all three projected years render, formula pairing present in the produced file.
+
+---
+
+## M17 — Per-bank export branding
+
+- **M17 Org branding on every exported workbook:** banks hand these files to credit committees; the files should read as THEIR work product. Settings → Branding (admin-writable, RLS + audit, migration 0037): institution name, primary and accent colors with pickers, footer text, and a LIVE preview of the workbook header. Exports apply it everywhere — title blocks lead each spread sheet, sheet headers wear the primary color, the footer travels on Assumptions. Unbranded orgs keep the original anatomy. Logo slot reserved (honest Soon until the storage pass).
+  - ✅ Shipped (2026-08-11, #202): verified end to end on the live deal — saved via the UI, downloaded via the endpoint, file inspected for title blocks, footer, and brand fill.
 
 ---
 
