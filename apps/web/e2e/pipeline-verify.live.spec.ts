@@ -40,7 +40,13 @@ const CLEANUP = `
   delete from public.deals where id = '${T.dealId}';
   delete from public.profiles where tenant_id = '${T.tenantId}';
   delete from public.audit_log where tenant_id = '${T.tenantId}';
+  -- tenants_audit (migration 0013) fires AFTER DELETE and inserts an audit
+  -- row for the tenant that no longer exists - FK 23503, and the whole
+  -- cleanup transaction rolls back. Disable it around the final delete
+  -- (transactional DDL: a failure re-enables it via rollback).
+  alter table public.tenants disable trigger tenants_audit;
   delete from public.tenants where id = '${T.tenantId}';
+  alter table public.tenants enable trigger tenants_audit;
 `;
 
 const seedSql = (userId: string) => `

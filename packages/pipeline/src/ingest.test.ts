@@ -199,7 +199,15 @@ describe("runIngest", () => {
     const { db, deps, payload } = await setup({
       pageTexts: ["no printed signals here", "still nothing recognizable"],
       classifier,
-      takeLlmUsage: () => [{ model: "claude-haiku-4-5", inputTokens: 1000, outputTokens: 200 }],
+      takeLlmUsage: () => [
+        {
+          model: "claude-haiku-4-5",
+          inputTokens: 1000,
+          outputTokens: 200,
+          cacheCreationInputTokens: 800,
+          cacheReadInputTokens: 10_000,
+        },
+      ],
     });
     const result = await runIngest(deps, payload);
 
@@ -207,8 +215,10 @@ describe("runIngest", () => {
     expect(db.logicalDocs).toHaveLength(1);
     expect(db.logicalDocs[0]).toMatchObject({ formFamily: "1040", taxYear: 2022 });
     const split = db.runs.find((r) => r.stage === "split_classify")!;
-    // 1000 in × $1/MTok + 200 out × $5/MTok = 2000 micro-USD, exact integers.
-    expect(split.costMicroUsd).toBe(2000n);
+    // 1000 in × $1/MTok + 200 out × $5/MTok = 2000, plus cache: 800 writes
+    // × $1 × 1.25 = 1000 and 10000 reads × $1 × 0.1 = 1000 → 4000 micro-USD,
+    // exact integers throughout.
+    expect(split.costMicroUsd).toBe(4000n);
     expect(split.model).toBe("claude-haiku-4-5");
   });
 
