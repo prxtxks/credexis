@@ -33,6 +33,12 @@ function scan(dir) {
   for (const name of readdirSync(dir)) {
     const path = join(dir, name);
     if (statSync(path).isDirectory()) {
+      // app/docs is static documentation PROSE - it explains formulas
+      // ("DSCR is CFADS divided by debt service") without computing
+      // anything, and JSX text is not a quoted string the blanker can
+      // see. Docs pages receive no live deal data; if one ever does,
+      // it moves out of /docs and back under this guard.
+      if (path.endsWith(join("app", "docs"))) continue;
       scan(path);
       continue;
     }
