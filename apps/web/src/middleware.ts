@@ -7,7 +7,7 @@ import { STATIC_SECURITY_HEADERS, buildCsp } from "@/lib/security-headers";
 const apiWriteLimiter = new RateLimiter(API_WRITE_LIMIT);
 
 /** Routes reachable without a session. Everything else requires sign-in. */
-const PUBLIC_PATHS = ["/login", "/signup", "/auth"];
+const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/docs"];
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
