@@ -141,7 +141,13 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "INTEREST EXPENSE", node: "is.other.interest_expense" },
   { label: "INTEREST REVENUE", node: "is.other.interest_income" },
   { label: "Other Income", node: "is.other.other_income" },
-  { label: "Total Other Income", node: "is.other.other_income" },
+  // "Total Other Income" was seeded → is.other.other_income in July (the
+  // labeled doc had ONE other-income line, so subtotal == leaf). On a
+  // multi-line section (Prayosha: rebate + tax discount + lottery +
+  // interest) it is a SECTION SUBTOTAL our taxonomy models only as the
+  // net (is.other.total) - binding it to the leaf produced the M23
+  // autopsy's single WRONG value (783.06 vs 738.46). Removed 2026-08-13:
+  // the mapper now leaves it to review (ruling #2) rather than force-fit.
   { label: "SALES TAX DISCOUNTS", node: "is.other.other_income" },
   { label: "Net Ordinary Income", node: "is.operating_income" },
   { label: "Net Operating Income", node: "is.operating_income" },
@@ -257,4 +263,17 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "TOTAL OTHER INCOME (EXPENSES)", node: "is.other.total" },
   { label: "NET INCOME (LOSS) BEFORE TAXES", node: "is.pretax_income" },
   { label: "Credit Cards Processing Fees", node: "is.opex.merchant_fees" },
+  // ── M23 round 2: scattered misses from the 20-doc autopsy, all printed
+  // on human-verified corpus docs (Niyazi 002/003, Prayosha scan, Jeff).
+  { label: "Dues and Subscriptions", node: "is.opex.dues_subscriptions" },
+  { label: "Linens and Lodging Supplies", node: "is.opex.supplies" },
+  { label: "Postage Expense", node: "is.opex.postage_shipping" },
+  { label: "Postage and Delivery", node: "is.opex.postage_shipping" },
+  { label: "Licenses and Permits", node: "is.opex.licenses_permits" },
+  { label: "Payroll Tax Expense", node: "is.opex.payroll_taxes" },
+  { label: "Security Expense", node: "is.opex.security" },
+  { label: "Supplies", node: "is.opex.supplies" },
+  { label: "Interest Income", node: "is.other.interest_income" },
+  { label: "Total COGS", node: "is.cogs.total" },
+  { label: "employee Appreciation", node: "is.opex.employee_benefits" }, // as printed
 ];

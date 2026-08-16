@@ -197,19 +197,25 @@ function toExtractor(spec: RowSpec): EvalExtractor {
       // field is absent"; scorer: null==null is correct, null vs value is
       // WRONG - so a wrongly-inferred blank still costs precision).
       // Statements stay open-set: no such inference.
+      // Scope: the GT-LABELED registry fields only (the answer key defines
+      // what is verifiable) - never the whole registry. The registry lists
+      // 51 fields for an 1120-S; a page-1 GT labels 23; inferring blanks
+      // for the other 28 scored them all spurious (precision 97% → 45% on
+      // the first full run - the inference over-reached, not the extractor).
       const closedSet = !["PNL", "BALANCE_SHEET", "DEBT_SCHEDULE"].includes(gt.form_family);
       if (closedSet && gt.tax_year !== null && fields.length > 0) {
         const entry = getRegistryEntry(gt.form_family as FormFamily, gt.tax_year);
+        const registryIds = new Set((entry?.fields ?? []).map((rf) => rf.fieldId));
         const period = canonPeriod(`FY${gt.tax_year}`);
         const have = new Set(fields.map((f) => `${f.registry_field_id ?? ""}|${f.period}`));
-        for (const rf of entry?.fields ?? []) {
-          if (have.has(`${rf.fieldId}|${period}`)) continue;
-          fields.push({
-            registry_field_id: rf.fieldId,
-            period,
-            value_cents: null,
-            outcome: "review",
-          });
+        const labeled = new Set(
+          gt.fields
+            .map((f) => f.registry_field_id)
+            .filter((id): id is string => typeof id === "string" && registryIds.has(id)),
+        );
+        for (const fieldId of labeled) {
+          if (have.has(`${fieldId}|${period}`)) continue;
+          fields.push({ registry_field_id: fieldId, period, value_cents: null, outcome: "review" });
         }
       }
       return { fields, cost_micro_usd: result.costMicroUsd };
