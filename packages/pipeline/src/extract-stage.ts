@@ -517,6 +517,10 @@ async function extractStatementInner(
   entityId: string,
   now: () => number,
 ): Promise<number> {
+  // Set when the LLM label classifier failed and mapping fell back to
+  // learned mappings only (recorded in run metadata).
+  let classifierDegraded: string | null = null;
+
   if (!deps.statementLayout) {
     await deps.db.insertExtractionRun(
       runRow(
@@ -581,7 +585,11 @@ async function extractStatementInner(
         deps.mappingsStore,
         deps.labelClassifier,
       );
-    } catch {
+    } catch (e) {
+      // Degrade VISIBLY: the run log must say the LLM tier was down so a
+      // seed-only run is never mistaken for a full one (the M24 autopsy
+      // read credit-exhausted runs as mapper gaps for an hour).
+      classifierDegraded = (e as Error).message.slice(0, 200);
       mapped = await mapLabels(labels, statement, input.tenantId, deps.mappingsStore, null);
     }
     const mappedByLabel = new Map(mapped.map((m) => [m.label, m]));
@@ -651,6 +659,7 @@ async function extractStatementInner(
         grids: grids.length,
         facts: inserted,
         unmappedLabels: unmapped,
+        ...(classifierDegraded ? { classifierDegraded } : {}),
         // M18.4: a served-by-fallback layout is visible in the run log -
         // duck-typed so the stage stays adapter-agnostic.
         ...((deps.statementLayout as { lastFailover?: unknown }).lastFailover
