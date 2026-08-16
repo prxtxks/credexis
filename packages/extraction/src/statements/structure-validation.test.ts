@@ -88,9 +88,11 @@ describe("M5 EXIT GATE — messy QuickBooks P&L (in thousands, planted break)", 
     ["Expenses"],
     ["Rent", "36,000", "34,000"],
     ["Payroll", "300,000", "280,000"],
-    ["Total Expenses", "336,000", "314,000"],
-    ["Net Income", "264,000", "226,000"],
+    // Unmappable planted line sits INSIDE the expense block: a line
+    // below Net Income is supplemental (M23) and never reaches the mapper.
     ["Zorble Fees", "1,000", "900"], // unmappable → review
+    ["Total Expenses", "337,000", "315,000"],
+    ["Net Income", "263,000", "225,000"],
   ]);
 
   it("produces mapped, period-bound, unit-scaled facts", async () => {

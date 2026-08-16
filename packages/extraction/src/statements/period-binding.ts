@@ -323,6 +323,69 @@ export function findPeriodInText(text: string): CanonicalPeriod | null {
 }
 
 /** Scan the top rows for period headers; bind by column identity. */
+/** "Total" / "TOTAL" / "Total Amount" - the header of a summing column. */
+const TOTAL_HEADER_RE = /^\s*total(?:\s+(?:amount|column|for period))?\s*$/i;
+
+/**
+ * Bind a "Total" column to the span of its sibling period columns (M23).
+ * Preconditions, each a refusal when unmet: exactly one Total-headed
+ * column; every other column bound; every sibling a whole-month interim
+ * (monthly grids are the shape this exists for); siblings tile a
+ * contiguous month range with no gap or overlap. Label follows the span:
+ * 12 months Jan-Dec → FY; any other 12-month run → TTM; shorter → interim
+ * range - the same spellings parsePeriodHeader emits.
+ */
+function bindTotalColumn(
+  grid: StatementGrid,
+  byColumn: Map<number, CanonicalPeriod | null>,
+  headerRowIndexes: number[],
+): void {
+  const headerRows = grid.rows.filter((r) => headerRowIndexes.includes(r.rowIndex));
+  const totalCols = grid.columnIds.filter(
+    (c) =>
+      !byColumn.get(c) && headerRows.some((r) => TOTAL_HEADER_RE.test(r.cells.get(c)?.text ?? "")),
+  );
+  if (totalCols.length !== 1) return;
+  const totalCol = totalCols[0]!;
+  const siblings = grid.columnIds.filter((c) => c !== totalCol).map((c) => byColumn.get(c));
+  if (siblings.length === 0 || siblings.some((p) => !p)) return;
+  const months = (siblings as CanonicalPeriod[])
+    .map((p) => {
+      const a = /^(\d{4})-(\d{2})-01$/.exec(p.startDate);
+      const b = /^(\d{4})-(\d{2})-(\d{2})$/.exec(p.endDate);
+      if (!a || !b || a[1] !== b[1] || a[2] !== b[2]) return null; // not a whole single month
+      const y = Number(a[1]);
+      const m = Number(a[2]);
+      if (Number(b[3]) !== eom(y, m)) return null;
+      return y * 12 + (m - 1);
+    })
+    .sort((x, y) => (x ?? 0) - (y ?? 0));
+  if (months.some((m) => m === null)) return;
+  const idx = months as number[];
+  for (let i = 1; i < idx.length; i++) if (idx[i] !== idx[i - 1]! + 1) return; // gap or overlap
+  const first = idx[0]!;
+  const last = idx[idx.length - 1]!;
+  const y1 = Math.floor(first / 12);
+  const m1 = (first % 12) + 1;
+  const y2 = Math.floor(last / 12);
+  const m2 = (last % 12) + 1;
+  const startDate = iso(y1, m1, 1);
+  const endDate = iso(y2, m2, eom(y2, m2));
+  const mm2 = String(m2).padStart(2, "0");
+  if (idx.length === 12 && m1 === 1) {
+    byColumn.set(totalCol, { kind: "fiscal_year", startDate, endDate, label: `FY${y1}` });
+  } else if (idx.length === 12) {
+    byColumn.set(totalCol, { kind: "ttm", startDate, endDate, label: `TTM ${y2}-${mm2}` });
+  } else {
+    byColumn.set(totalCol, {
+      kind: "interim",
+      startDate,
+      endDate,
+      label: `${y1}-${String(m1).padStart(2, "0")}..${y2}-${mm2}`,
+    });
+  }
+}
+
 export function bindPeriods(grid: StatementGrid, pages: LayoutPage[] = []): PeriodBinding {
   const byColumn = new Map<number, CanonicalPeriod | null>();
   const headerRowIndexes: number[] = [];
@@ -341,6 +404,14 @@ export function bindPeriods(grid: StatementGrid, pages: LayoutPage[] = []): Peri
     // Stop once every column is bound.
     if (grid.columnIds.every((c) => byColumn.get(c))) break;
   }
+
+  // Total column of a multi-period grid (M23): a column headed "Total" has
+  // no date of its own, but its identity is not a guess - it IS the span
+  // of its sibling period columns, by definition. Bound only when EVERY
+  // other column parsed to a period and those periods tile a contiguous
+  // range with no gaps/overlaps (Iron Law #4: identity, never position;
+  // any ambiguity → null → review).
+  bindTotalColumn(grid, byColumn, headerRowIndexes);
 
   // Page-title fallback (real CPA statements print the period in the
   // title block, not a table cell): allowed ONLY for single-value-column

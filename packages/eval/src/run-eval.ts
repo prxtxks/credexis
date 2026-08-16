@@ -177,6 +177,7 @@ async function bakeOff(root: string): Promise<void> {
           form_family: sc.form_family,
           missed: sc.detail.missed_keys,
           wrong: sc.detail.wrong_values,
+          uncovered: sc.detail.uncovered_keys,
         })),
         null,
         2,

@@ -132,6 +132,20 @@ describe("normalization + fuzzy bar", () => {
     expect(normalizeLabel("Section 179 Deduction")).toBe("section 179 deduction");
     expect(normalizeLabel("401k Match")).toBe("401k match");
   });
+  it('QuickBooks "Total for X" ≡ "Total X" (bs-asof finding, M23)', () => {
+    // QuickBooks Online prints every subtotal as "Total for <section>";
+    // the seed (and every other vendor) says "Total <section>". The live
+    // bake-off lost all nine balance-sheet totals to that one word.
+    expect(normalizeLabel("Total for Assets")).toBe("total assets");
+    expect(normalizeLabel("Total for Current Liabilities")).toBe("total current liabilities");
+    expect(normalizeLabel("Total for Liabilities and Equity")).toBe("total liabilities and equity");
+    // Existing behavior preserved: code-stripping still works with the prefix.
+    expect(normalizeLabel("Total for 63300 Insurance Expense")).toBe("total insurance expense");
+    // Never touch a mid-label "for".
+    expect(normalizeLabel("Allowance for Doubtful Accounts")).toBe(
+      "allowance for doubtful accounts",
+    );
+  });
   it("the ≥95 bar: near-identical passes, sibling labels do not", () => {
     expect(similarity("officers compensation", "officer compensation")).toBeGreaterThanOrEqual(
       0.95,

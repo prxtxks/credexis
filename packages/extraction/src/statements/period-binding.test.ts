@@ -350,3 +350,100 @@ describe("real CPA statement headers (bake-off findings, 2026-07-20)", () => {
     expect(binding.byColumn.get(2)).toBeNull();
   });
 });
+
+describe("Total column of a multi-period grid (M23 - the pnl-t12 finding)", () => {
+  // The live bake-off extracted all 12 monthly columns of the RAJ KRUPA
+  // trailing-twelve P&L perfectly (396 facts) and dropped the ONE column
+  // a banker reads: "Total". A total column has no date in its own
+  // header, but its identity is not a guess - it IS the span of its
+  // sibling period columns, by definition. Bound with that span; label
+  // follows the span shape (12 calendar months → FY; 12 rolling → TTM;
+  // fewer → interim).
+  const cells = (col: number, text: string) =>
+    [col, { text, bbox: { x: 0.1 + col * 0.06, y: 0.05, w: 0.05, h: 0.02 } }] as const;
+  function monthlyGrid(headers: string[]): StatementGrid {
+    return {
+      page: 1,
+      bbox: { x: 0, y: 0, w: 1, h: 1 },
+      columnIds: headers.map((_, i) => i + 1),
+      rows: [
+        {
+          rowIndex: 0,
+          label: "",
+          labelX: null,
+          cells: new Map(headers.map((h, i) => cells(i + 1, h))),
+        },
+        {
+          rowIndex: 1,
+          label: "ROOM RENTAL",
+          labelX: 0.02,
+          cells: new Map(headers.map((_, i) => cells(i + 1, "1,000.00"))),
+        },
+      ],
+    };
+  }
+
+  it("binds a trailing-twelve Total column as TTM of its siblings", () => {
+    const months = [
+      "Oct 2024",
+      "Nov 2024",
+      "Dec 2024",
+      "Jan 2025",
+      "Feb 2025",
+      "Mar 2025",
+      "Apr 2025",
+      "May 2025",
+      "Jun 2025",
+      "Jul 2025",
+      "Aug 2025",
+      "Sep 2025",
+    ];
+    const b = bindPeriods(monthlyGrid([...months, "Total"]));
+    expect(b.byColumn.get(13)).toMatchObject({
+      kind: "ttm",
+      startDate: "2024-10-01",
+      endDate: "2025-09-30",
+      label: "TTM 2025-09",
+    });
+  });
+
+  it("binds a calendar-year Total column as the fiscal year", () => {
+    const months = [
+      "Jan 2024",
+      "Feb 2024",
+      "Mar 2024",
+      "Apr 2024",
+      "May 2024",
+      "Jun 2024",
+      "Jul 2024",
+      "Aug 2024",
+      "Sep 2024",
+      "Oct 2024",
+      "Nov 2024",
+      "Dec 2024",
+    ];
+    const b = bindPeriods(monthlyGrid([...months, "TOTAL"]));
+    expect(b.byColumn.get(13)).toMatchObject({ kind: "fiscal_year", label: "FY2024" });
+  });
+
+  it("binds a partial-year Total column as the interim span", () => {
+    const b = bindPeriods(monthlyGrid(["Jan 2025", "Feb 2025", "Mar 2025", "Total"]));
+    expect(b.byColumn.get(4)).toMatchObject({
+      kind: "interim",
+      startDate: "2025-01-01",
+      endDate: "2025-03-31",
+      label: "2025-01..2025-03",
+    });
+  });
+
+  it("refuses when siblings are not contiguous or not all bound (Iron Law #4)", () => {
+    // A gap means the Total is not simply the span - review owns it.
+    expect(bindPeriods(monthlyGrid(["Jan 2025", "Mar 2025", "Total"])).byColumn.get(3)).toBeNull();
+    // An unparseable sibling ("Budget") means we cannot know the span.
+    expect(
+      bindPeriods(monthlyGrid(["Jan 2025", "Feb 2025", "Budget", "Total"])).byColumn.get(4),
+    ).toBeNull();
+    // A lone Total with no period siblings is just an unbound column.
+    expect(bindPeriods(monthlyGrid(["Total"])).byColumn.get(1)).toBeNull();
+  });
+});

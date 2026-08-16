@@ -25,7 +25,6 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "ROOM RENTAL", node: "is.revenue.rental_income" },
   { label: "MISC. INCOME", node: "is.revenue.other" },
   { label: "Income", node: "is.revenue.total" },
-  { label: "Total for Income", node: "is.revenue.total" },
   { label: "Total Sales", node: "is.revenue.total" },
   { label: "Total Income", node: "is.revenue.total" },
   { label: "Cost of Goods Sold", node: "is.cogs.total" },
@@ -88,7 +87,6 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "Software & apps", node: "is.opex.software" },
   { label: "Total Expense", node: "is.opex.total" },
   { label: "Total Expenses", node: "is.opex.total" },
-  { label: "Total for Expenses", node: "is.opex.total" },
   { label: "Total Operating Expenses", node: "is.opex.total" },
 
   // ── Annual P&L full vocabulary (verified against the printed pages,
@@ -131,7 +129,6 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "Wages", node: "is.opex.salaries_wages" },
   { label: "Total Payroll Taxes", node: "is.opex.payroll_taxes" },
   { label: "Rent Expense", node: "is.opex.rent" },
-  { label: "Total 68600 Utilities", node: "is.opex.utilities" },
   { label: "Total 63300 Insurance Expense", node: "is.opex.insurance" },
   { label: "Total 67200 Repairs and Maintenance", node: "is.opex.repairs_maintenance" },
   { label: "Total Operating Supplies", node: "is.opex.supplies" },
@@ -183,6 +180,7 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "Total Equity", node: "bs.equity.total" },
   { label: "Total Partners' Equity", node: "bs.equity.total" },
   { label: "TOTAL LIABILITIES & EQUITY", node: "bs.total_liabilities_equity" },
+  { label: "Total Liabilities and Equity", node: "bs.total_liabilities_equity" }, // bs-asof (QBO), M23
   { label: "Total Liabilities and Partners' Equity", node: "bs.total_liabilities_equity" },
 
   // ── V1 (UnderlyticsAI) banker synonym map — domain-expert vocabulary,

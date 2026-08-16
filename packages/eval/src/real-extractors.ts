@@ -73,6 +73,10 @@ export function canonPeriod(label: string): string {
   // different spelling. Both sides canonicalize identically.
   const asOf = /^As of (\d{4})-(\d{2})-\d{2}$/.exec(stripped);
   if (asOf) return `${asOf[1]}-${asOf[2]}`;
+  // TTM: the chain emits "TTM 2025-09", hand labels wrote "TTM2025-09" -
+  // same twelve months. Whitespace only.
+  const ttm = /^TTM\s*(\d{4}-\d{2})$/i.exec(stripped);
+  if (ttm) return `TTM ${ttm[1]}`;
   return stripped;
 }
 

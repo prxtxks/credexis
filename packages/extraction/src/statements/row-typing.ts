@@ -12,7 +12,15 @@
 import { normalizeAmount, type Cents } from "@credexis/shared";
 import type { GridRow, StatementGrid } from "./grid.js";
 
-export type RowType = "header" | "item" | "subtotal" | "total" | "section_break";
+export type RowType =
+  | "header"
+  | "item"
+  | "subtotal"
+  | "total"
+  | "section_break"
+  /** Below the income statement's bottom line: add-back / EBITDA / memo
+   *  blocks an accountant appended. Analysis, never source facts (M23). */
+  | "supplemental";
 
 export interface TypedRow {
   row: GridRow;
@@ -30,6 +38,11 @@ const GRAND_KEYWORD =
   /^(net (income|profit|loss)|total (assets|liabilities and (?:stockholders'?|owner'?s?|members'?)? ?equity|equity and liabilities))\b/i;
 
 const TOLERANCE_CENTS = 100n; // ±$1/level (Blueprint §4.5 G1)
+
+/** THE bottom line - not "Net Income Before Taxes", not "Net Operating
+ *  Income": those are intermediate and rows after them are still facts.
+ *  Optional "(Loss)" / "/ (Loss)" decoration; nothing else may follow. */
+const BOTTOM_LINE_RE = /^net (?:income|profit|loss)(?: ?\/? ?\((?:loss|deficit)\))?\s*$/i;
 
 function absDiff(a: bigint, b: bigint): bigint {
   return a > b ? a - b : b - a;
@@ -52,7 +65,14 @@ function matchesBlock(
   return compared > 0;
 }
 
-export function typeRows(grid: StatementGrid): TypedRow[] {
+export interface TypeRowsOptions {
+  /** Income statements end at Net Income; rows below are supplemental
+   *  (add-back / EBITDA blocks). NEVER for balance sheets, where "Net
+   *  Income" is an equity line item followed by real totals (M23). */
+  bottomLineIs?: "net_income" | undefined;
+}
+
+export function typeRows(grid: StatementGrid, opts: TypeRowsOptions = {}): TypedRow[] {
   const out: TypedRow[] = [];
   // Running sums per column: items since last subtotal boundary, and
   // subtotals since last total boundary.
@@ -67,7 +87,28 @@ export function typeRows(grid: StatementGrid): TypedRow[] {
     }
   };
 
+  let belowBottomLine = false;
+
   for (const row of grid.rows) {
+    // Everything after the bottom line is supplemental (M23): the
+    // RAJ KRUPA add-back block re-printed depreciation / amortization /
+    // interest below Net Income and the mapper summed them twice.
+    if (belowBottomLine) {
+      const valuesCents = new Map<number, Cents | null>();
+      for (const [col, cell] of row.cells) {
+        const r = normalizeAmount(cell.text);
+        valuesCents.set(col, r.ok ? r.cents : null);
+      }
+      out.push({
+        row,
+        type: "supplemental",
+        valuesCents,
+        hasUnreadable: false,
+        numericallyVerified: false,
+      });
+      continue;
+    }
+
     // Normalize the row's cells (raw scale — unit scaling is M5.3's).
     const valuesCents = new Map<number, Cents | null>();
     let hasUnreadable = false;
@@ -136,6 +177,9 @@ export function typeRows(grid: StatementGrid): TypedRow[] {
     }
 
     out.push({ row, type, valuesCents, hasUnreadable, numericallyVerified });
+    if (opts.bottomLineIs === "net_income" && hasValue && BOTTOM_LINE_RE.test(row.label.trim())) {
+      belowBottomLine = true;
+    }
   }
   return out;
 }

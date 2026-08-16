@@ -36,6 +36,8 @@ export interface DocumentScore {
   detail: {
     missed_keys: string[];
     wrong_values: { key: string; expected: string | null; got: string | null }[];
+    /** Open-set only: extracted identities outside the labeled set. */
+    uncovered_keys: string[];
   };
 }
 
@@ -139,6 +141,7 @@ export function scoreDocument(
   let autoAcceptedCorrect = 0;
   let silentWrong = 0;
   const wrongValues: DocumentScore["detail"]["wrong_values"] = [];
+  const uncoveredKeys: string[] = [];
 
   for (const ex of aggregatedExtraction) {
     const key = fieldKey(ex);
@@ -157,6 +160,7 @@ export function scoreDocument(
     if (truth === undefined) {
       if (opts.openSet) {
         uncovered += 1; // outside the labeled set — reported, not penalized
+        uncoveredKeys.push(key);
       } else {
         spurious += 1;
         if (isAuto) silentWrong += 1;
@@ -184,7 +188,7 @@ export function scoreDocument(
   const missedKeys = [...truthByKey.keys()].filter((k) => !seen.has(k));
 
   return {
-    detail: { missed_keys: missedKeys, wrong_values: wrongValues },
+    detail: { missed_keys: missedKeys, wrong_values: wrongValues, uncovered_keys: uncoveredKeys },
     id: gt.id,
     form_family: gt.form_family,
     quality: gt.quality,

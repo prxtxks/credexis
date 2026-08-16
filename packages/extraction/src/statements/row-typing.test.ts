@@ -156,3 +156,80 @@ describe("row typing — hand-built style traps", () => {
     expect(typed[10]?.numericallyVerified).toBe(false);
   });
 });
+
+describe("supplemental rows below Net Income (M23 - the pnl-t12 finding)", () => {
+  // RAJ KRUPA's trailing-twelve P&L prints AMORTIZATION / DEPRECIATION /
+  // INTEREST EXPENSE a SECOND time below Net Income - the accountant's
+  // add-back block. The live bake-off summed both occurrences into the
+  // opex nodes (exactly 2x depreciation; interest netted to 0). Rows
+  // after the bottom line are analysis, not source facts (labeling guide
+  // rule 5; the engine computes add-backs itself).
+  const IS = { bottomLineIs: "net_income" as const };
+
+  it("types every row after Net Income as supplemental", () => {
+    const rows = typeRows(
+      grid([
+        ["Revenue", "1,000.00", "2,000.00"],
+        ["DEPRECIATION", "100.00", "200.00"],
+        ["INTEREST EXPENSE", "(50.00)", "(60.00)"],
+        ["Total Operating Expenses", "150.00", "260.00"],
+        ["Net Income (Loss)", "850.00", "1,740.00"],
+        ["", null, null],
+        ["AMORTIZATION", "10.00", "20.00"],
+        ["DEPRECIATION", "100.00", "200.00"],
+        ["INTEREST EXPENSE", "50.00", "60.00"],
+        ["EBITDA", "1,010.00", "2,020.00"],
+      ]),
+      IS,
+    );
+    const types = rows.map((r) => [r.row.label, r.type]);
+    expect(types.slice(0, 5).map((t) => t[1])).not.toContain("supplemental");
+    expect(types[4]).toEqual(["Net Income (Loss)", "total"]);
+    for (const [label, type] of types.slice(6))
+      expect([label, type]).toEqual([label, "supplemental"]);
+  });
+
+  it("does not fire without a Net Income row (partial pages)", () => {
+    const rows = typeRows(
+      grid([
+        ["Cash", "100.00", "200.00"],
+        ["Total Assets", "100.00", "200.00"],
+        ["Accounts Payable", "40.00", "80.00"],
+      ]),
+      IS,
+    );
+    expect(rows.map((r) => r.type)).not.toContain("supplemental");
+  });
+
+  it("a balance sheet's Net Income equity line never arms the rule (live probe, bs-asof)", () => {
+    // Travelodge BS: "Net Income 134,615.48" is an EQUITY item followed by
+    // "Total for Equity" and "Total for Liabilities and Equity" - real
+    // totals. Without the income-statement option, nothing is supplemental.
+    const rows = typeRows(
+      grid([
+        ["Opening balance equity", "-161,117.22", "-161,117.22"],
+        ["Retained Earnings", "236,884.83", "236,884.83"],
+        ["Net Income", "134,615.48", "134,615.48"],
+        ["Total for Equity", "210,383.09", "210,383.09"],
+        ["Total for Liabilities and Equity", "856,660.95", "856,660.95"],
+      ]),
+    );
+    expect(rows.map((r) => r.type)).not.toContain("supplemental");
+  });
+
+  it("'Net Income Before Taxes' is NOT the bottom line - rows after it stay live", () => {
+    const rows = typeRows(
+      grid([
+        ["Revenue", "1,000.00", "2,000.00"],
+        ["Net Income (Loss) Before Taxes", "900.00", "1,900.00"],
+        ["Income Tax", "100.00", "200.00"],
+        ["Net Income (Loss)", "800.00", "1,700.00"],
+        ["DEPRECIATION", "100.00", "200.00"],
+      ]),
+      IS,
+    );
+    const t = rows.map((r) => r.type);
+    expect(t[2]).toBe("item"); // Income Tax is a real fact
+    expect(t[4]).toBe("supplemental");
+  });
+});
