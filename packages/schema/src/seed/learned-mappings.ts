@@ -272,7 +272,10 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "Licenses and Permits", node: "is.opex.licenses_permits" },
   { label: "Payroll Tax Expense", node: "is.opex.payroll_taxes" },
   { label: "Security Expense", node: "is.opex.security" },
-  { label: "Supplies", node: "is.opex.supplies" },
+  // NOT "Supplies" bare: on QBO it is a SECTION HEADER carrying its own
+  // amount ("Supplies $103.31" then sub-lines then "Total for Supplies")
+  // - seeding it double-counted the section (pnl-monthly, M23 run 3:
+  // 2,623.84 vs printed 2,618.87). The section total is the mapping.
   { label: "Interest Income", node: "is.other.interest_income" },
   { label: "Total COGS", node: "is.cogs.total" },
   { label: "employee Appreciation", node: "is.opex.employee_benefits" }, // as printed
