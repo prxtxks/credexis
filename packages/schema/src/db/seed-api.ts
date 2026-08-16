@@ -84,7 +84,8 @@ select count(*)::int as n from public.taxonomy_nodes;`;
       .replace(/\s+/g, " ")
       .trim()
       .replace(/^(total (?:for )?)?\d{3,5}(?: \d{1,4})* /, "$1")
-      .trim();
+      .trim()
+      .replace(/^total for /, "total ");
   // Dedupe by label_norm: a single INSERT ... ON CONFLICT DO UPDATE may
   // not touch one row twice (Postgres 21000), so the DB write must not
   // depend on data-file discipline alone (a test enforces it there too).

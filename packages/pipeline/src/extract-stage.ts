@@ -554,8 +554,21 @@ async function extractStatementInner(
   let unmapped = 0;
   for (const grid of grids) {
     const binding = bindPeriods(grid, pages);
-    const typed = typeRows(grid);
-    const labels = [...new Set(typed.map((r) => r.row.label).filter((l) => l.trim() !== ""))];
+    // Income statements end at Net Income (rows below = add-back blocks);
+    // balance sheets never arm that rule - "Net Income" is an equity item.
+    const typed = typeRows(grid, statement === "PNL" ? { bottomLineIs: "net_income" } : {});
+    // Supplemental rows (below the bottom line: add-back / EBITDA blocks)
+    // never become facts and never teach the mapper - their labels
+    // ("DEPRECIATION" re-printed as an add-back) would otherwise be
+    // classified, written back, and summed into the operating nodes (M23).
+    const labels = [
+      ...new Set(
+        typed
+          .filter((r) => r.type !== "supplemental")
+          .map((r) => r.row.label)
+          .filter((l) => l.trim() !== ""),
+      ),
+    ];
     // A dead classifier (rate limit, credits, outage) must DEGRADE, not
     // abort the document: retry with learned mappings only - unmapped
     // labels route to review instead of losing the whole statement.

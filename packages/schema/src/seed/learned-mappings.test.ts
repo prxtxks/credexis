@@ -22,7 +22,8 @@ describe("learned-mappings seed integrity", () => {
         .replace(/\s+/g, " ")
         .trim()
         .replace(/^(total (?:for )?)?\d{3,5}(?: \d{1,4})* /, "$1")
-        .trim();
+        .trim()
+        .replace(/^total for /, "total ");
     const seen = new Map<string, string>();
     const clashes: string[] = [];
     for (const m of LEARNED_MAPPINGS_SEED) {

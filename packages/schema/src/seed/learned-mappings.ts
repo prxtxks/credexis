@@ -25,7 +25,6 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "ROOM RENTAL", node: "is.revenue.rental_income" },
   { label: "MISC. INCOME", node: "is.revenue.other" },
   { label: "Income", node: "is.revenue.total" },
-  { label: "Total for Income", node: "is.revenue.total" },
   { label: "Total Sales", node: "is.revenue.total" },
   { label: "Total Income", node: "is.revenue.total" },
   { label: "Cost of Goods Sold", node: "is.cogs.total" },
@@ -88,7 +87,6 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "Software & apps", node: "is.opex.software" },
   { label: "Total Expense", node: "is.opex.total" },
   { label: "Total Expenses", node: "is.opex.total" },
-  { label: "Total for Expenses", node: "is.opex.total" },
   { label: "Total Operating Expenses", node: "is.opex.total" },
 
   // ── Annual P&L full vocabulary (verified against the printed pages,
@@ -109,7 +107,7 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "Total Tax Expense", node: "is.opex.other_taxes" },
   { label: "Royalties", node: "is.opex.royalties_franchise" },
   { label: "Total Rooms", node: "is.opex.misc" }, // rooms-dept costs section
-  { label: "Small Tools and Equipment", node: "is.opex.misc" },
+  { label: "Small Tools and Equipment", node: "is.opex.small_equipment" }, // retargeted 2026-08-13: node added under ruling #3
   { label: "Breakfast Supplies", node: "is.opex.supplies" },
   { label: "Cleaning Supplies", node: "is.opex.supplies" },
   { label: "Laundry and Lodging Supplies", node: "is.opex.supplies" },
@@ -131,7 +129,6 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "Wages", node: "is.opex.salaries_wages" },
   { label: "Total Payroll Taxes", node: "is.opex.payroll_taxes" },
   { label: "Rent Expense", node: "is.opex.rent" },
-  { label: "Total 68600 Utilities", node: "is.opex.utilities" },
   { label: "Total 63300 Insurance Expense", node: "is.opex.insurance" },
   { label: "Total 67200 Repairs and Maintenance", node: "is.opex.repairs_maintenance" },
   { label: "Total Operating Supplies", node: "is.opex.supplies" },
@@ -144,7 +141,13 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "INTEREST EXPENSE", node: "is.other.interest_expense" },
   { label: "INTEREST REVENUE", node: "is.other.interest_income" },
   { label: "Other Income", node: "is.other.other_income" },
-  { label: "Total Other Income", node: "is.other.other_income" },
+  // "Total Other Income" was seeded → is.other.other_income in July (the
+  // labeled doc had ONE other-income line, so subtotal == leaf). On a
+  // multi-line section (Prayosha: rebate + tax discount + lottery +
+  // interest) it is a SECTION SUBTOTAL our taxonomy models only as the
+  // net (is.other.total) - binding it to the leaf produced the M23
+  // autopsy's single WRONG value (783.06 vs 738.46). Removed 2026-08-13:
+  // the mapper now leaves it to review (ruling #2) rather than force-fit.
   { label: "SALES TAX DISCOUNTS", node: "is.other.other_income" },
   { label: "Net Ordinary Income", node: "is.operating_income" },
   { label: "Net Operating Income", node: "is.operating_income" },
@@ -183,6 +186,7 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "Total Equity", node: "bs.equity.total" },
   { label: "Total Partners' Equity", node: "bs.equity.total" },
   { label: "TOTAL LIABILITIES & EQUITY", node: "bs.total_liabilities_equity" },
+  { label: "Total Liabilities and Equity", node: "bs.total_liabilities_equity" }, // bs-asof (QBO), M23
   { label: "Total Liabilities and Partners' Equity", node: "bs.total_liabilities_equity" },
 
   // ── V1 (UnderlyticsAI) banker synonym map — domain-expert vocabulary,
@@ -226,4 +230,53 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "r&m", node: "is.opex.repairs_maintenance" },
   { label: "ads", node: "is.opex.marketing_advertising" },
   { label: "marketing", node: "is.opex.marketing_advertising" },
+  // ── M23 recall push (2026-08-13): every row below is a label PRINTED on a
+  // human-verified corpus document (docs/testing-docs/labeling-batch-2/3),
+  // bound where the ground truth binds it. ADR-0004: vocabulary from evidence.
+  { label: "Travel Expense", node: "is.opex.travel" },
+  { label: "Travel Expenses", node: "is.opex.travel" },
+  { label: "Travel", node: "is.opex.travel" },
+  { label: "Meals & Entertainment", node: "is.opex.meals" },
+  { label: "Meals & Entertaintment", node: "is.opex.meals" }, // typo as printed (Niyazi)
+  { label: "Uniforms", node: "is.opex.uniforms" },
+  { label: "Wages - Officer", node: "is.opex.officer_comp" },
+  { label: "Officer Wages", node: "is.opex.officer_comp" },
+  { label: "Officer Compensation", node: "is.opex.officer_comp" },
+  { label: "Officer Salary", node: "is.opex.officer_comp" },
+  { label: "Personal Property Taxes", node: "is.opex.property_taxes" },
+  { label: "Real Estate Taxes", node: "is.opex.property_taxes" },
+  { label: "Property Taxes", node: "is.opex.property_taxes" },
+  { label: "Property Tax", node: "is.opex.property_taxes" },
+  { label: "Sales Tax Expense", node: "is.opex.other_taxes" },
+  { label: "Taxes Expense", node: "is.opex.other_taxes" },
+  { label: "Bad Debt Expense", node: "is.opex.bad_debt" },
+  { label: "Bad Debt", node: "is.opex.bad_debt" },
+  { label: "Outside Services", node: "is.opex.contract_labor" },
+  { label: "Computer and Internet Expenses", node: "is.opex.telephone_internet" },
+  { label: "Point of Sale System Fee", node: "is.opex.software" },
+  { label: "Software Fees", node: "is.opex.software" },
+  { label: "Accounting Fees", node: "is.opex.accounting_fees" },
+  { label: "Merchandise Sales", node: "is.revenue.product_sales" },
+  { label: "Purchases", node: "is.cogs.purchases" },
+  { label: "Snow Removal Expense", node: "is.opex.repairs_maintenance" }, // ruling #1 sum
+  { label: "Cash Short (Over)", node: "is.opex.misc" },
+  { label: "TOTAL OTHER INCOME (EXPENSES)", node: "is.other.total" },
+  { label: "NET INCOME (LOSS) BEFORE TAXES", node: "is.pretax_income" },
+  { label: "Credit Cards Processing Fees", node: "is.opex.merchant_fees" },
+  // ── M23 round 2: scattered misses from the 20-doc autopsy, all printed
+  // on human-verified corpus docs (Niyazi 002/003, Prayosha scan, Jeff).
+  { label: "Dues and Subscriptions", node: "is.opex.dues_subscriptions" },
+  { label: "Linens and Lodging Supplies", node: "is.opex.supplies" },
+  { label: "Postage Expense", node: "is.opex.postage_shipping" },
+  { label: "Postage and Delivery", node: "is.opex.postage_shipping" },
+  { label: "Licenses and Permits", node: "is.opex.licenses_permits" },
+  { label: "Payroll Tax Expense", node: "is.opex.payroll_taxes" },
+  { label: "Security Expense", node: "is.opex.security" },
+  // NOT "Supplies" bare: on QBO it is a SECTION HEADER carrying its own
+  // amount ("Supplies $103.31" then sub-lines then "Total for Supplies")
+  // - seeding it double-counted the section (pnl-monthly, M23 run 3:
+  // 2,623.84 vs printed 2,618.87). The section total is the mapping.
+  { label: "Interest Income", node: "is.other.interest_income" },
+  { label: "Total COGS", node: "is.cogs.total" },
+  { label: "employee Appreciation", node: "is.opex.employee_benefits" }, // as printed
 ];

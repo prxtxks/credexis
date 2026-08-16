@@ -78,13 +78,17 @@ export class InMemoryMappingsStore implements LearnedMappingsStore {
  * ("401k Match") are never touched.
  */
 export function normalizeLabel(label: string): string {
-  return label
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/^(total (?:for )?)?\d{3,5}(?: \d{1,4})* /, "$1")
-    .trim();
+  return (
+    label
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/^(total (?:for )?)?\d{3,5}(?: \d{1,4})* /, "$1")
+      .trim()
+      // QuickBooks Online: "Total for Assets" ≡ "Total Assets" (M23).
+      .replace(/^total for /, "total ")
+  );
 }
 
 function levenshtein(a: string, b: string): number {

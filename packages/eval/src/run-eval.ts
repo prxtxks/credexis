@@ -166,6 +166,24 @@ async function bakeOff(root: string): Promise<void> {
       }
     }
     if (scores.length === 0) continue;
+    // Field-level autopsy: recall work needs to know WHICH identities were
+    // missed, not just how many (M23).
+    await mkdir(join(root, "eval-output"), { recursive: true });
+    await writeFile(
+      join(root, "eval-output", `misses-${key}.json`),
+      JSON.stringify(
+        scores.map((sc) => ({
+          id: sc.id,
+          form_family: sc.form_family,
+          missed: sc.detail.missed_keys,
+          wrong: sc.detail.wrong_values,
+          uncovered: sc.detail.uncovered_keys,
+        })),
+        null,
+        2,
+      ),
+      "utf8",
+    );
     const s = summarize(scores);
     const pct = (x: number | null) => (x === null ? "—" : `${(x * 100).toFixed(2)}%`);
     const usd = (m: bigint) => `$${(Number(m) / 1e6).toFixed(2)}`;

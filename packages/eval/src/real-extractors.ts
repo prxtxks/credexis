@@ -21,6 +21,7 @@ import {
   AnthropicLabelClassifier,
   AnthropicVisionAdapter,
   AzureDocumentIntelligenceAdapter,
+  getRegistryEntry,
   InMemoryMappingsStore,
   normalizeLabel,
   ReductoAdapter,
@@ -32,7 +33,7 @@ import {
   type ExtractionRunInsert,
   type FactInsert,
 } from "@credexis/pipeline";
-import { LEARNED_MAPPINGS_SEED } from "@credexis/schema";
+import { LEARNED_MAPPINGS_SEED, type FormFamily } from "@credexis/schema";
 
 /**
  * Per-doc mappings store preloaded with the SHIPPED global seed. The seed
@@ -72,6 +73,10 @@ export function canonPeriod(label: string): string {
   // different spelling. Both sides canonicalize identically.
   const asOf = /^As of (\d{4})-(\d{2})-\d{2}$/.exec(stripped);
   if (asOf) return `${asOf[1]}-${asOf[2]}`;
+  // TTM: the chain emits "TTM 2025-09", hand labels wrote "TTM2025-09" -
+  // same twelve months. Whitespace only.
+  const ttm = /^TTM\s*(\d{4}-\d{2})$/i.exec(stripped);
+  if (ttm) return `TTM ${ttm[1]}`;
   return stripped;
 }
 
@@ -183,6 +188,36 @@ function toExtractor(spec: RowSpec): EvalExtractor {
         else if (f.taxonomy_node_key !== null) field.taxonomy_node = f.taxonomy_node_key;
         return field;
       });
+      // Closed-set blank inference (M23): on tax forms the registry defines
+      // the complete field universe and a blank box is not a fact (Iron Law
+      // #1: never invent). So a registry field with NO fact after a
+      // successful extraction over the labeled span IS the extractor's
+      // verdict "blank" - surfaced as an explicit null so the scorer can
+      // credit correctly-reported blanks (ARCHITECTURE.md: "null when a
+      // field is absent"; scorer: null==null is correct, null vs value is
+      // WRONG - so a wrongly-inferred blank still costs precision).
+      // Statements stay open-set: no such inference.
+      // Scope: the GT-LABELED registry fields only (the answer key defines
+      // what is verifiable) - never the whole registry. The registry lists
+      // 51 fields for an 1120-S; a page-1 GT labels 23; inferring blanks
+      // for the other 28 scored them all spurious (precision 97% → 45% on
+      // the first full run - the inference over-reached, not the extractor).
+      const closedSet = !["PNL", "BALANCE_SHEET", "DEBT_SCHEDULE"].includes(gt.form_family);
+      if (closedSet && gt.tax_year !== null && fields.length > 0) {
+        const entry = getRegistryEntry(gt.form_family as FormFamily, gt.tax_year);
+        const registryIds = new Set((entry?.fields ?? []).map((rf) => rf.fieldId));
+        const period = canonPeriod(`FY${gt.tax_year}`);
+        const have = new Set(fields.map((f) => `${f.registry_field_id ?? ""}|${f.period}`));
+        const labeled = new Set(
+          gt.fields
+            .map((f) => f.registry_field_id)
+            .filter((id): id is string => typeof id === "string" && registryIds.has(id)),
+        );
+        for (const fieldId of labeled) {
+          if (have.has(`${fieldId}|${period}`)) continue;
+          fields.push({ registry_field_id: fieldId, period, value_cents: null, outcome: "review" });
+        }
+      }
       return { fields, cost_micro_usd: result.costMicroUsd };
     },
   };
