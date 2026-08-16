@@ -109,7 +109,7 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "Total Tax Expense", node: "is.opex.other_taxes" },
   { label: "Royalties", node: "is.opex.royalties_franchise" },
   { label: "Total Rooms", node: "is.opex.misc" }, // rooms-dept costs section
-  { label: "Small Tools and Equipment", node: "is.opex.misc" },
+  { label: "Small Tools and Equipment", node: "is.opex.small_equipment" }, // retargeted 2026-08-13: node added under ruling #3
   { label: "Breakfast Supplies", node: "is.opex.supplies" },
   { label: "Cleaning Supplies", node: "is.opex.supplies" },
   { label: "Laundry and Lodging Supplies", node: "is.opex.supplies" },
@@ -226,4 +226,37 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "r&m", node: "is.opex.repairs_maintenance" },
   { label: "ads", node: "is.opex.marketing_advertising" },
   { label: "marketing", node: "is.opex.marketing_advertising" },
+  // ── M23 recall push (2026-08-13): every row below is a label PRINTED on a
+  // human-verified corpus document (docs/testing-docs/labeling-batch-2/3),
+  // bound where the ground truth binds it. ADR-0004: vocabulary from evidence.
+  { label: "Travel Expense", node: "is.opex.travel" },
+  { label: "Travel Expenses", node: "is.opex.travel" },
+  { label: "Travel", node: "is.opex.travel" },
+  { label: "Meals & Entertainment", node: "is.opex.meals" },
+  { label: "Meals & Entertaintment", node: "is.opex.meals" }, // typo as printed (Niyazi)
+  { label: "Uniforms", node: "is.opex.uniforms" },
+  { label: "Wages - Officer", node: "is.opex.officer_comp" },
+  { label: "Officer Wages", node: "is.opex.officer_comp" },
+  { label: "Officer Compensation", node: "is.opex.officer_comp" },
+  { label: "Officer Salary", node: "is.opex.officer_comp" },
+  { label: "Personal Property Taxes", node: "is.opex.property_taxes" },
+  { label: "Real Estate Taxes", node: "is.opex.property_taxes" },
+  { label: "Property Taxes", node: "is.opex.property_taxes" },
+  { label: "Property Tax", node: "is.opex.property_taxes" },
+  { label: "Sales Tax Expense", node: "is.opex.other_taxes" },
+  { label: "Taxes Expense", node: "is.opex.other_taxes" },
+  { label: "Bad Debt Expense", node: "is.opex.bad_debt" },
+  { label: "Bad Debt", node: "is.opex.bad_debt" },
+  { label: "Outside Services", node: "is.opex.contract_labor" },
+  { label: "Computer and Internet Expenses", node: "is.opex.telephone_internet" },
+  { label: "Point of Sale System Fee", node: "is.opex.software" },
+  { label: "Software Fees", node: "is.opex.software" },
+  { label: "Accounting Fees", node: "is.opex.accounting_fees" },
+  { label: "Merchandise Sales", node: "is.revenue.product_sales" },
+  { label: "Purchases", node: "is.cogs.purchases" },
+  { label: "Snow Removal Expense", node: "is.opex.repairs_maintenance" }, // ruling #1 sum
+  { label: "Cash Short (Over)", node: "is.opex.misc" },
+  { label: "TOTAL OTHER INCOME (EXPENSES)", node: "is.other.total" },
+  { label: "NET INCOME (LOSS) BEFORE TAXES", node: "is.pretax_income" },
+  { label: "Credit Cards Processing Fees", node: "is.opex.merchant_fees" },
 ];

@@ -21,6 +21,7 @@ import {
   AnthropicLabelClassifier,
   AnthropicVisionAdapter,
   AzureDocumentIntelligenceAdapter,
+  getRegistryEntry,
   InMemoryMappingsStore,
   normalizeLabel,
   ReductoAdapter,
@@ -32,7 +33,7 @@ import {
   type ExtractionRunInsert,
   type FactInsert,
 } from "@credexis/pipeline";
-import { LEARNED_MAPPINGS_SEED } from "@credexis/schema";
+import { LEARNED_MAPPINGS_SEED, type FormFamily } from "@credexis/schema";
 
 /**
  * Per-doc mappings store preloaded with the SHIPPED global seed. The seed
@@ -183,6 +184,30 @@ function toExtractor(spec: RowSpec): EvalExtractor {
         else if (f.taxonomy_node_key !== null) field.taxonomy_node = f.taxonomy_node_key;
         return field;
       });
+      // Closed-set blank inference (M23): on tax forms the registry defines
+      // the complete field universe and a blank box is not a fact (Iron Law
+      // #1: never invent). So a registry field with NO fact after a
+      // successful extraction over the labeled span IS the extractor's
+      // verdict "blank" - surfaced as an explicit null so the scorer can
+      // credit correctly-reported blanks (ARCHITECTURE.md: "null when a
+      // field is absent"; scorer: null==null is correct, null vs value is
+      // WRONG - so a wrongly-inferred blank still costs precision).
+      // Statements stay open-set: no such inference.
+      const closedSet = !["PNL", "BALANCE_SHEET", "DEBT_SCHEDULE"].includes(gt.form_family);
+      if (closedSet && gt.tax_year !== null && fields.length > 0) {
+        const entry = getRegistryEntry(gt.form_family as FormFamily, gt.tax_year);
+        const period = canonPeriod(`FY${gt.tax_year}`);
+        const have = new Set(fields.map((f) => `${f.registry_field_id ?? ""}|${f.period}`));
+        for (const rf of entry?.fields ?? []) {
+          if (have.has(`${rf.fieldId}|${period}`)) continue;
+          fields.push({
+            registry_field_id: rf.fieldId,
+            period,
+            value_cents: null,
+            outcome: "review",
+          });
+        }
+      }
       return { fields, cost_micro_usd: result.costMicroUsd };
     },
   };

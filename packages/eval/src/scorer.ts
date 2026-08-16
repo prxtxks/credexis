@@ -31,6 +31,12 @@ export interface DocumentScore {
   silent_wrong: number;
   ground_truth_fields: number;
   cost_micro_usd: bigint;
+  /** Field-level autopsy: which identities were missed/wrong (additive —
+   *  aggregate consumers and the CI baseline ignore it). */
+  detail: {
+    missed_keys: string[];
+    wrong_values: { key: string; expected: string | null; got: string | null }[];
+  };
 }
 
 export interface MetricsSummary {
@@ -132,6 +138,7 @@ export function scoreDocument(
   let autoAccepted = 0;
   let autoAcceptedCorrect = 0;
   let silentWrong = 0;
+  const wrongValues: DocumentScore["detail"]["wrong_values"] = [];
 
   for (const ex of aggregatedExtraction) {
     const key = fieldKey(ex);
@@ -157,6 +164,13 @@ export function scoreDocument(
       continue;
     }
     const matches = truth.value_cents === ex.value_cents;
+    if (!matches) {
+      wrongValues.push({
+        key,
+        expected: truth.value_cents === null ? null : truth.value_cents.toString(),
+        got: ex.value_cents === null ? null : ex.value_cents.toString(),
+      });
+    }
     if (matches) {
       correct += 1;
       if (isAuto) autoAcceptedCorrect += 1;
@@ -167,8 +181,10 @@ export function scoreDocument(
   }
 
   const missed = gt.fields.length - [...seen].filter((k) => truthByKey.has(k)).length;
+  const missedKeys = [...truthByKey.keys()].filter((k) => !seen.has(k));
 
   return {
+    detail: { missed_keys: missedKeys, wrong_values: wrongValues },
     id: gt.id,
     form_family: gt.form_family,
     quality: gt.quality,
