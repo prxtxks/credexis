@@ -174,12 +174,12 @@ Each law is the named antidote to a specific failure documented in [docs/POSTMOR
 
 We grade ourselves the way an examiner would - against a **golden corpus of real, human-labeled borrower documents**, scored to the **exact integer cent**. A value is identical to the human label or it is wrong; there is no "close enough."
 
-From the July 2026 evaluation on that corpus:
+From the current scorecard (August 2026 - 20 real documents, 367 human-verified fields, live production extractors):
 
-- **98.6% field precision** across all document types.
-- **100% precision on every tax-form family** (1040, 1120-S, K-1) and on balance sheets - **including scanned documents**.
-- **Zero silent wrong values** in every recorded round. When Credexis writes a number into the file, it has never been silently wrong.
-- **~65% recall** - the number vendors usually hide. The system automatically reads about two thirds of labeled fields and routes the rest to a human _with the source page attached_, because a wrong number nobody catches is worse than a gap somebody fills. Precision is a solved problem; recall is the frontier.
+- **99.7% field precision** across all document types.
+- **97.3% field recall** - up from 64% in July, after a miss-by-miss autopsy of every field the system failed to read. Recall is the number vendors usually hide; we publish ours because a wrong number nobody catches is worse than a gap somebody fills.
+- **Zero silent wrong values** in every recorded round, ever. When Credexis writes a number into the file, it has never been silently wrong. What it is not sure about, it refuses and routes to a human _with the source page attached_.
+- **100% precision on tax-form families and balance sheets - including scanned documents.**
 
 The methodology is itself the differentiator: labels are hash-bound to the exact PDF bytes they describe (the loader refuses mismatches), synthetic fixtures are quarantined by enforced naming and reported in a separate section, and a merge that regresses per-field accuracy more than 0.2 points is blocked. The page classifier is separately stress-tested against **1,153 pages of public IRS filings** with zero confident misclassifications.
 
