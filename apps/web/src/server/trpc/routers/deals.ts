@@ -32,23 +32,36 @@ export const dealsRouter = router({
       };
     }),
 
-  /** Pipeline board (M8.7): deals + form families present + headline DSCR. */
+  /** Pipeline board (M8.7): deals + form families present + headline DSCR.
+   *  Bounded (known-debt fix): latest BOARD_LIMIT deals with an honest
+   *  totalCount, and the sibling queries scoped to those deal ids instead
+   *  of scanning the tenant. */
   board: protectedProcedure.query(async ({ ctx }) => {
-    const [dealsRes, ldRes, dscrRes, issuesRes] = await Promise.all([
+    const BOARD_LIMIT = 100;
+    const dealsRes = await ctx.supabase
+      .from("deals")
+      .select("id, name, type, status, created_at, updated_at", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .limit(BOARD_LIMIT);
+    if (dealsRes.error) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: dealsRes.error.message });
+    }
+    const dealIds = (dealsRes.data ?? []).map((d) => d.id as string);
+    const [ldRes, dscrRes, issuesRes] = await Promise.all([
       ctx.supabase
-        .from("deals")
-        .select("id, name, type, status, created_at, updated_at")
-        .order("created_at", { ascending: false }),
-      ctx.supabase.from("logical_documents").select("document_id, form_family, documents(deal_id)"),
+        .from("logical_documents")
+        .select("document_id, form_family, documents!inner(deal_id)")
+        .in("documents.deal_id", dealIds),
       ctx.supabase
         .from("computed_metrics")
         .select("deal_id, metric, period_label, ratio_mantissa, ratio_scale")
         .eq("metric", "dscr_business")
-        .is("scenario_id", null),
+        .is("scenario_id", null)
+        .in("deal_id", dealIds),
       // ui-10: open blocking issues are first-class on the board card.
-      ctx.supabase.from("issues").select("deal_id").eq("status", "open"),
+      ctx.supabase.from("issues").select("deal_id").eq("status", "open").in("deal_id", dealIds),
     ]);
-    for (const r of [dealsRes, ldRes, dscrRes, issuesRes]) {
+    for (const r of [ldRes, dscrRes, issuesRes]) {
       if (r.error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: r.error.message });
     }
     const issuesByDeal = new Map<string, number>();
@@ -80,7 +93,7 @@ export const dealsRouter = router({
       }
     }
 
-    return (dealsRes.data ?? []).map((d) => ({
+    const deals = (dealsRes.data ?? []).map((d) => ({
       id: d.id as string,
       name: d.name as string,
       type: d.type as string,
@@ -93,6 +106,7 @@ export const dealsRouter = router({
       dscr: dscrByDeal.get(d.id as string) ?? null,
       openIssues: issuesByDeal.get(d.id as string) ?? 0,
     }));
+    return { deals, totalCount: dealsRes.count ?? deals.length };
   }),
 
   /** New-deal wizard (M8.7): deal + entities in one step, pinned to the
