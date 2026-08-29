@@ -45,6 +45,9 @@ export const NAV_SETTINGS: { href: string; label: string }[] = [
   { href: "/settings/notifications", label: "Notifications" },
   { href: "/settings/security", label: "Security" },
   { href: "/settings/branding", label: "Branding" },
+  // ADR-0004 ledger (2026-08-28): admin-only read surface; flagged to
+  // Pratik for veto since the tab list is his curated set.
+  { href: "/settings/taxonomy", label: "Taxonomy" },
 ];
 
 /**
