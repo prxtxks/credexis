@@ -85,8 +85,20 @@ export async function middleware(request: NextRequest) {
   }
   if (signedIn && pathname === "/login") {
     const redirect = request.nextUrl.clone();
+    // Honor ?next= (set by the unauthenticated redirect above) so a
+    // deep link survives the login round-trip. Same-origin relative
+    // paths only: must start with a single "/" ("//host" is scheme-
+    // relative = open redirect) and never /login itself (loop).
+    const next = request.nextUrl.searchParams.get("next");
+    const safe =
+      next !== null && /^\/(?!\/)/.test(next) && next !== "/login" && !next.startsWith("/login?");
     redirect.pathname = "/";
     redirect.search = "";
+    if (safe) {
+      const target = new URL(next, request.nextUrl.origin);
+      redirect.pathname = target.pathname;
+      redirect.search = target.search;
+    }
     return secured(NextResponse.redirect(redirect));
   }
   return secured(response);
