@@ -15,6 +15,7 @@ import { sourceRouter } from "./routers/source";
 import { spreadRouter } from "./routers/spread";
 import { transcriptsRouter } from "./routers/transcripts";
 import { invitesRouter, membersRouter, orgRouter } from "./routers/org";
+import { taxonomyRouter } from "./routers/taxonomy";
 import { notificationsRouter } from "./routers/notifications";
 import { profileRouter } from "./routers/profile";
 import { borrowerInvitesRouter, borrowersRouter, documentRequestsRouter } from "./routers/borrower";
@@ -67,6 +68,9 @@ export const appRouter = router({
 
   /** Pipeline progress (M8.8): stage timeline per document. */
   pipeline: pipelineRouter,
+
+  /** Taxonomy growth ledger (ADR-0004): unmapped-label candidates. */
+  taxonomy: taxonomyRouter,
 
   /** IRS transcripts (M9): flag, consents, ingest - graceful absence. */
   transcripts: transcriptsRouter,

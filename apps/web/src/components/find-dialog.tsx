@@ -55,6 +55,7 @@ export function FindDialog({
       { label: "Settings · General", meta: "Settings", href: "/settings" },
       { label: "Notification settings", meta: "Settings", href: "/settings/notifications" },
       { label: "Security", meta: "Settings", href: "/settings/security" },
+      { label: "Taxonomy", meta: "Settings", href: "/settings/taxonomy" },
     ];
     const deals = (board.data ?? []).map((d) => ({
       label: d.name,
