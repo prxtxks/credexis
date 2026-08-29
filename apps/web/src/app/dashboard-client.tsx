@@ -418,10 +418,12 @@ export default function DashboardClient() {
     if (bootstrap.data && !bootstrap.data.hasProfile) router.replace("/welcome");
   }, [bootstrap.data, router]);
 
-  const deals = useMemo(() => board.data ?? [], [board.data]);
+  const deals = useMemo(() => board.data?.deals ?? [], [board.data]);
   const counts = useMemo(() => {
     const c: Record<BoardFilter, number> = {
-      all: deals.length,
+      // Honest cap (no silent truncation): the server sends the latest 100
+      // with the true total; "All" shows the total so the cap is visible.
+      all: board.data?.totalCount ?? deals.length,
       intake: 0,
       parsing: 0,
       review: 0,

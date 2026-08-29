@@ -78,7 +78,7 @@ export default function DealOverviewPage() {
     );
   }
 
-  const boardRow = board.data?.find((d) => d.id === dealId);
+  const boardRow = board.data?.deals.find((d) => d.id === dealId);
   const costRow = costs.data?.find((c) => c.dealId === dealId);
   const checklist = deal.data ? checklistFor(deal.data.type) : [];
   const families = boardRow?.formFamilies ?? [];

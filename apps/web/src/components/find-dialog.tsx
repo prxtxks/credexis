@@ -57,7 +57,7 @@ export function FindDialog({
       { label: "Security", meta: "Settings", href: "/settings/security" },
       { label: "Taxonomy", meta: "Settings", href: "/settings/taxonomy" },
     ];
-    const deals = (board.data ?? []).map((d) => ({
+    const deals = (board.data?.deals ?? []).map((d) => ({
       label: d.name,
       meta: STATUS_LABEL[d.status] ?? d.status,
       href: `/deals/${d.id}/overview`,
