@@ -7,9 +7,12 @@
  * mutually-exclusive panel was a postmortem finding).
  */
 
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   AlertTriangle,
   Download,
+  Loader2,
   FileSearch,
   PanelLeft,
   PanelLeftClose,
@@ -35,6 +38,50 @@ const INSPECTOR_TABS: { key: InspectorTab; label: string; icon: typeof FileSearc
   { key: "scenario", label: "Scenario", icon: SlidersHorizontal },
 ];
 
+/**
+ * Export is a fetch, not a navigation (M18): a failed export must speak
+ * plain language in place, never dump raw JSON into the tab.
+ */
+async function downloadWorkbook(href: string, setExporting: (b: boolean) => void): Promise<void> {
+  setExporting(true);
+  try {
+    const res = await fetch(href);
+    if (!res.ok) {
+      let detail = "";
+      try {
+        detail = ((await res.json()) as { error?: string }).error ?? "";
+      } catch {
+        /* non-JSON body */
+      }
+      const lead =
+        res.status === 401
+          ? "Your session expired - sign in again and retry the export."
+          : res.status === 404
+            ? "This deal no longer exists."
+            : detail === "deal has no entities"
+              ? "Nothing to export yet - this deal has no borrower entity. Upload and assign documents first."
+              : "The export failed on our side - retry in a moment, and report it if it persists.";
+      toast.error(lead, { description: detail && detail !== lead ? detail : undefined });
+      return;
+    }
+    const blob = await res.blob();
+    const cd = res.headers.get("Content-Disposition") ?? "";
+    const fileName = /filename="([^"]+)"/.exec(cd)?.[1] ?? "credexis-workbook.xlsx";
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch {
+    toast.error("The export could not reach the server - check your connection and retry.");
+  } finally {
+    setExporting(false);
+  }
+}
+
 export function WorkspaceToolbar({
   dealName,
   dealType,
@@ -58,6 +105,7 @@ export function WorkspaceToolbar({
   onTogglePanel: () => void;
   onInspectorTab: (tab: InspectorTab) => void;
 }) {
+  const [exporting, setExporting] = useState(false);
   return (
     <header className="frosted-toolbar z-30 flex h-14 shrink-0 items-center gap-2 px-3">
       <BackButton />
@@ -105,16 +153,19 @@ export function WorkspaceToolbar({
         </div>
 
         <Button
-          asChild
           variant="outline"
           size="sm"
           className="rounded-full max-md:hidden"
           title="Download banker workbook (.xlsx)"
+          disabled={exporting}
+          onClick={() => void downloadWorkbook(exportHref, setExporting)}
         >
-          <a href={exportHref}>
+          {exporting ? (
+            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+          ) : (
             <Download className="mr-1.5 h-3.5 w-3.5" />
-            XLSX
-          </a>
+          )}
+          XLSX
         </Button>
 
         <Button

@@ -258,13 +258,21 @@ export async function GET(
   } catch {
     /* a deal without a projectable base still exports its spreads */
   }
-  const workbook = buildWorkbook(data);
-  const buffer = await workbook.xlsx.writeBuffer();
-  const fileName = `${(dealRes.data.name as string).replace(/[^\w-]+/g, "_")}_credexis.xlsx`;
-  return new NextResponse(buffer as unknown as ArrayBuffer, {
-    headers: {
-      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="${fileName}"`,
-    },
-  }) as NextResponse;
+  try {
+    const workbook = buildWorkbook(data);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const fileName = `${(dealRes.data.name as string).replace(/[^\w-]+/g, "_")}_credexis.xlsx`;
+    return new NextResponse(buffer as unknown as ArrayBuffer, {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${fileName}"`,
+      },
+    }) as NextResponse;
+  } catch (e) {
+    // JSON, not an HTML error page: the client toast reads .error (M18).
+    return NextResponse.json(
+      { error: `workbook build failed: ${(e as Error).message}` },
+      { status: 500 },
+    );
+  }
 }
