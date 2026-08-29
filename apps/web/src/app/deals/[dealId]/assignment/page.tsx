@@ -11,7 +11,7 @@
  * draft/save behavior byte-for-byte and avoid Radix-portal test flakiness.
  */
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { AlertCircle, Check, FileText, Loader2, Merge, Scissors, X } from "lucide-react";
@@ -250,222 +250,261 @@ export default function AssignmentPage() {
                   const year = draft.taxYear ?? String(row.taxYear ?? "");
                   const entityId = draft.entityId ?? row.entityId ?? "";
                   const dirty = Object.keys(draft).length > 0;
+                  // M18 leftover: an UNKNOWN span explains WHY the
+                  // classifier abstained, from the split run's own
+                  // diagnostics - the reviewer should never wonder what
+                  // the pipeline saw.
+                  const diag = row.splitDiagnostics;
+                  const unresolvedHint =
+                    family === "UNKNOWN"
+                      ? diag?.error
+                        ? `The pipeline could not read this file: ${diag.error}`
+                        : diag && (diag.blindPages > 0 || diag.unresolvedPages > 0)
+                          ? `The classifier abstained rather than guess: ` +
+                            [
+                              diag.unresolvedPages > 0
+                                ? `${diag.unresolvedPages} page(s) carried no recognizable form signals`
+                                : null,
+                              diag.blindPages > 0
+                                ? `${diag.blindPages} page(s) had no text layer and could not be rendered`
+                                : null,
+                              diag.scannedPages > 0 ? `${diag.scannedPages} scanned page(s)` : null,
+                            ]
+                              .filter(Boolean)
+                              .join("; ") +
+                            ". Pick the form family and entity - extraction runs once you save."
+                          : "The classifier abstained rather than guess this span's form. Pick the family and entity - extraction runs once you save."
+                      : null;
                   return (
-                    <TableRow key={row.id}>
-                      <TableCell className="font-medium">
-                        {row.fileName}
-                        {(identities.data ?? [])
-                          .filter((i) => i.logicalDocumentId === row.id && i.state === "suggested")
-                          .map((i) => (
-                            <span
-                              key={i.id}
-                              className={cn(
-                                "mt-1 flex items-center gap-1.5 text-[11px] font-normal",
-                                i.band === "high"
-                                  ? "text-primary"
-                                  : i.band === "mid"
-                                    ? "text-severity-warning"
-                                    : "text-severity-critical",
-                              )}
-                            >
-                              &ldquo;{i.extractedName}&rdquo; - matches{" "}
-                              {Math.round(i.scoreBps / 100)}%
-                              <button
-                                className="underline underline-offset-2"
-                                onClick={() =>
-                                  decideIdentity.mutate({ identityId: i.id, state: "confirmed" })
-                                }
+                    <Fragment key={row.id}>
+                      <TableRow>
+                        <TableCell className="font-medium">
+                          {row.fileName}
+                          {(identities.data ?? [])
+                            .filter(
+                              (i) => i.logicalDocumentId === row.id && i.state === "suggested",
+                            )
+                            .map((i) => (
+                              <span
+                                key={i.id}
+                                className={cn(
+                                  "mt-1 flex items-center gap-1.5 text-[11px] font-normal",
+                                  i.band === "high"
+                                    ? "text-primary"
+                                    : i.band === "mid"
+                                      ? "text-severity-warning"
+                                      : "text-severity-critical",
+                                )}
                               >
-                                approve
-                              </button>
-                              <button
-                                className="text-muted-foreground underline underline-offset-2"
-                                onClick={() =>
-                                  decideIdentity.mutate({ identityId: i.id, state: "rejected" })
-                                }
-                              >
-                                reject
-                              </button>
-                            </span>
-                          ))}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {/* Editable range + split (M13.5): if the splitter
-                            drew a boundary wrong, the reviewer fixes it
-                            here - every change audited like the labels. */}
-                        <div className="flex items-center gap-1">
-                          <Input
-                            aria-label={`First page of the ${row.pageStart}-${row.pageEnd} span in ${row.fileName}`}
-                            value={pageDrafts[row.id]?.start ?? String(row.pageStart)}
-                            onChange={(e) =>
-                              setPageDrafts((d) => ({
-                                ...d,
-                                [row.id]: {
-                                  start: e.target.value.replace(/\D/g, ""),
-                                  end: d[row.id]?.end ?? String(row.pageEnd),
-                                },
-                              }))
-                            }
-                            onKeyDown={(e) => e.key === "Enter" && submitPages(row)}
-                            inputMode="numeric"
-                            className="h-8 w-12 text-center tabular-nums"
-                          />
-                          <span className="text-muted-foreground">-</span>
-                          <Input
-                            aria-label={`Last page of the ${row.pageStart}-${row.pageEnd} span in ${row.fileName}`}
-                            value={pageDrafts[row.id]?.end ?? String(row.pageEnd)}
-                            onChange={(e) =>
-                              setPageDrafts((d) => ({
-                                ...d,
-                                [row.id]: {
-                                  start: d[row.id]?.start ?? String(row.pageStart),
-                                  end: e.target.value.replace(/\D/g, ""),
-                                },
-                              }))
-                            }
-                            onKeyDown={(e) => e.key === "Enter" && submitPages(row)}
-                            inputMode="numeric"
-                            className="h-8 w-12 text-center tabular-nums"
-                          />
-                          {pagesDirty(row) ? (
-                            <Button
-                              size="xs"
-                              variant="brand"
-                              // Guard the empty/partial draft here: the server
-                              // would answer a raw Zod blob, which is not a
-                              // sentence an underwriter can act on.
-                              disabled={setPages.isPending || !pagesValid(row)}
-                              onClick={() => submitPages(row)}
-                            >
-                              Set
-                            </Button>
-                          ) : row.pageEnd > row.pageStart ? (
-                            splitDrafts[row.id] !== undefined ? (
-                              <span className="flex items-center gap-1">
-                                <Input
-                                  autoFocus
-                                  aria-label={`Split the ${row.pageStart}-${row.pageEnd} span of ${row.fileName} at page`}
-                                  value={splitDrafts[row.id]}
-                                  onChange={(e) =>
-                                    setSplitDrafts((d) => ({
-                                      ...d,
-                                      [row.id]: e.target.value.replace(/\D/g, ""),
-                                    }))
-                                  }
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") submitSplit(row);
-                                    if (e.key === "Escape") cancelSplit(row);
-                                  }}
-                                  placeholder={`${row.pageStart + 1}`}
-                                  inputMode="numeric"
-                                  className="h-8 w-12 text-center tabular-nums"
-                                />
-                                <Button
-                                  size="xs"
-                                  variant="brand"
-                                  disabled={split.isPending || !splitValid(row)}
-                                  onClick={() => submitSplit(row)}
-                                >
-                                  Split
-                                </Button>
-                                {/* An accidental scissors click must be
-                                    escapable - Esc or this button. */}
+                                &ldquo;{i.extractedName}&rdquo; - matches{" "}
+                                {Math.round(i.scoreBps / 100)}%
                                 <button
-                                  type="button"
-                                  aria-label={`Cancel splitting the ${row.pageStart}-${row.pageEnd} span`}
-                                  onClick={() => cancelSplit(row)}
-                                  className="hover:bg-accent text-muted-foreground rounded-md p-1 transition-colors"
+                                  className="underline underline-offset-2"
+                                  onClick={() =>
+                                    decideIdentity.mutate({ identityId: i.id, state: "confirmed" })
+                                  }
                                 >
-                                  <X className="size-3.5" />
+                                  approve
+                                </button>
+                                <button
+                                  className="text-muted-foreground underline underline-offset-2"
+                                  onClick={() =>
+                                    decideIdentity.mutate({ identityId: i.id, state: "rejected" })
+                                  }
+                                >
+                                  reject
                                 </button>
                               </span>
-                            ) : (
+                            ))}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {/* Editable range + split (M13.5): if the splitter
+                            drew a boundary wrong, the reviewer fixes it
+                            here - every change audited like the labels. */}
+                          <div className="flex items-center gap-1">
+                            <Input
+                              aria-label={`First page of the ${row.pageStart}-${row.pageEnd} span in ${row.fileName}`}
+                              value={pageDrafts[row.id]?.start ?? String(row.pageStart)}
+                              onChange={(e) =>
+                                setPageDrafts((d) => ({
+                                  ...d,
+                                  [row.id]: {
+                                    start: e.target.value.replace(/\D/g, ""),
+                                    end: d[row.id]?.end ?? String(row.pageEnd),
+                                  },
+                                }))
+                              }
+                              onKeyDown={(e) => e.key === "Enter" && submitPages(row)}
+                              inputMode="numeric"
+                              className="h-8 w-12 text-center tabular-nums"
+                            />
+                            <span className="text-muted-foreground">-</span>
+                            <Input
+                              aria-label={`Last page of the ${row.pageStart}-${row.pageEnd} span in ${row.fileName}`}
+                              value={pageDrafts[row.id]?.end ?? String(row.pageEnd)}
+                              onChange={(e) =>
+                                setPageDrafts((d) => ({
+                                  ...d,
+                                  [row.id]: {
+                                    start: d[row.id]?.start ?? String(row.pageStart),
+                                    end: e.target.value.replace(/\D/g, ""),
+                                  },
+                                }))
+                              }
+                              onKeyDown={(e) => e.key === "Enter" && submitPages(row)}
+                              inputMode="numeric"
+                              className="h-8 w-12 text-center tabular-nums"
+                            />
+                            {pagesDirty(row) ? (
+                              <Button
+                                size="xs"
+                                variant="brand"
+                                // Guard the empty/partial draft here: the server
+                                // would answer a raw Zod blob, which is not a
+                                // sentence an underwriter can act on.
+                                disabled={setPages.isPending || !pagesValid(row)}
+                                onClick={() => submitPages(row)}
+                              >
+                                Set
+                              </Button>
+                            ) : row.pageEnd > row.pageStart ? (
+                              splitDrafts[row.id] !== undefined ? (
+                                <span className="flex items-center gap-1">
+                                  <Input
+                                    autoFocus
+                                    aria-label={`Split the ${row.pageStart}-${row.pageEnd} span of ${row.fileName} at page`}
+                                    value={splitDrafts[row.id]}
+                                    onChange={(e) =>
+                                      setSplitDrafts((d) => ({
+                                        ...d,
+                                        [row.id]: e.target.value.replace(/\D/g, ""),
+                                      }))
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") submitSplit(row);
+                                      if (e.key === "Escape") cancelSplit(row);
+                                    }}
+                                    placeholder={`${row.pageStart + 1}`}
+                                    inputMode="numeric"
+                                    className="h-8 w-12 text-center tabular-nums"
+                                  />
+                                  <Button
+                                    size="xs"
+                                    variant="brand"
+                                    disabled={split.isPending || !splitValid(row)}
+                                    onClick={() => submitSplit(row)}
+                                  >
+                                    Split
+                                  </Button>
+                                  {/* An accidental scissors click must be
+                                    escapable - Esc or this button. */}
+                                  <button
+                                    type="button"
+                                    aria-label={`Cancel splitting the ${row.pageStart}-${row.pageEnd} span`}
+                                    onClick={() => cancelSplit(row)}
+                                    className="hover:bg-accent text-muted-foreground rounded-md p-1 transition-colors"
+                                  >
+                                    <X className="size-3.5" />
+                                  </button>
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  aria-label={`Split span ${row.pageStart}-${row.pageEnd} of ${row.fileName}`}
+                                  title="Split this span at a page"
+                                  onClick={() => setSplitDrafts((d) => ({ ...d, [row.id]: "" }))}
+                                  className="hover:bg-accent text-muted-foreground rounded-md p-1.5 transition-colors"
+                                >
+                                  <Scissors className="size-3.5" />
+                                </button>
+                              )
+                            ) : null}
+                            {mergeable && splitDrafts[row.id] === undefined ? (
                               <button
                                 type="button"
-                                aria-label={`Split span ${row.pageStart}-${row.pageEnd} of ${row.fileName}`}
-                                title="Split this span at a page"
-                                onClick={() => setSplitDrafts((d) => ({ ...d, [row.id]: "" }))}
+                                aria-label={`Join pages ${row.pageStart}-${row.pageEnd} into the ${mergeable.pageStart}-${mergeable.pageEnd} span`}
+                                title={`Join with the span above (${mergeable.pageStart}-${mergeable.pageEnd})`}
+                                disabled={merge.isPending}
+                                onClick={() =>
+                                  merge.mutate({
+                                    logicalDocumentId: row.id,
+                                    intoLogicalDocumentId: mergeable.id,
+                                  })
+                                }
                                 className="hover:bg-accent text-muted-foreground rounded-md p-1.5 transition-colors"
                               >
-                                <Scissors className="size-3.5" />
+                                <Merge className="size-3.5" />
                               </button>
-                            )
-                          ) : null}
-                          {mergeable && splitDrafts[row.id] === undefined ? (
-                            <button
-                              type="button"
-                              aria-label={`Join pages ${row.pageStart}-${row.pageEnd} into the ${mergeable.pageStart}-${mergeable.pageEnd} span`}
-                              title={`Join with the span above (${mergeable.pageStart}-${mergeable.pageEnd})`}
-                              disabled={merge.isPending}
-                              onClick={() =>
-                                merge.mutate({
-                                  logicalDocumentId: row.id,
-                                  intoLogicalDocumentId: mergeable.id,
-                                })
-                              }
-                              className="hover:bg-accent text-muted-foreground rounded-md p-1.5 transition-colors"
-                            >
-                              <Merge className="size-3.5" />
-                            </button>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <FieldSelect
-                          ariaLabel={`Form family for ${row.fileName}`}
-                          value={family}
-                          onChange={(v) => setDraft(row.id, { formFamily: v })}
-                          options={ASSIGNABLE_FAMILIES.map((f) => ({ value: f, label: f }))}
-                          className={cn(
-                            family === "UNKNOWN" &&
-                              "text-severity-warning ring-1 ring-severity-warning",
-                          )}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={year}
-                          onChange={(e) => setDraft(row.id, { taxYear: e.target.value })}
-                          placeholder="-"
-                          inputMode="numeric"
-                          className="w-16"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
+                            ) : null}
+                          </div>
+                        </TableCell>
+                        <TableCell>
                           <FieldSelect
-                            ariaLabel={`Entity for ${row.fileName}`}
-                            value={entityId}
-                            onChange={(v) => setDraft(row.id, { entityId: v })}
-                            placeholder="- unassigned -"
-                            options={(entities.data ?? []).map((e) => ({
-                              value: e.id,
-                              label: `${e.name} (${e.kind})`,
-                            }))}
+                            ariaLabel={`Form family for ${row.fileName}`}
+                            value={family}
+                            onChange={(v) => setDraft(row.id, { formFamily: v })}
+                            options={ASSIGNABLE_FAMILIES.map((f) => ({ value: f, label: f }))}
+                            className={cn(
+                              family === "UNKNOWN" &&
+                                "text-severity-warning ring-1 ring-severity-warning",
+                            )}
                           />
-                          {row.entityConfirmed && !dirty && (
-                            <span className="flex items-center gap-1 whitespace-nowrap text-xs font-medium text-primary">
-                              <Check className="h-3.5 w-3.5" />✓ confirmed
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant={dirty ? "default" : "outline"}
-                          onClick={() => save(row)}
-                          disabled={
-                            assign.isPending || (!dirty && (row.entityConfirmed || !row.entityId))
-                          }
-                        >
-                          {assign.isPending && (
-                            <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                          )}
-                          {dirty ? "Save" : "Confirm"}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={year}
+                            onChange={(e) => setDraft(row.id, { taxYear: e.target.value })}
+                            placeholder="-"
+                            inputMode="numeric"
+                            className="w-16"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <FieldSelect
+                              ariaLabel={`Entity for ${row.fileName}`}
+                              value={entityId}
+                              onChange={(v) => setDraft(row.id, { entityId: v })}
+                              placeholder="- unassigned -"
+                              options={(entities.data ?? []).map((e) => ({
+                                value: e.id,
+                                label: `${e.name} (${e.kind})`,
+                              }))}
+                            />
+                            {row.entityConfirmed && !dirty && (
+                              <span className="flex items-center gap-1 whitespace-nowrap text-xs font-medium text-primary">
+                                <Check className="h-3.5 w-3.5" />✓ confirmed
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant={dirty ? "default" : "outline"}
+                            onClick={() => save(row)}
+                            disabled={
+                              assign.isPending || (!dirty && (row.entityConfirmed || !row.entityId))
+                            }
+                          >
+                            {assign.isPending && (
+                              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                            )}
+                            {dirty ? "Save" : "Confirm"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      {unresolvedHint ? (
+                        <TableRow className="border-0">
+                          <TableCell
+                            colSpan={6}
+                            className="text-severity-warning pt-0 pb-3 text-xs"
+                          >
+                            {unresolvedHint}
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                    </Fragment>
                   );
                 })}
                 {rows.length === 0 && (
