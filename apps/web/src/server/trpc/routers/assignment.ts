@@ -54,6 +54,38 @@ export const assignmentRouter = router({
       .order("page_start", { ascending: true });
     if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
 
+    // Split diagnostics per source document (M18 leftover): an UNKNOWN
+    // span should say WHY the classifier abstained, from the
+    // split_classify run's metadata - never leave the reviewer guessing
+    // about the guess we refused to make.
+    const docIds = [...new Set((data ?? []).map((d) => d.document_id as string))];
+    const splitByDoc = new Map<
+      string,
+      { unresolvedPages: number; blindPages: number; scannedPages: number; error: string | null }
+    >();
+    if (docIds.length > 0) {
+      const runsRes = await ctx.supabase
+        .from("extraction_runs")
+        .select("document_id, status, error, metadata, started_at")
+        .eq("stage", "split_classify")
+        .in("document_id", docIds)
+        .order("started_at", { ascending: false });
+      if (runsRes.error) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: runsRes.error.message });
+      }
+      for (const r of runsRes.data ?? []) {
+        const docId = r.document_id as string;
+        if (splitByDoc.has(docId)) continue; // latest run wins
+        const m = (r.metadata ?? {}) as Record<string, unknown>;
+        splitByDoc.set(docId, {
+          unresolvedPages: typeof m["unresolvedPages"] === "number" ? m["unresolvedPages"] : 0,
+          blindPages: typeof m["blindPages"] === "number" ? m["blindPages"] : 0,
+          scannedPages: typeof m["scannedPages"] === "number" ? m["scannedPages"] : 0,
+          error: (r.error as string | null) ?? null,
+        });
+      }
+    }
+
     return (data ?? []).map((d) => ({
       id: d.id as string,
       documentId: d.document_id as string,
@@ -64,6 +96,7 @@ export const assignmentRouter = router({
       pageEnd: d.page_end as number,
       entityId: (d.entity_id as string | null) ?? null,
       entityConfirmed: d.entity_confirmed as boolean,
+      splitDiagnostics: splitByDoc.get(d.document_id as string) ?? null,
     }));
   }),
 
