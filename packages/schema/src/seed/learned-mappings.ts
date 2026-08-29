@@ -129,6 +129,7 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "Wages", node: "is.opex.salaries_wages" },
   { label: "Total Payroll Taxes", node: "is.opex.payroll_taxes" },
   { label: "Rent Expense", node: "is.opex.rent" },
+  { label: "Rent", node: "is.opex.rent" }, // pnl-halfyear (M24 autopsy) - the commonest opex label there is
   { label: "Total 63300 Insurance Expense", node: "is.opex.insurance" },
   { label: "Total 67200 Repairs and Maintenance", node: "is.opex.repairs_maintenance" },
   { label: "Total Operating Supplies", node: "is.opex.supplies" },
@@ -187,7 +188,12 @@ export const LEARNED_MAPPINGS_SEED: LearnedMappingSeed[] = [
   { label: "Total Partners' Equity", node: "bs.equity.total" },
   { label: "TOTAL LIABILITIES & EQUITY", node: "bs.total_liabilities_equity" },
   { label: "Total Liabilities and Equity", node: "bs.total_liabilities_equity" }, // bs-asof (QBO), M23
+  // Partnership / LLC / corp statements name equity by owner type.
   { label: "Total Liabilities and Partners' Equity", node: "bs.total_liabilities_equity" },
+  { label: "Total Liabilities and Members' Equity", node: "bs.total_liabilities_equity" },
+  { label: "Total Liabilities and Stockholders' Equity", node: "bs.total_liabilities_equity" },
+  { label: "Total Liabilities and Shareholders' Equity", node: "bs.total_liabilities_equity" },
+  { label: "Total Members' Equity", node: "bs.equity.total" },
 
   // ── V1 (UnderlyticsAI) banker synonym map — domain-expert vocabulary,
   // translated to TAXONOMY_V1 nodes (m1-3, 2026-07-22). Raw labels;

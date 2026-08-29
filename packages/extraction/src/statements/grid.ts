@@ -59,6 +59,29 @@ export function toStatementGrid(table: LayoutTable): StatementGrid {
     }
   }
 
+  // Wrapped-label tails (M24): on statements with an indent column, a
+  // long label's last word can land in that column ("Total Liabilities
+  // and Partners'" | "Equity" | 1,451,496.68). A column that carries NO
+  // numeric cell anywhere in the table is not a value column - its text
+  // is label continuation, by construction. Merge and drop the column.
+  const numericCols = new Set<number>();
+  for (const row of rowsByIndex.values()) {
+    for (const [col, c] of row.cells) if (/\d/.test(c.text)) numericCols.add(col);
+  }
+  const labelOnlyCols = [...columnIds].filter((c) => !numericCols.has(c));
+  if (labelOnlyCols.length > 0 && numericCols.size > 0) {
+    for (const row of rowsByIndex.values()) {
+      for (const col of labelOnlyCols) {
+        const c = row.cells.get(col);
+        if (!c) continue;
+        const tail = c.text.trim();
+        if (tail !== "") row.label = `${row.label} ${tail}`.trim();
+        row.cells.delete(col);
+      }
+    }
+    for (const col of labelOnlyCols) columnIds.delete(col);
+  }
+
   return {
     page: table.page,
     bbox: table.bbox,
